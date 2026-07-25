@@ -13,6 +13,7 @@
 - Blockquote, code block พร้อม syntax highlighting (สไตล์ GitHub) และปุ่มคัดลอกโค้ด
 - เส้นคั่นบทความ
 - รองรับมือถือ (responsive)
+- ระบบร่าง/เผยแพร่ (draft/published) แยกปุ่ม "บันทึกร่าง"/"เผยแพร่" ในตัวเขียน พร้อมหน้ารายการร่าง ([drafts.php](drafts.php))
 
 ## ยังไม่มี
 
