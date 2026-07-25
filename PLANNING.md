@@ -32,7 +32,7 @@
 
 **ตัวอย่างที่ตัดสินใจแล้วตามหลักนี้:**
 - **เมนู** — `config/menu.php` (ข้อมูล) ↔ `partials/header.php` (แสดงผล, ไม่รู้จักชื่อเมนูตรงๆ วน loop จาก array ที่ได้มาเท่านั้น) — ดูรายละเอียดหัวข้อ 1
-- **บทความ** (แผนงาน) — ต้องมีฟังก์ชัน `getArticles()`/`getArticle()` คั่นกลาง แทนการเรียก `json_decode(file_get_contents(...))` กระจายอยู่หลายไฟล์แบบตอนนี้ — **หมายเหตุ: โค้ดปัจจุบัน (`index.php`, `article.php`) ยังไม่ได้ทำตามหลักนี้ เป็นสิ่งที่ต้อง refactor ก่อนหรือระหว่างย้ายไป MySQL**
+- **บทความ (ทำแล้ว)** — `includes/articles.php` มีฟังก์ชัน `getArticles()`/`getArticle($slug)` คั่นกลาง `index.php`, `article.php`, `editor.php` เรียกผ่านฟังก์ชันแทนอ่านไฟล์ตรงๆ ทั้งหมดแล้ว — จุดเดียวที่ต้องแก้ตอนย้ายไป MySQL
 - **สิทธิ์ผู้ใช้** (แผนงาน) — `userCan()` แบบ capability-based ตามที่คุยไว้ในหัวข้อล็อกอิน (ดูหัวข้อ "ประเด็นที่วนกลับมาซ้ำๆ")
 
 ---
@@ -42,11 +42,15 @@
 ระบบเขียนบทความแบบ WYSIWYG (ยังไม่มีฐานข้อมูล เก็บเป็นไฟล์):
 
 - **โครงสร้างไฟล์**
-  - `index.php` — รายการบทความ
-  - `editor.php` — หน้าเขียน/แก้ไข (ใช้ [Quill.js](https://quilljs.com))
-  - `article.php` — หน้าอ่านบทความ
+  - `index.php` — รายการบทความ (เฉพาะที่เผยแพร่แล้ว)
+  - `drafts.php` — รายการร่าง (ชั่วคราว ยังไม่ผูกสิทธิ์เจ้าของ เพราะยังไม่มีระบบล็อกอิน — ดู "ประเด็นที่วนกลับมาซ้ำๆ")
+  - `editor.php` — หน้าเขียน/แก้ไข (ใช้ [Quill.js](https://quilljs.com)) แยกปุ่ม "บันทึกร่าง"/"เผยแพร่"
+  - `article.php` — หน้าอ่านบทความ (เฉพาะที่เผยแพร่แล้ว)
   - `api/save.php`, `api/upload.php` — บันทึกบทความ / อัปโหลดรูป
-  - `articles/*.json` — เก็บบทความ (ยังไม่ใช้ DB)
+  - `includes/articles.php` — ฟังก์ชันกลางอ่านบทความ (`getArticles()`, `getArticle()`, `getArticleForEdit()`, `getDraftArticles()`)
+  - `config.php` (gitignored) / `config.example.php` — path + `APP_ENV`
+  - `config/menu.php` — ข้อมูลเมนู, `partials/header.php`+`footer.php` — layout ร่วม
+  - `articles/*.json` — เก็บบทความ พร้อมฟิลด์ `status` (draft/published), `published_at` (ยังไม่ใช้ DB)
   - `uploads/` — เก็บรูปภาพที่แทรก
   - `assets/style.css`, `assets/editor.js`, `assets/copy-button.js`
 
@@ -236,15 +240,15 @@
 
 ### Phase 1 — โครงสร้างข้อมูลบทความ + เตรียม MySQL (ส่วน 1, 8, 9) 🔵 กำลังทำ
 เป้าหมาย: พิสูจน์หลักการ "แยกข้อมูล-โค้ด" ให้แน่นบนของเดิมก่อน แล้วค่อยย้าย MySQL จริง กันทำงานซ้ำสองรอบ
-- [ ] เขียน `getArticles()` / `getArticle($slug)` ห่อการอ่านไฟล์ `articles/*.json` ปัจจุบัน แก้ `index.php`, `article.php`, `editor.php` ให้เรียกผ่านฟังก์ชันแทนอ่านไฟล์ตรงๆ (พฤติกรรมเว็บต้องเหมือนเดิมทุกอย่าง) 🔵 **กำลังเริ่ม**
-- [ ] ระหว่างเขียนฟังก์ชันข้อบน ใส่ตรรกะกรอง `status` (draft/published) เข้าไปด้วยเลย — จังหวะดีที่สุดที่จะทำ (ส่วน 8 บอกว่าทำได้บนไฟล์ json ไม่ต้องรอ MySQL อยู่แล้ว) เพิ่ม field `status`, `published_at` ในไฟล์ json + แยกปุ่ม "บันทึกร่าง"/"เผยแพร่" ใน `editor.php`
-- [ ] สร้าง `config.php` (path/credentials รวมจุดเดียว + environment flag `local`/`production` ไว้ใช้ต่อใน Phase 2)
+- [x] เขียน `getArticles()` / `getArticle($slug)` ห่อการอ่านไฟล์ `articles/*.json` ปัจจุบัน แก้ `index.php`, `article.php`, `editor.php` ให้เรียกผ่านฟังก์ชันแทนอ่านไฟล์ตรงๆ (พฤติกรรมเว็บต้องเหมือนเดิมทุกอย่าง)
+- [x] ระหว่างเขียนฟังก์ชันข้อบน ใส่ตรรกะกรอง `status` (draft/published) เข้าไปด้วยเลย — จังหวะดีที่สุดที่จะทำ (ส่วน 8 บอกว่าทำได้บนไฟล์ json ไม่ต้องรอ MySQL อยู่แล้ว) เพิ่ม field `status`, `published_at` ในไฟล์ json + แยกปุ่ม "บันทึกร่าง"/"เผยแพร่" ใน `editor.php`
+- [x] สร้าง `config.php` (path/credentials รวมจุดเดียว + environment flag `local`/`production` ไว้ใช้ต่อใน Phase 2)
 - [ ] ออกแบบตาราง MySQL: `articles` อย่างน้อย, พิจารณาตาราง `images` (ผูก `article_id` FK ตามส่วน 9) ไปพร้อมกัน
 - [ ] สลับข้างในฟังก์ชันจากข้อแรกให้อ่าน MySQL แทนไฟล์ — `index.php`/`article.php`/`editor.php` ไม่ต้องแก้แม้แต่บรรทัดเดียวถ้าทำถูกต้อง (จุดพิสูจน์หลักการ)
 
 ### Phase 2 — งานคู่ขนาน (ทำระหว่าง/หลัง Phase 1 ก็ได้ ไม่บล็อกกัน)
-- [ ] `partials/header.php` + `partials/footer.php` ดึงส่วนซ้ำออกจาก 3 ไฟล์ปัจจุบัน (ส่วน 1)
-- [ ] `config/menu.php` ข้อมูลเมนูแยกจาก header (ส่วน 1)
+- [x] `partials/header.php` + `partials/footer.php` ดึงส่วนซ้ำออกจาก 3 ไฟล์ปัจจุบัน (ส่วน 1)
+- [x] `config/menu.php` ข้อมูลเมนูแยกจาก header (ส่วน 1)
 - [ ] CSS custom properties (ตัวแปรสี) ใน `assets/style.css` — สีหลัก `#2563eb` ตอนนี้เขียนซ้ำอยู่ 5 จุด ต้องรวมเป็นตัวแปรใน `:root`
 - [ ] SEO พื้นฐาน (ส่วน 10): field excerpt + featured image ต่อบทความ, meta description, OG/Twitter tags, `robots.txt`, `sitemap.php` (ใช้ `getArticles()` จาก Phase 1 ได้เลย), canonical tag, JSON-LD Article schema
 - [ ] Error handling พื้นฐาน (ส่วน 12): ใช้ environment flag จาก Phase 1 คุม `display_errors`/`log_errors`, หน้า error กลาง (404/500), `set_error_handler()`/`set_exception_handler()`, เช็ค `json_decode() === null` ทุกจุดที่โหลดบทความ
