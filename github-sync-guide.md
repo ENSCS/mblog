@@ -38,6 +38,40 @@ git push origin main
 
 ---
 
+## ย้ายเครื่องทำงาน (GitHub คือตัวกลางที่อัปเดตสุดเสมอ)
+
+ทำงานหลายเครื่อง (เช่นสลับ Mac คนละตัว) ให้ยึดหลักว่า **GitHub คือความจริงชุดล่าสุดเสมอ** — ทุกครั้งที่ย้ายมาเริ่มงานที่เครื่องไหน ให้ดึงลงมาทับก่อนเริ่มแก้อะไรทั้งนั้น
+
+```bash
+cd /Applications/XAMPP/xamppfiles/htdocs/z/mblog
+git pull origin main --no-rebase
+```
+
+`--no-rebase` คือสั่งให้ merge เข้าด้วยกันตรงๆ (ไม่ใช่เรียง history ใหม่) เผื่อเครื่องที่เพิ่งย้ายมามี commit ค้างที่ยังไม่ได้ push ไว้จากรอบก่อน
+
+**ถ้าเจอ `error: Need to specify how to reconcile divergent branches`** แปลว่าเครื่องนี้มี commit ค้างที่ origin ไม่มี (เช่น commit ก่อนหน้าที่ push ไม่สำเร็จ) รันคำสั่งข้างบนซ้ำอีกครั้งหลังตั้งค่า reconcile ไว้ก่อน:
+
+```bash
+git config pull.rebase false
+git pull origin main
+```
+
+ถ้า merge แล้วขึ้น `CONFLICT` ในไฟล์ไหน (เช่น `PLANNING.md`) — เนื่องจาก GitHub คือตัวกลางที่อัปเดตสุด ให้ **ยึดฝั่ง origin เป็นหลักเสมอ**:
+
+```bash
+git checkout --theirs <ชื่อไฟล์ที่ conflict>
+git add <ชื่อไฟล์ที่ conflict>
+git commit --no-edit
+```
+
+> ถ้าอยากชัวร์ว่าเครื่องนี้ตรงกับ GitHub เป๊ะๆ ไม่สนใจว่าจะมี commit ค้างอะไรอยู่หรือไม่ ใช้คำสั่งนี้แทนได้เลย (แรงกว่า — **ลบ commit/การแก้ไขที่ยังไม่ได้ push ทิ้งถาวร** ใช้เฉพาะตอนมั่นใจว่าไม่มีงานค้างที่อยากเก็บ):
+> ```bash
+> git fetch origin
+> git reset --hard origin/main
+> ```
+
+---
+
 ## Commit Message แนะนำ
 
 | สถานการณ์ | ข้อความ |
