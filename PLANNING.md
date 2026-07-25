@@ -64,6 +64,13 @@
   - `database/*.sql` — SQL migration แยกไฟล์ตาม Phase (`phase1_core.sql` ถึง `phase9_stats.sql`) ทุกตารางขึ้นต้นด้วย `mblog_` กันชนกับระบบอื่นถ้าต้องใช้ฐานข้อมูลร่วมกันบนโฮสที่มีได้แค่ DB เดียว
   - `uploads/YYYY/MM/` — เก็บรูปภาพที่แทรก แยกโฟลเดอร์ตามเดือนกันไฟล์บวมในโฟลเดอร์เดียว
   - `assets/base.css`, `layout.css`, `components.css`, `article.css`, `editor.css` — แยกจาก `style.css` ไฟล์เดียวเดิม (`editor.css` โหลดเฉพาะหน้าแก้ไข ไม่ส่งให้ผู้อ่านทั่วไป), `assets/editor.js`, `assets/copy-button.js`, `assets/menu.js` — เมนูย่อย desktop เปิดด้วย CSS `:hover`/`:focus-within` ล้วนๆ (ไม่ใช้ JS toggle อีกต่อไป เพราะตัวคำหลักกลายเป็นลิงก์จริงแล้ว), ส่วน mobile accordion ยังคลิกเปิด/ปิดผ่าน JS เหมือนเดิม (คนละ component กันกับ desktop โดยสิ้นเชิง)
+  - **ธีมเว็บ (ทำแล้ว)** — restyle ตาม `claude-design.md` (เอกสารดีไซน์ของ claude.com — cream canvas + coral accent + dark-navy surface) พร้อมโหมด light/dark สลับได้ `assets/theme.js` — โครง 2 ชั้นใน `assets/base.css`: raw palette (`--color-*`) → role tokens (`--page-bg`, `--text-primary`, `--card-bg` ฯลฯ) ที่ component เรียกใช้จริง สลับธีมทั้งเว็บคือแก้ role tokens จุดเดียว ไม่ต้องไล่แก้ทุกไฟล์ CSS — พิสูจน์หลักการ "แยกข้อมูลออกจากโค้ดที่แสดงผล" แบบเดียวกับที่ใช้กับ backend มาตลอด แต่ใช้กับ CSS แทน — รายละเอียด:
+    - Footer เป็น dark navy ตายตัวทั้ง 2 ธีม ("footer never inverts" ตามเอกสารต้นฉบับ)
+    - Code block ในบทความเป็น dark "code window" ตายตัวเช่นกัน (ไม่ตามธีม) พร้อมสลับ highlight.js theme เป็น `github-dark.min.css` คู่กันไปด้วย กันสีอ่านไม่ออก
+    - Quill editor canvas (`#editor-container`) จงใจไม่ตามธีม (พื้นขาว/ตัวหนังสือดำตายตัว) เพราะ Quill เองบังคับสีตัวหนังสือมาจาก snow.css ของมันเอง ถ้าเปลี่ยนแค่พื้นหลังตามธีมโดยไม่คุม CSS ของ Quill เองด้วย จะเกิดตัวหนังสือมืดอ่านไม่ออกบนพื้นมืด
+    - Badge สี category (7 โทน) ปรับจากโทน SaaS ทั่วไป (blue/green/purple ...) เป็นโทนอุ่น/หม่นให้เข้ากับชุดสี cream+coral แทน เก็บเป็น `--tag-*-bg`/`--tag-*-text` คู่กันในเลเยอร์ role tokens เหมือนกัน
+    - ฟอนต์: ลองสลับเป็น Cormorant Garamond (หัวข้อ) + Inter (เนื้อหา) + JetBrains Mono (โค้ด) ตามเอกสารต้นฉบับไปรอบหนึ่งแล้ว แต่**ตัดสินใจย้อนกลับไปใช้ฟอนต์เดิม** (`"Segoe UI", "Sarabun", Tahoma, sans-serif` ตัวเดียวทั้งเว็บ ไม่แยก display/body) เพราะอ่านง่ายทั้งไทย/อังกฤษอยู่แล้วโดยไม่ต้องพึ่ง web font โหลดจากภายนอก — สีปาเลตต์/โหมด light-dark ยังคงไว้ตามเดิม เปลี่ยนแค่ font-family
+    - Toggle ธีม: ปุ่มใน topbar ทุกหน้า, จำค่าไว้ที่ `localStorage` (ไม่ผูกกับ `mblog_settings` เพราะเป็น preference ต่อผู้ชม ไม่ใช่ค่าตั้งค่าเว็บส่วนกลาง), มี inline script ก่อน CSS ใน `partials/header.php` กัน flash ของธีมผิดตอนโหลดหน้า, เคารพ `prefers-color-scheme` เป็นค่าเริ่มต้นถ้ายังไม่เคยกด toggle เอง
 
 - **ฐานข้อมูล MySQL (`mblog`)** — ตาราง `mblog_*` ทั้งหมด 11 ตัว (คอลัมน์เต็มดู `database/*.sql`)
   - ใช้งานจริงแล้ว (Phase 1): `mblog_articles` (มีคอลัมน์ `type` แยก post/page), `mblog_images`, `mblog_categories` (มีคอลัมน์ `color` เก็บโทนสี badge), `mblog_menu_items`, `mblog_slug_redirects`
@@ -275,7 +282,7 @@
 ### Phase 2 — งานคู่ขนาน (ทำระหว่าง/หลัง Phase 1 ก็ได้ ไม่บล็อกกัน)
 - [x] `partials/header.php` + `partials/footer.php` ดึงส่วนซ้ำออกจาก 3 ไฟล์ปัจจุบัน (ส่วน 1)
 - [x] ข้อมูลเมนูแยกจาก header (ส่วน 1) — เริ่มจาก `config/menu.php` (ไฟล์) ตอนนี้ย้ายเป็นตาราง `mblog_menu_items` (MySQL) แล้วผ่าน `includes/menu.php`
-- [x] CSS custom properties (ตัวแปรสี) ใน `:root` — สีหลัก `#2563eb` รวมเป็นตัวแปรแล้ว
+- [x] CSS custom properties (ตัวแปรสี) ใน `:root` — เริ่มจากสีหลักตัวเดียว ต่อมาขยายเป็นระบบ role tokens เต็มรูปแบบ + โหมด light/dark ตอน restyle ตาม `claude-design.md` (ดูหัวข้อ 1 "ธีมเว็บ")
 - [x] **(เพิ่มเติม)** แยกไฟล์ CSS เดี่ยวยาวๆ (`style.css`) เป็น `base.css`/`layout.css`/`components.css`/`article.css`/`editor.css` ตามที่ระบุไว้ในหัวข้อ 1 ("ควรแยก...") — `editor.css` โหลดเฉพาะหน้าแก้ไขจริงตามที่ตั้งใจไว้
 - [x] SEO พื้นฐาน (ส่วน 10): field excerpt + featured image ต่อบทความ, meta description, OG/Twitter tags, `robots.txt`, `sitemap.php` (ใช้ `getArticles()` จาก Phase 1 ได้เลย), canonical tag, JSON-LD Article schema
 - [x] Error handling พื้นฐาน (ส่วน 12): ใช้ environment flag จาก Phase 1 คุม `display_errors`/`log_errors`, หน้า error กลาง (404/500), `set_error_handler()`/`set_exception_handler()`, เช็ค `json_decode() === null` ทุกจุดที่โหลดบทความ

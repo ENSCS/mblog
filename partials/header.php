@@ -7,6 +7,17 @@ $menuItems = getMenuItems();
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  // Applies the saved/system theme before first paint, so switching themes
+  // never causes a flash of the wrong one on load — must run before any
+  // stylesheet below, since it's the CSS that actually reads [data-theme].
+  (function () {
+    var saved = localStorage.getItem('mblog-theme');
+    if (saved === 'light' || saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+  })();
+</script>
 <title><?= $pageTitle ?></title>
 <?= $extraHead ?? '' ?>
 <?php
@@ -18,6 +29,7 @@ $assetVer = fn(string $path) => '?v=' . @filemtime(__DIR__ . '/../' . $path);
 <link rel="stylesheet" href="assets/layout.css<?= $assetVer('assets/layout.css') ?>">
 <link rel="stylesheet" href="assets/components.css<?= $assetVer('assets/components.css') ?>">
 <script src="assets/menu.js<?= $assetVer('assets/menu.js') ?>" defer></script>
+<script src="assets/theme.js<?= $assetVer('assets/theme.js') ?>" defer></script>
 </head>
 <body>
 <div class="topbar">
@@ -43,6 +55,10 @@ $assetVer = fn(string $path) => '?v=' . @filemtime(__DIR__ . '/../' . $path);
       </nav>
     </div>
     <div class="actions">
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-label="สลับธีมสว่าง/มืด">
+        <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
+        <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </button>
       <?= $topbarActions ?? '' ?>
     </div>
   </div>

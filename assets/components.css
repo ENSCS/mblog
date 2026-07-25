@@ -1,20 +1,19 @@
 .card {
-  background: #fff;
-  border-radius: 10px;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
   padding: 20px;
   margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.08);
 }
 .article-list-item h2 {
   margin: 0 0 6px;
   font-size: 20px;
 }
 .article-list-item h2 a {
-  color: #1f2937;
+  color: var(--text-primary);
   text-decoration: none;
 }
 .article-list-item .meta {
-  color: #888;
+  color: var(--text-muted);
   font-size: 13px;
   margin-bottom: 10px;
 }
@@ -26,25 +25,28 @@
 }
 .empty-state {
   text-align: center;
-  color: #888;
+  color: var(--text-muted);
   padding: 60px 20px;
 }
 .field { margin-bottom: 14px; }
 .field label {
   display: block;
   font-size: 13px;
-  color: #555;
+  color: var(--text-secondary);
   margin-bottom: 4px;
 }
 .field input[type=text],
+.field input[type=number],
 .field select,
 .field textarea {
   width: 100%;
   padding: 10px 12px;
   font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background: #fff;
+  font-family: inherit;
+  color: var(--input-text);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-md);
+  background: var(--input-bg);
 }
 .field select {
   max-width: 260px;
@@ -56,8 +58,8 @@
 .featured-image-preview img {
   max-width: 200px;
   max-height: 120px;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-border);
   object-fit: cover;
 }
 .field textarea {
@@ -66,25 +68,26 @@
 }
 .btn {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--text-on-primary);
   border: none;
   padding: 10px 20px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
 }
 .btn:hover { background: var(--color-primary-hover); }
 .btn-secondary {
-  background: #fff;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
+  border: 1px solid var(--btn-secondary-border);
   margin-right: 8px;
 }
-.btn-secondary:hover { background: #f3f4f6; }
+.btn-secondary:hover { background: var(--btn-secondary-bg-hover); }
 #save-status {
   margin-left: 12px;
   font-size: 14px;
-  color: #16a34a;
+  color: var(--success-text);
 }
 .toolbar-row {
   display: flex;
@@ -95,40 +98,42 @@
   font-size: 12px;
   font-weight: 600;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   margin-left: 12px;
 }
 .status-draft {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--warning-bg);
+  color: var(--warning-text);
 }
 .status-published {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--success-bg);
+  color: var(--success-text);
 }
 .category-tag {
   display: inline-block;
   font-size: 12px;
   font-weight: 600;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   text-decoration: none; /* also used as <a> when the article has a linkable category */
-  background: #e5e7eb; /* gray fallback if no .category-tag-* color class is added */
-  color: #374151;
+  background: var(--tag-gray-bg); /* fallback if no .category-tag-* color class is added */
+  color: var(--tag-gray-text);
 }
 
 /* Color tokens for category badges — 7 to start. Each pair is picked for
    readable contrast, so choosing a category's color (mblog_categories.color)
-   can never produce an illegible badge. "gray" matches the original look, so
+   can never produce an illegible badge. "gray" matches the default look, so
    any category left unset (or a non-category badge like drafts.php's "หน้า"
-   pseudo-badge) looks exactly like it always did. */
-.category-tag-gray   { background: #e5e7eb; color: #374151; }
-.category-tag-blue   { background: #dbeafe; color: #1e40af; }
-.category-tag-green  { background: #dcfce7; color: #166534; }
-.category-tag-purple { background: #ede9fe; color: #5b21b6; }
-.category-tag-orange { background: #ffedd5; color: #9a3412; }
-.category-tag-pink   { background: #fce7f3; color: #9d174d; }
-.category-tag-yellow { background: #fef9c3; color: #854d0e; }
+   pseudo-badge) looks exactly like it always did. Warm/muted rather than
+   stock SaaS hues — see the --tag-* tokens in base.css — so the 7-color set
+   still reads as part of the cream+coral system instead of a 4th surface tone. */
+.category-tag-gray   { background: var(--tag-gray-bg);   color: var(--tag-gray-text); }
+.category-tag-blue   { background: var(--tag-blue-bg);   color: var(--tag-blue-text); }
+.category-tag-green  { background: var(--tag-green-bg);  color: var(--tag-green-text); }
+.category-tag-purple { background: var(--tag-purple-bg); color: var(--tag-purple-text); }
+.category-tag-orange { background: var(--tag-orange-bg); color: var(--tag-orange-text); }
+.category-tag-pink   { background: var(--tag-pink-bg);   color: var(--tag-pink-text); }
+.category-tag-yellow { background: var(--tag-yellow-bg); color: var(--tag-yellow-text); }
 
 a.category-tag:hover {
   filter: brightness(0.95);
@@ -148,29 +153,29 @@ a.category-tag:hover {
   font-size: 12px;
   font-weight: 600;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   text-decoration: none;
   background: transparent;
-  border: 1px solid #d1d5db;
-  color: #4b5563;
+  border: 1px solid var(--card-border);
+  color: var(--text-muted);
 }
 a.tag-badge:hover {
-  background: #f3f4f6;
+  background: var(--btn-secondary-bg-hover);
 }
 
 .settings-notice {
   padding: 10px 14px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-size: 14px;
   margin-bottom: 16px;
 }
 .settings-notice-success {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--success-bg);
+  color: var(--success-text);
 }
 .settings-notice-error {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--error-bg);
+  color: var(--error-text);
 }
 
 .table-scroll {
@@ -185,17 +190,17 @@ a.tag-badge:hover {
 .admin-table td {
   text-align: left;
   padding: 10px 12px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--card-border);
   white-space: nowrap;
 }
 .admin-table th {
-  color: #6b7280;
+  color: var(--text-muted);
   font-weight: 600;
   font-size: 13px;
 }
 .admin-table-child {
   padding-left: 28px !important;
-  color: #4b5563;
+  color: var(--text-secondary);
 }
 .row-actions button.link-danger {
   background: none;
@@ -203,7 +208,7 @@ a.tag-badge:hover {
   padding: 0;
   font: inherit;
   font-size: 13px;
-  color: #b91c1c;
+  color: var(--error-text);
   text-decoration: none;
   cursor: pointer;
   margin-right: 12px;

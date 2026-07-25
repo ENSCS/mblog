@@ -16,7 +16,7 @@
   width: 100%;
   max-height: 360px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   margin-bottom: 20px;
 }
 
@@ -46,7 +46,7 @@
   display: block;
   max-width: 100%;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-muted);
   text-align: center;
   margin: -4px 0 14px;
 }
@@ -67,28 +67,35 @@
   margin-right: auto;
 }
 
-/* --- Blockquote / code block / divider content styling --- */
+/* --- Blockquote --- */
 .article-content blockquote, .ql-editor blockquote {
-  border-left: 4px solid #cbd5e1;
+  border-left: 4px solid var(--card-border);
   margin: 16px 0;
   padding: 4px 0 4px 16px;
-  color: #555;
+  color: var(--text-secondary);
   font-style: italic;
 }
+
+/* --- Code block: a fixed dark "code window", independent of the light/dark
+   site toggle — matches claude-design.md's code-window-card, one of the
+   handful of surfaces (with the footer) that's deliberately always dark. The
+   syntax theme is pinned to github-dark.min.css (see article.php/editor.php)
+   to match — swapping only this CSS to a light theme without also swapping
+   that stylesheet would make code unreadable. --- */
 .article-content pre.ql-syntax,
 .article-content .ql-code-block-container,
 .ql-editor pre.ql-syntax,
 .ql-editor .ql-code-block-container {
   position: relative;
-  background: #f6f8fa !important;
-  color: #24292e !important;
+  background: var(--color-surface-dark-soft) !important;
+  color: var(--color-on-dark) !important;
   padding: 14px 16px;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
+  border: 1px solid #3a3730;
+  border-radius: var(--radius-lg);
   overflow-x: auto;
   font-size: 14px;
   margin: 16px 0;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-family: var(--font-mono);
 }
 .article-content .ql-code-block-container .ql-code-block,
 .ql-editor .ql-code-block-container .ql-code-block {
@@ -107,21 +114,21 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: #fff;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
+  background: var(--color-surface-dark-elevated);
+  border: 1px solid #3a3730;
+  border-radius: var(--radius-sm);
   padding: 4px 8px;
   font-size: 12px;
   line-height: 1.4;
-  color: #57606a;
+  color: var(--color-on-dark-soft);
   cursor: pointer;
 }
 .code-copy-btn:hover {
-  background: #f3f4f6;
+  background: #302d27;
 }
 .code-copy-btn.copied {
-  color: #1a7f37;
-  border-color: #1a7f37;
+  color: #8fd6a2;
+  border-color: #8fd6a2;
 }
 .code-copy-btn svg {
   width: 14px;
@@ -129,7 +136,7 @@
 }
 .article-content hr, .ql-editor hr {
   border: none;
-  border-top: 2px solid #e5e7eb;
+  border-top: 2px solid var(--card-border);
   margin: 28px 0;
 }
 

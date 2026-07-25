@@ -13,7 +13,7 @@ $allTagNames = array_column(getAllTags(), 'name');
 
 $pageTitle = ($article ? 'แก้ไข: ' . htmlspecialchars($article['title']) : 'เขียนบทความใหม่') . ' — ' . siteSetting('site_name');
 $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">' . "\n"
-    . '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">' . "\n"
+    . '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
     . '<link rel="stylesheet" href="assets/article.css">' . "\n"
     . '<link rel="stylesheet" href="assets/editor.css">';
 $topbarActions = '<a href="articles.php">รายการบทความ</a>';
