@@ -473,12 +473,98 @@ function setupFeaturedImagePicker() {
   });
 }
 
+// --- tag chip input (separate from category — freeform, many per article) ---
+// existingTags: names already on the article (editing) or [] (new article).
+// allTagNames: every tag name in the DB, used to drive the autocomplete list.
+function setupTagInput(existingTags, allTagNames) {
+  const hidden = document.getElementById('tags');
+  const chipsEl = document.getElementById('tag-chips');
+  const input = document.getElementById('tag-input');
+  const suggestionsEl = document.getElementById('tag-suggestions');
+  let tags = existingTags.slice();
+
+  function render() {
+    chipsEl.innerHTML = '';
+    tags.forEach((tag, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      chip.textContent = tag;
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.textContent = '×';
+      remove.addEventListener('click', () => {
+        tags.splice(i, 1);
+        render();
+      });
+      chip.appendChild(remove);
+      chipsEl.appendChild(chip);
+    });
+    hidden.value = tags.join(',');
+  }
+
+  function addTag(name) {
+    name = name.trim();
+    if (!name || tags.some(t => t.toLowerCase() === name.toLowerCase())) return;
+    tags.push(name);
+    render();
+  }
+
+  function showSuggestions() {
+    const q = input.value.trim().toLowerCase();
+    suggestionsEl.innerHTML = '';
+    if (!q) {
+      suggestionsEl.style.display = 'none';
+      return;
+    }
+    const matches = allTagNames
+      .filter(name => name.toLowerCase().includes(q) && !tags.some(t => t.toLowerCase() === name.toLowerCase()))
+      .slice(0, 8);
+    if (!matches.length) {
+      suggestionsEl.style.display = 'none';
+      return;
+    }
+    matches.forEach((name) => {
+      const item = document.createElement('div');
+      item.className = 'tag-suggestion-item';
+      item.textContent = name;
+      // mousedown (not click) fires before the input's blur handler hides the list
+      item.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        addTag(name);
+        input.value = '';
+        suggestionsEl.style.display = 'none';
+      });
+      suggestionsEl.appendChild(item);
+    });
+    suggestionsEl.style.display = 'block';
+  }
+
+  input.addEventListener('input', showSuggestions);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag(input.value.replace(/,$/, ''));
+      input.value = '';
+      suggestionsEl.style.display = 'none';
+    } else if (e.key === 'Backspace' && input.value === '' && tags.length) {
+      tags.pop();
+      render();
+    }
+  });
+  input.addEventListener('blur', () => {
+    setTimeout(() => { suggestionsEl.style.display = 'none'; }, 150);
+  });
+
+  render();
+}
+
 function saveArticle(quill, articleId, slug, status) {
   const title = document.getElementById('title').value.trim();
   const type = document.getElementById('type').value;
   const category = document.getElementById('category').value;
   const excerpt = document.getElementById('excerpt').value.trim();
   const featuredImage = document.getElementById('featured-image').value;
+  const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(Boolean);
   const statusEl = document.getElementById('save-status');
   if (!title) {
     alert('กรุณาใส่ชื่อบทความ');
@@ -504,7 +590,8 @@ function saveArticle(quill, articleId, slug, status) {
       type: type,
       category: category,
       excerpt: excerpt,
-      featured_image: featuredImage
+      featured_image: featuredImage,
+      tags: tags
     })
   })
     .then(r => r.json())

@@ -2,21 +2,21 @@
 require __DIR__ . '/includes/articles.php';
 
 $slug = $_GET['slug'] ?? '';
-$category = getCategoryBySlug($slug);
-if (!$category) {
-    renderErrorPage(404, 'ไม่พบหมวดหมู่นี้');
+$tag = getTagBySlug($slug);
+if (!$tag) {
+    renderErrorPage(404, 'ไม่พบแท็กนี้');
 }
 
-$articles = getArticlesByCategorySlug($slug);
+$articles = getArticlesByTagSlug($slug);
 
-$pageTitle = 'หมวด: ' . htmlspecialchars($category['name']) . ' — ' . siteSetting('site_name');
+$pageTitle = 'แท็ก: ' . htmlspecialchars($tag['name']) . ' — ' . siteSetting('site_name');
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 include __DIR__ . '/partials/header.php';
 ?>
-  <h1 class="article-title"><?= htmlspecialchars($category['name']) ?></h1>
+  <h1 class="article-title">#<?= htmlspecialchars($tag['name']) ?></h1>
   <?php if (empty($articles)): ?>
     <div class="empty-state">
-      ยังไม่มีบทความในหมวดนี้
+      ยังไม่มีบทความในแท็กนี้
     </div>
   <?php else: ?>
     <?php foreach ($articles as $a): ?>

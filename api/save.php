@@ -28,6 +28,7 @@ if ($featuredImage !== '' && (
 // to a standalone page like "About"/"Privacy Policy".
 if ($type === 'page') {
     $categoryId = null;
+    $tagNames = [];
 } else {
     $categories = getCategories();
     $category = isset($data['category']) ? trim($data['category']) : '';
@@ -35,6 +36,7 @@ if ($type === 'page') {
         $category = $categories[0];
     }
     $categoryId = categoryIdByName($category);
+    $tagNames = isset($data['tags']) && is_array($data['tags']) ? $data['tags'] : [];
 }
 
 if ($title === '') {
@@ -100,5 +102,6 @@ if ($existing) {
 }
 
 syncArticleImages($articleId, $content, $featuredImage);
+syncArticleTags($articleId, $tagNames);
 
 echo json_encode(['success' => true, 'id' => $articleId, 'slug' => $slug, 'status' => $status, 'type' => $type]);

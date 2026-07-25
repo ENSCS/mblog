@@ -5,6 +5,7 @@ header('Content-Type: application/xml; charset=utf-8');
 
 $articles = getArticles();
 $pages = getPages();
+$tags = getPublicTags();
 $base = siteBaseUrl();
 
 echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
@@ -25,6 +26,11 @@ echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
   <url>
     <loc><?= htmlspecialchars($base . '/page.php?slug=' . urlencode($p['slug'])) ?></loc>
     <lastmod><?= htmlspecialchars(substr($p['updated_at'], 0, 10)) ?></lastmod>
+  </url>
+<?php endforeach; ?>
+<?php foreach ($tags as $t): ?>
+  <url>
+    <loc><?= htmlspecialchars($base . '/tag.php?slug=' . urlencode($t['slug'])) ?></loc>
   </url>
 <?php endforeach; ?>
 </urlset>

@@ -134,6 +134,30 @@ a.category-tag:hover {
   filter: brightness(0.95);
 }
 
+/* Tag badges — outlined pills, deliberately distinct from the filled
+   .category-tag look, since a tag is freeform/many-per-article rather than
+   the one curated category an article belongs to. */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+.tag-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-decoration: none;
+  background: transparent;
+  border: 1px solid #d1d5db;
+  color: #4b5563;
+}
+a.tag-badge:hover {
+  background: #f3f4f6;
+}
+
 /* --- Mobile --- */
 @media (max-width: 600px) {
   .card {

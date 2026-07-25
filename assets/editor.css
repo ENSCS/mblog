@@ -63,6 +63,78 @@
   z-index: 9998;
 }
 
+/* --- Tag chip input --- */
+.tag-input-wrap {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 8px;
+  background: #fff;
+}
+.tag-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 6px 3px 10px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+}
+.tag-chip button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.tag-chip button:hover {
+  color: #111827;
+}
+#tag-input {
+  flex: 1;
+  min-width: 120px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  padding: 4px;
+}
+.tag-suggestions {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+  z-index: 10;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.tag-suggestion-item {
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.tag-suggestion-item:hover {
+  background: #f3f4f6;
+}
+
 /* --- Mobile --- */
 @media (max-width: 600px) {
   /* bigger touch target for the resize handle without changing its look much */

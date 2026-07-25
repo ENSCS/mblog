@@ -23,7 +23,7 @@ include __DIR__ . '/partials/header.php';
             <span class="category-tag category-tag-<?= htmlspecialchars($categoryColor) ?>"><?= htmlspecialchars(articleCategory($a)) ?></span>
           <?php endif; ?>
         </h2>
-        <div class="meta">อัปเดตล่าสุด: <?= htmlspecialchars($a['updated_at']) ?></div>
+        <div class="meta"><?= relativeTimeTag($a['published_at']) ?></div>
         <div class="row-actions">
           <a href="article.php?slug=<?= urlencode($a['slug']) ?>">อ่าน</a>
           <a href="editor.php?slug=<?= urlencode($a['slug']) ?>">แก้ไข</a>

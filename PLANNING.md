@@ -66,7 +66,8 @@
 
 - **ฐานข้อมูล MySQL (`mblog`)** — ตาราง `mblog_*` ทั้งหมด 10 ตัว (คอลัมน์เต็มดู `database/*.sql`)
   - ใช้งานจริงแล้ว (Phase 1): `mblog_articles` (มีคอลัมน์ `type` แยก post/page), `mblog_images`, `mblog_categories` (มีคอลัมน์ `color` เก็บโทนสี badge), `mblog_menu_items`, `mblog_slug_redirects`
-  - สร้างตารางไว้รอล่วงหน้าแล้ว แต่ยังไม่มีโค้ดใช้งาน (Phase 3/4/7/9): `mblog_users`, `mblog_tags`, `mblog_article_tag`, `mblog_comments`, `mblog_article_stats`
+  - ใช้งานจริงแล้ว (Phase 4): `mblog_tags`, `mblog_article_tag`
+  - สร้างตารางไว้รอล่วงหน้าแล้ว แต่ยังไม่มีโค้ดใช้งาน (Phase 3/7/9): `mblog_users`, `mblog_comments`, `mblog_article_stats`
 
 - **ฟีเจอร์ตัวเขียน (เทียบเท่า WP editor พื้นฐาน)**
   - หัวข้อ H1–H3, ตัวหนา/เอียง/ขีดเส้นใต้, สีตัวอักษร, จัดกึ่งกลาง/ซ้าย/ขวา/เต็มบรรทัด
@@ -121,8 +122,8 @@
 
 ### 3. ระบบแท็ก/หมวดหมู่
 - **หมวดหมู่ (Category) — ทำแล้ว** — 1 บทความอยู่ 1 หมวด ตาราง `mblog_categories` + คอลัมน์ `mblog_articles.category_id` (FK, `ON DELETE SET NULL` — ลบหมวดแล้ว fallback ไปหมวดแรกอัตโนมัติ ไม่ต้องเขียนโค้ดกันลบเพิ่ม) Editor UI เป็น dropdown แล้ว
-- **แท็ก (Tag) — ยังไม่ทำ (Phase 4)** — many-to-many คำเฉพาะเจาะจงกว่า ตาราง `mblog_tags` + junction table `mblog_article_tag` สร้างรอไว้แล้วแต่ยังไม่มีโค้ดใช้งาน
-- Editor UI ของแท็ก (ยังไม่ทำ): ช่อง chip input + autocomplete
+- **แท็ก (Tag) — ทำแล้ว (Phase 4)** — many-to-many คำเฉพาะเจาะจงกว่า ตาราง `mblog_tags` + junction table `mblog_article_tag`, freeform (ไม่มีแอดมินคอยสร้างไว้ล่วงหน้าแบบหมวดหมู่) ระบุตัวตนแท็กด้วย slug (`sanitizeSlug()` เดียวกับบทความ) กันสร้างซ้ำเวลาสะกด/ตัวพิมพ์ต่างกัน
+- Editor UI ของแท็ก — ช่อง chip input + autocomplete (`setupTagInput()` ใน `assets/editor.js`) พิมพ์แล้ว Enter เพื่อสร้าง/เพิ่ม หรือกดเลือกจากรายการที่มีอยู่
 
 ### 4. ระบบคอมเมนต์/รีวิว
 - สร้างเอง (คุมได้เต็มที่) vs ฝังสำเร็จรูป (giscus/Disqus/Cusdis — เร็วกว่ามาก)
@@ -287,10 +288,11 @@
 - [ ] อัปเกรดความปลอดภัยของ draft จาก Phase 1 — ให้เจ้าของพรีวิวร่างได้จริงแบบปลอดภัย (ไม่ใช่แค่อาศัย slug เดายาก)
 
 ### Phase 4 — แท็ก (tag) เต็มรูปแบบ (ส่วน 3) — ต้องมี MySQL
-- [x] ตาราง `mblog_tags` + junction table `mblog_article_tag` (many-to-many) — สร้างรอไว้ล่วงหน้าแล้วตั้งแต่ Phase 1 (`database/phase4_tags.sql`) ยังไม่มีโค้ดใช้งาน
-- [ ] Editor UI: chip input + autocomplete
+- [x] ตาราง `mblog_tags` + junction table `mblog_article_tag` (many-to-many) — สร้างรอไว้ล่วงหน้าแล้วตั้งแต่ Phase 1 (`database/phase4_tags.sql`)
+- [x] Data layer ใน `includes/articles.php`: `getAllTags()`, `getPublicTags()`, `getArticleTags()`, `getTagBySlug()`, `getArticlesByTagSlug()`, `findOrCreateTagIds()`/`syncArticleTags()` (upsert แบบ `INSERT ... ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)` กันแท็กซ้ำ, เหมือน `syncArticleImages()` แต่ไม่ลบแถว `mblog_tags` เอง ปล่อยให้ใช้ซ้ำได้)
+- [x] Editor UI: chip input + autocomplete (`editor.php` + `assets/editor.js` `setupTagInput()`) — freeform พิมพ์แล้วสร้างใหม่ได้เลย ไม่ต้องมีแอดมินสร้างไว้ก่อน ซ่อนพร้อมกับช่องหมวดหมู่เมื่อเลือกประเภท "หน้า"
 - [x] **(ทำก่อนกำหนด)** หน้าแสดงบทความตามหมวดหมู่ (`category.php?slug=`) — เขียนไปแล้วตอนทำเมนู "การลงทุน" เพราะอยากได้หน้ารวมบทความต่อหมวดที่อัปเดตอัตโนมัติ ไม่ต้องมาแก้เมนูเองทุกครั้งที่มีบทความใหม่
-- [ ] หน้าแสดงบทความตามแท็ก (`tag.php?slug=`) — ยังรอ เพราะต้องมีระบบแท็กก่อน (ข้อ 1-2 ด้านบน)
+- [x] หน้าแสดงบทความตามแท็ก (`tag.php?slug=`) — เขียนแล้ว โครงเหมือน `category.php`, ลิงก์จาก tag chip ใต้เนื้อหาใน `article.php` เท่านั้น (ไม่โชว์บนการ์ดหน้า list ตามที่ตัดสินใจไว้ กันรกเพราะแท็กมีได้หลายอัน), รวมเข้า `sitemap.php` ด้วย `getPublicTags()` (เฉพาะแท็กที่มีบทความเผยแพร่แล้วอย่างน้อย 1 ชิ้น กันหน้าว่างเปล่าเข้า sitemap) — ไม่มี noindex พิเศษ (index ทั้งหมดตามที่ตัดสินใจไว้ เหมือน `category.php` ที่ก็ไม่มี robots meta อยู่แล้ว)
 
 ### Phase 5 — เนื้อหาจาก AI: นำเข้า Markdown (ส่วน 6)
 - [ ] ติดตั้ง Parsedown (แปลง Markdown → HTML ฝั่ง PHP)

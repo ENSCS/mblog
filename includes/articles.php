@@ -85,7 +85,7 @@ function getCategoryBySlug(string $slug): ?array
 // (no menu item to hand-maintain per article).
 function getArticlesByCategorySlug(string $slug): array
 {
-    return fetchArticles('c.slug = ? AND a.status = ? AND a.type = ?', [$slug, 'published', 'post']);
+    return fetchArticles('c.slug = ? AND a.status = ? AND a.type = ?', [$slug, 'published', 'post'], 'a.published_at DESC');
 }
 
 // Uses the author-written excerpt if there is one, otherwise auto-generates
@@ -142,14 +142,91 @@ function normalizeArticleRow(array $row): array
     return $row;
 }
 
-function fetchArticles(string $whereSql, array $params): array
+function thaiMonthName(int $month): string
+{
+    static $months = ['', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+        'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+
+    return $months[$month];
+}
+
+function thaiDayName(int $weekday): string
+{
+    static $days = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+
+    return $days[$weekday];
+}
+
+// "16 กรกฎาคม เวลา 17:01 น." — year appended only when it isn't the current
+// year (same convention Facebook uses), since spelling it out on every older
+// timestamp within the same year is just noise.
+function thaiShortDateTime(int $timestamp): string
+{
+    $text = date('j', $timestamp) . ' ' . thaiMonthName((int) date('n', $timestamp));
+    if ((int) date('Y', $timestamp) !== (int) date('Y')) {
+        $text .= ' ' . date('Y', $timestamp);
+    }
+
+    return $text . ' เวลา ' . date('H:i', $timestamp) . ' น.';
+}
+
+// "วันอาทิตย์ที่ 26 กรกฎาคม 2026 เวลา 00:48 น." — full timestamp for the
+// hover tooltip, always spells out the year since there's no "is it this
+// year" ambiguity to save characters on here.
+function thaiFullDateTime(int $timestamp): string
+{
+    return 'วัน' . thaiDayName((int) date('w', $timestamp)) . 'ที่ ' . date('j', $timestamp) . ' '
+        . thaiMonthName((int) date('n', $timestamp)) . ' ' . date('Y', $timestamp)
+        . ' เวลา ' . date('H:i', $timestamp) . ' น.';
+}
+
+// Facebook-style relative time — "text" for the visible label ("12 นาที"),
+// "title" for the full date/time shown on hover (native <span title="">
+// tooltip, no JS needed). Both read off PHP's current timezone, which
+// config.php already pins to siteSetting('timezone') (Asia/Bangkok) — so this
+// needs no timezone conversion of its own.
+function formatRelativeTime(string $dateString): array
+{
+    $timestamp = strtotime($dateString);
+    $diff = max(0, time() - $timestamp);
+
+    if ($diff < 60) {
+        $text = 'เมื่อสักครู่';
+    } elseif ($diff < 3600) {
+        $text = floor($diff / 60) . ' นาที';
+    } elseif ($diff < 86400) {
+        $text = floor($diff / 3600) . ' ชั่วโมง';
+    } elseif ($diff < 604800) {
+        $text = floor($diff / 86400) . ' วัน';
+    } else {
+        $text = thaiShortDateTime($timestamp);
+    }
+
+    return ['text' => $text, 'title' => thaiFullDateTime($timestamp)];
+}
+
+// Ready-to-echo <span> for formatRelativeTime() — every "อัปเดตล่าสุด"/"เผยแพร่เมื่อ"
+// spot on the site wants the exact same markup, so this keeps the
+// htmlspecialchars() escaping in one place instead of repeated at each call site.
+function relativeTimeTag(string $dateString): string
+{
+    $rt = formatRelativeTime($dateString);
+
+    return '<span title="' . htmlspecialchars($rt['title']) . '">' . htmlspecialchars($rt['text']) . '</span>';
+}
+
+// $orderBy defaults to updated_at (edit-recency) since that's the only sort
+// that makes sense for getDraftArticles() — a draft may have no published_at
+// at all yet. Published-only lists pass 'a.published_at DESC' explicitly, to
+// match the published_at now shown next to them (see relativeTimeTag()).
+function fetchArticles(string $whereSql, array $params, string $orderBy = 'a.updated_at DESC'): array
 {
     $stmt = db()->prepare(
         'SELECT a.*, c.name AS category, c.slug AS category_slug, c.color AS category_color
          FROM mblog_articles a
          LEFT JOIN mblog_categories c ON a.category_id = c.id
          WHERE ' . $whereSql . '
-         ORDER BY a.updated_at DESC'
+         ORDER BY ' . $orderBy
     );
     $stmt->execute($params);
 
@@ -174,14 +251,14 @@ function fetchOneArticle(string $whereSql, array $params): ?array
 // Public article list — published posts only (not pages — see getPages()).
 function getArticles(): array
 {
-    return fetchArticles('a.status = ? AND a.type = ?', ['published', 'post']);
+    return fetchArticles('a.status = ? AND a.type = ?', ['published', 'post'], 'a.published_at DESC');
 }
 
 // Public page list — published pages only (About/Contact/Privacy Policy/...).
 // Pages aren't browsed as a feed like posts; mainly used by sitemap.php.
 function getPages(): array
 {
-    return fetchArticles('a.status = ? AND a.type = ?', ['published', 'page']);
+    return fetchArticles('a.status = ? AND a.type = ?', ['published', 'page'], 'a.published_at DESC');
 }
 
 // Draft list — for the "ร่าง" screen so drafts stay findable now that they're
@@ -339,6 +416,134 @@ function syncArticleImages(int $articleId, string $content, ?string $featuredIma
         $delete = db()->prepare('DELETE FROM mblog_images WHERE id = ?');
         foreach ($toDelete as $row) {
             $delete->execute([$row['id']]);
+        }
+    }
+}
+
+// Every tag that exists, regardless of whether any article currently uses it
+// — used for the editor's autocomplete list, so an author can reuse a tag
+// that's momentarily unattached (e.g. removed from its last article).
+function getAllTags(): array
+{
+    return db()->query('SELECT slug, name FROM mblog_tags ORDER BY name')->fetchAll();
+}
+
+// Only tags attached to at least one published post — used by sitemap.php,
+// since an unused tag has no real archive page worth listing.
+function getPublicTags(): array
+{
+    return db()->query(
+        'SELECT DISTINCT t.slug, t.name
+         FROM mblog_tags t
+         JOIN mblog_article_tag at ON at.tag_id = t.id
+         JOIN mblog_articles a ON a.id = at.article_id
+         WHERE a.status = "published" AND a.type = "post"
+         ORDER BY t.name'
+    )->fetchAll();
+}
+
+// Tags on one article, for display (article.php) and for pre-filling the
+// chip input when reopening an article in the editor.
+function getArticleTags(int $articleId): array
+{
+    $stmt = db()->prepare(
+        'SELECT t.slug, t.name
+         FROM mblog_tags t
+         JOIN mblog_article_tag at ON at.tag_id = t.id
+         WHERE at.article_id = ?
+         ORDER BY t.name'
+    );
+    $stmt->execute([$articleId]);
+
+    return $stmt->fetchAll();
+}
+
+// Looks up a tag by its URL slug — used by tag.php to resolve "?slug=..."
+// into a display name and to validate it exists (404 if not), same idea as
+// getCategoryBySlug().
+function getTagBySlug(string $slug): ?array
+{
+    $stmt = db()->prepare('SELECT id, slug, name FROM mblog_tags WHERE slug = ? LIMIT 1');
+    $stmt->execute([$slug]);
+    $row = $stmt->fetch();
+
+    return $row ?: null;
+}
+
+// Published posts carrying one tag — powers tag.php, same shape as
+// getArticlesByCategorySlug() but joined through the many-to-many tables.
+function getArticlesByTagSlug(string $slug): array
+{
+    $stmt = db()->prepare(
+        'SELECT a.*, c.name AS category, c.slug AS category_slug, c.color AS category_color
+         FROM mblog_articles a
+         LEFT JOIN mblog_categories c ON a.category_id = c.id
+         JOIN mblog_article_tag at ON at.article_id = a.id
+         JOIN mblog_tags t ON t.id = at.tag_id
+         WHERE t.slug = ? AND a.status = ? AND a.type = ?
+         ORDER BY a.published_at DESC'
+    );
+    $stmt->execute([$slug, 'published', 'post']);
+
+    return array_map('normalizeArticleRow', $stmt->fetchAll());
+}
+
+// Tags are freeform (unlike category, there's no admin-curated list) — an
+// author just types a name in the editor and it's created on the spot if it
+// doesn't exist yet. Identity is the slug (same sanitizeSlug() as articles),
+// so "React" and "react" collapse into one tag; whichever name was typed
+// first is what displays. The INSERT ... ON DUPLICATE KEY trick makes
+// find-or-create a single atomic statement instead of a racy SELECT-then-INSERT.
+function findOrCreateTagIds(array $names): array
+{
+    $insert = db()->prepare(
+        'INSERT INTO mblog_tags (slug, name) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)'
+    );
+
+    $ids = [];
+    foreach ($names as $name) {
+        $name = trim((string) $name);
+        if ($name === '') {
+            continue;
+        }
+        $slug = sanitizeSlug($name);
+        if ($slug === '') {
+            continue;
+        }
+        $insert->execute([$slug, mb_substr($name, 0, 100)]);
+        $ids[] = (int) db()->lastInsertId();
+    }
+
+    return array_values(array_unique($ids));
+}
+
+// Keeps mblog_article_tag in sync with the tag names an article was saved
+// with — same add/remove-the-difference approach as syncArticleImages().
+// Only touches the junction table: a tag that ends up with zero articles is
+// left in mblog_tags (still offered by getAllTags() for reuse), not deleted.
+function syncArticleTags(int $articleId, array $tagNames): void
+{
+    $tagIds = findOrCreateTagIds($tagNames);
+
+    $stmt = db()->prepare('SELECT tag_id FROM mblog_article_tag WHERE article_id = ?');
+    $stmt->execute([$articleId]);
+    $existingIds = array_map('intval', array_column($stmt->fetchAll(), 'tag_id'));
+
+    $toInsert = array_diff($tagIds, $existingIds);
+    $toDelete = array_diff($existingIds, $tagIds);
+
+    if ($toInsert) {
+        $insert = db()->prepare('INSERT INTO mblog_article_tag (article_id, tag_id) VALUES (?, ?)');
+        foreach ($toInsert as $tagId) {
+            $insert->execute([$articleId, $tagId]);
+        }
+    }
+
+    if ($toDelete) {
+        $delete = db()->prepare('DELETE FROM mblog_article_tag WHERE article_id = ? AND tag_id = ?');
+        foreach ($toDelete as $tagId) {
+            $delete->execute([$articleId, $tagId]);
         }
     }
 }

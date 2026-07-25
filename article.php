@@ -20,6 +20,7 @@ $imageUrl = $featuredImage ? siteBaseUrl() . '/' . ltrim($featuredImage, '/') : 
 // fallback is already the first image inside the content, so showing it
 // again here would just duplicate it.
 $manualFeaturedImage = $article['featured_image'] ?? '';
+$tags = getArticleTags($article['id']);
 
 $pageTitle = htmlspecialchars($article['title']) . ' — ' . siteSetting('site_name');
 $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">' . "\n"
@@ -64,8 +65,15 @@ include __DIR__ . '/partials/header.php';
       <h1 class="article-title"><?= htmlspecialchars($article['title']) ?></h1>
       <div class="meta" style="margin-bottom:20px;">
         <span class="category-tag category-tag-<?= htmlspecialchars(articleCategoryColor($article)) ?>"><?= htmlspecialchars(articleCategory($article)) ?></span>
-        อัปเดตล่าสุด: <?= htmlspecialchars($article['updated_at']) ?>
+        <?= relativeTimeTag($article['published_at']) ?>
       </div>
       <div class="article-content ql-editor" style="padding:0;"><?= $article['content'] ?></div>
+      <?php if (!empty($tags)): ?>
+        <div class="tag-list">
+          <?php foreach ($tags as $tag): ?>
+            <a class="tag-badge" href="tag.php?slug=<?= urlencode($tag['slug']) ?>">#<?= htmlspecialchars($tag['name']) ?></a>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
     </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>

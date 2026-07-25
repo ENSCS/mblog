@@ -16,7 +16,7 @@ include __DIR__ . '/partials/header.php';
     <?php foreach ($pages as $p): ?>
       <div class="card article-list-item">
         <h2><a href="page.php?slug=<?= urlencode($p['slug']) ?>"><?= htmlspecialchars($p['title']) ?></a></h2>
-        <div class="meta">อัปเดตล่าสุด: <?= htmlspecialchars($p['updated_at']) ?></div>
+        <div class="meta"><?= relativeTimeTag($p['published_at']) ?></div>
         <div class="row-actions">
           <a href="page.php?slug=<?= urlencode($p['slug']) ?>">อ่าน</a>
           <a href="editor.php?slug=<?= urlencode($p['slug']) ?>">แก้ไข</a>

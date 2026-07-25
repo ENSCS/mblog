@@ -8,6 +8,8 @@ $currentType = $article['type'] ?? 'post';
 $categories = getCategories();
 $currentCategory = $article ? articleCategory($article) : $categories[0];
 $currentFeaturedImage = $article['featured_image'] ?? '';
+$currentTags = $article ? array_column(getArticleTags($article['id']), 'name') : [];
+$allTagNames = array_column(getAllTags(), 'name');
 
 $pageTitle = ($article ? 'แก้ไข: ' . htmlspecialchars($article['title']) : 'เขียนบทความใหม่') . ' — ' . siteSetting('site_name');
 $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">' . "\n"
@@ -25,9 +27,11 @@ ob_start();
   const existingContent = <?= json_encode($article['content'] ?? '') ?>;
   const quill = initArticleEditor(existingContent);
   setupFeaturedImagePicker();
+  setupTagInput(<?= json_encode($currentTags, JSON_UNESCAPED_UNICODE) ?>, <?= json_encode($allTagNames, JSON_UNESCAPED_UNICODE) ?>);
 
   document.getElementById('type').addEventListener('change', (e) => {
     document.getElementById('category-field').style.display = e.target.value === 'page' ? 'none' : 'block';
+    document.getElementById('tags-field').style.display = e.target.value === 'page' ? 'none' : 'block';
   });
 
   document.getElementById('save-draft-btn').addEventListener('click', () => {
@@ -73,6 +77,15 @@ include __DIR__ . '/partials/header.php';
     </div>
     <input type="file" id="featured-image-input" accept="image/*" style="display:<?= $currentFeaturedImage ? 'none' : 'block' ?>;">
     <input type="hidden" id="featured-image" value="<?= htmlspecialchars($currentFeaturedImage) ?>">
+  </div>
+  <div class="field" id="tags-field" style="display:<?= $currentType === 'page' ? 'none' : 'block' ?>;">
+    <label for="tag-input">แท็ก (ไม่บังคับ — พิมพ์ชื่อแล้วกด Enter หรือเลือกจากรายการที่แนะนำ)</label>
+    <div class="tag-input-wrap">
+      <div id="tag-chips" class="tag-chip-list"></div>
+      <input type="text" id="tag-input" placeholder="พิมพ์แท็ก แล้วกด Enter...">
+      <div id="tag-suggestions" class="tag-suggestions"></div>
+    </div>
+    <input type="hidden" id="tags" value="">
   </div>
   <div class="field">
     <label for="slug">Slug (URL ของบทความ — ไม่ใส่จะสร้างจากชื่อบทความให้อัตโนมัติ)</label>
