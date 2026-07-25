@@ -10,8 +10,10 @@ $base = siteBaseUrl();
 echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
 ?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <?php // index.php just 302-redirects here for now (see index.php) — list
+        // the real destination directly instead of a URL that only redirects. ?>
   <url>
-    <loc><?= htmlspecialchars($base . '/index.php') ?></loc>
+    <loc><?= htmlspecialchars($base . '/articles.php') ?></loc>
   </url>
 <?php foreach ($articles as $a): ?>
   <url>

@@ -29,7 +29,7 @@ $assetVer = fn(string $path) => '?v=' . @filemtime(__DIR__ . '/../' . $path);
         <?php foreach ($menuItems as $item): ?>
           <?php if (!empty($item['children'])): ?>
             <div class="menu-item-has-children">
-              <button type="button" class="menu-toggle"><?= htmlspecialchars($item['label']) ?> <span class="menu-caret">&#9662;</span></button>
+              <a href="<?= htmlspecialchars($item['href']) ?>" class="menu-toggle"><?= htmlspecialchars($item['label']) ?> <span class="menu-caret">&#9662;</span></a>
               <ul class="submenu">
                 <?php foreach ($item['children'] as $child): ?>
                   <li><a href="<?= htmlspecialchars($child['href']) ?>"><?= htmlspecialchars($child['label']) ?></a></li>

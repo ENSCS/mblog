@@ -63,7 +63,7 @@ include __DIR__ . '/partials/header.php';
       <?php endif; ?>
       <h1 class="article-title"><?= htmlspecialchars($article['title']) ?></h1>
       <div class="meta" style="margin-bottom:20px;">
-        <span class="category-tag"><?= htmlspecialchars(articleCategory($article)) ?></span>
+        <span class="category-tag category-tag-<?= htmlspecialchars(articleCategoryColor($article)) ?>"><?= htmlspecialchars(articleCategory($article)) ?></span>
         อัปเดตล่าสุด: <?= htmlspecialchars($article['updated_at']) ?>
       </div>
       <div class="article-content ql-editor" style="padding:0;"><?= $article['content'] ?></div>

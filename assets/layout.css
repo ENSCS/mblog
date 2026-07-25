@@ -46,19 +46,15 @@
   opacity: 1;
 }
 
-/* --- Submenu dropdown (click-to-toggle, see assets/menu.js) --- */
+/* --- Submenu dropdown: hover to open (like WP), the label itself is a real
+   link so clicking it navigates instead of just toggling --- */
 .menu-item-has-children {
   position: relative;
 }
 .menu-toggle {
-  background: none;
-  border: none;
-  font: inherit;
   color: #fff;
   font-weight: 500;
   opacity: 0.85;
-  cursor: pointer;
-  padding: 0;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -78,8 +74,12 @@
      accordion menu instead), so there's always room for it to extend
      rightward without running off the viewport. */
   left: 0;
-  margin: 10px 0 0;
-  padding: 6px;
+  /* No margin-top gap on purpose — a gap between the toggle and this box
+     would break :hover continuity (the cursor briefly hovers nothing while
+     crossing it, closing the dropdown before it's reached). Padding-top
+     gives the same visual breathing room without a dead zone. */
+  margin: 0;
+  padding: 14px 6px 6px;
   min-width: 200px;
   background: #1f2937;
   border-radius: 6px;
@@ -87,7 +87,8 @@
   list-style: none;
   z-index: 20;
 }
-.menu-item-has-children.open .submenu {
+.menu-item-has-children:hover .submenu,
+.menu-item-has-children:focus-within .submenu {
   display: block;
 }
 .submenu li a {

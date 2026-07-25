@@ -1,22 +1,30 @@
 <?php
 require __DIR__ . '/includes/articles.php';
 
-$articles = getDraftArticles();
+$slug = $_GET['slug'] ?? '';
+$category = getCategoryBySlug($slug);
+if (!$category) {
+    renderErrorPage(404, 'ไม่พบหมวดหมู่นี้');
+}
 
-$pageTitle = 'ร่างบทความ — ' . siteSetting('site_name');
+$articles = getArticlesByCategorySlug($slug);
+
+$pageTitle = 'หมวด: ' . htmlspecialchars($category['name']) . ' — ' . siteSetting('site_name');
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 include __DIR__ . '/partials/header.php';
 ?>
+  <h1 class="article-title"><?= htmlspecialchars($category['name']) ?></h1>
   <?php if (empty($articles)): ?>
     <div class="empty-state">
-      ไม่มีร่างบทความ
+      ยังไม่มีบทความในหมวดนี้
     </div>
   <?php else: ?>
     <?php foreach ($articles as $a): ?>
       <div class="card article-list-item">
-        <h2><a href="editor.php?slug=<?= urlencode($a['slug']) ?>"><?= htmlspecialchars($a['title']) ?></a> <span class="status-badge status-draft">ร่าง</span> <span class="category-tag <?= $a['type'] === 'page' ? '' : 'category-tag-' . htmlspecialchars(articleCategoryColor($a)) ?>"><?= $a['type'] === 'page' ? 'หน้า' : htmlspecialchars(articleCategory($a)) ?></span></h2>
+        <h2><a href="article.php?slug=<?= urlencode($a['slug']) ?>"><?= htmlspecialchars($a['title']) ?></a></h2>
         <div class="meta">อัปเดตล่าสุด: <?= htmlspecialchars($a['updated_at']) ?></div>
         <div class="row-actions">
+          <a href="article.php?slug=<?= urlencode($a['slug']) ?>">อ่าน</a>
           <a href="editor.php?slug=<?= urlencode($a['slug']) ?>">แก้ไข</a>
         </div>
       </div>

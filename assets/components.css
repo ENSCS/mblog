@@ -112,8 +112,26 @@
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 999px;
-  background: #e5e7eb;
+  text-decoration: none; /* also used as <a> when the article has a linkable category */
+  background: #e5e7eb; /* gray fallback if no .category-tag-* color class is added */
   color: #374151;
+}
+
+/* Color tokens for category badges — 7 to start. Each pair is picked for
+   readable contrast, so choosing a category's color (mblog_categories.color)
+   can never produce an illegible badge. "gray" matches the original look, so
+   any category left unset (or a non-category badge like drafts.php's "หน้า"
+   pseudo-badge) looks exactly like it always did. */
+.category-tag-gray   { background: #e5e7eb; color: #374151; }
+.category-tag-blue   { background: #dbeafe; color: #1e40af; }
+.category-tag-green  { background: #dcfce7; color: #166534; }
+.category-tag-purple { background: #ede9fe; color: #5b21b6; }
+.category-tag-orange { background: #ffedd5; color: #9a3412; }
+.category-tag-pink   { background: #fce7f3; color: #9d174d; }
+.category-tag-yellow { background: #fef9c3; color: #854d0e; }
+
+a.category-tag:hover {
+  filter: brightness(0.95);
 }
 
 /* --- Mobile --- */

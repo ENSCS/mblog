@@ -53,6 +53,41 @@ function articleCategory(array $article): string
     return $article['category'] ?? $categories[0];
 }
 
+// Slug for linking the category badge to category.php?slug=... — null (no
+// link, badge shows as plain text) when the article has no real category,
+// since there's no slug to fall back to for the "first category" case above.
+function articleCategorySlug(array $article): ?string
+{
+    return $article['category_slug'] ?? null;
+}
+
+// Color token for the category badge (see .category-tag-* in
+// assets/components.css) — falls back to "gray" (the original badge look)
+// when the article has no real category, same spirit as articleCategory().
+function articleCategoryColor(array $article): string
+{
+    return $article['category_color'] ?? 'gray';
+}
+
+// Looks up a category by its URL slug — used by category.php to resolve
+// "?slug=investing" into a display name and to validate it exists (404 if not).
+function getCategoryBySlug(string $slug): ?array
+{
+    $stmt = db()->prepare('SELECT id, slug, name FROM mblog_categories WHERE slug = ? LIMIT 1');
+    $stmt->execute([$slug]);
+    $row = $stmt->fetch();
+
+    return $row ?: null;
+}
+
+// Published posts within one category — powers category.php, which stays in
+// sync automatically as articles are added to/removed from the category
+// (no menu item to hand-maintain per article).
+function getArticlesByCategorySlug(string $slug): array
+{
+    return fetchArticles('c.slug = ? AND a.status = ? AND a.type = ?', [$slug, 'published', 'post']);
+}
+
 // Uses the author-written excerpt if there is one, otherwise auto-generates
 // one from the content (stripped of HTML, trimmed to ~160 chars at a word
 // boundary) — used for <meta name="description"> and OG/Twitter descriptions.
@@ -110,7 +145,7 @@ function normalizeArticleRow(array $row): array
 function fetchArticles(string $whereSql, array $params): array
 {
     $stmt = db()->prepare(
-        'SELECT a.*, c.name AS category
+        'SELECT a.*, c.name AS category, c.slug AS category_slug, c.color AS category_color
          FROM mblog_articles a
          LEFT JOIN mblog_categories c ON a.category_id = c.id
          WHERE ' . $whereSql . '
@@ -124,7 +159,7 @@ function fetchArticles(string $whereSql, array $params): array
 function fetchOneArticle(string $whereSql, array $params): ?array
 {
     $stmt = db()->prepare(
-        'SELECT a.*, c.name AS category
+        'SELECT a.*, c.name AS category, c.slug AS category_slug, c.color AS category_color
          FROM mblog_articles a
          LEFT JOIN mblog_categories c ON a.category_id = c.id
          WHERE ' . $whereSql . '

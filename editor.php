@@ -14,7 +14,7 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.
     . '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">' . "\n"
     . '<link rel="stylesheet" href="assets/article.css">' . "\n"
     . '<link rel="stylesheet" href="assets/editor.css">';
-$topbarActions = '<a href="index.php">รายการบทความ</a>';
+$topbarActions = '<a href="articles.php">รายการบทความ</a>';
 
 ob_start();
 ?>

@@ -11,6 +11,11 @@ CREATE TABLE IF NOT EXISTS mblog_categories (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     slug VARCHAR(100) NOT NULL,
     name VARCHAR(100) NOT NULL,
+    -- Color token, not a raw hex code — maps to a pre-defined, contrast-safe
+    -- CSS class (.category-tag-<color> in assets/components.css). Keeps the
+    -- badge color "data" (can change without a code deploy) while guaranteeing
+    -- it always looks right, instead of letting any arbitrary hex be picked.
+    color VARCHAR(20) NOT NULL DEFAULT 'gray',
     sort_order INT NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL,
     PRIMARY KEY (id),
@@ -18,10 +23,10 @@ CREATE TABLE IF NOT EXISTS mblog_categories (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ข้อมูลเดิมจาก config/categories.php ให้เว็บใช้งานต่อได้ทันทีหลังย้าย
-INSERT INTO mblog_categories (slug, name, sort_order, created_at) VALUES
-    ('general', 'ทั่วไป', 1, NOW()),
-    ('technology', 'เทคโนโลยี', 2, NOW()),
-    ('personal', 'บันทึกส่วนตัว', 3, NOW());
+INSERT INTO mblog_categories (slug, name, color, sort_order, created_at) VALUES
+    ('general', 'ทั่วไป', 'gray', 1, NOW()),
+    ('technology', 'เทคโนโลยี', 'blue', 2, NOW()),
+    ('personal', 'บันทึกส่วนตัว', 'purple', 3, NOW());
 
 -- ==========================================================
 -- mblog_menu_items — เมนูเว็บ รองรับเมนูย่อยผ่าน parent_id (self-reference)
