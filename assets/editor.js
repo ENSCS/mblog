@@ -436,8 +436,48 @@ function applyImageCaption(imgEl) {
   }
 }
 
+// --- featured image picker (separate from images inserted in the content) ---
+function setupFeaturedImagePicker() {
+  const input = document.getElementById('featured-image-input');
+  const hidden = document.getElementById('featured-image');
+  const preview = document.getElementById('featured-image-preview');
+  const thumb = document.getElementById('featured-image-thumb');
+  const removeBtn = document.getElementById('remove-featured-image-btn');
+
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('image', file);
+    fetch('api/upload.php', { method: 'POST', body: formData })
+      .then(r => r.json())
+      .then(data => {
+        if (data.url) {
+          hidden.value = data.url;
+          thumb.src = data.url;
+          preview.style.display = 'flex';
+          input.style.display = 'none';
+        } else {
+          alert('อัปโหลดรูปไม่สำเร็จ: ' + (data.error || 'unknown error'));
+        }
+      })
+      .catch(() => alert('อัปโหลดรูปไม่สำเร็จ'));
+  });
+
+  removeBtn.addEventListener('click', () => {
+    hidden.value = '';
+    thumb.src = '';
+    preview.style.display = 'none';
+    input.value = '';
+    input.style.display = 'block';
+  });
+}
+
 function saveArticle(quill, slug, status) {
   const title = document.getElementById('title').value.trim();
+  const category = document.getElementById('category').value;
+  const excerpt = document.getElementById('excerpt').value.trim();
+  const featuredImage = document.getElementById('featured-image').value;
   const statusEl = document.getElementById('save-status');
   if (!title) {
     alert('กรุณาใส่ชื่อบทความ');
@@ -458,7 +498,10 @@ function saveArticle(quill, slug, status) {
       slug: slug || '',
       title: title,
       content: clone.innerHTML,
-      status: status
+      status: status,
+      category: category,
+      excerpt: excerpt,
+      featured_image: featuredImage
     })
   })
     .then(r => r.json())

@@ -7,6 +7,10 @@ uploads/*
 # Future config (DB credentials, API keys, etc.)
 config.php
 
+# Generated at runtime — logs and local backups, not source
+logs/
+backups/
+
 # OS/editor cruft
 .DS_Store
 Thumbs.db

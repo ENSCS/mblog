@@ -14,11 +14,15 @@
 - เส้นคั่นบทความ
 - รองรับมือถือ (responsive)
 - ระบบร่าง/เผยแพร่ (draft/published) แยกปุ่ม "บันทึกร่าง"/"เผยแพร่" ในตัวเขียน พร้อมหน้ารายการร่าง ([drafts.php](drafts.php))
+- หมวดหมู่แบบง่าย (เลือกจาก dropdown ตอนเขียนบทความ)
+- SEO พื้นฐาน: สรุปสั้น (excerpt) + featured image (อัปโหลดเองหรือใช้รูปแรกในเนื้อหาอัตโนมัติ), meta description, Open Graph/Twitter Card, canonical tag, JSON-LD, [sitemap.php](sitemap.php), [robots.txt](robots.txt)
+- หน้า error กลาง (404/500) ที่หน้าตาเข้ากับเว็บ + log ข้อผิดพลาดลงไฟล์ + สคริปต์ backup ข้อมูล พร้อม retention ([scripts/backup.php](scripts/backup.php))
 
 ## ยังไม่มี
 
-ล็อกอิน/สิทธิ์ผู้ใช้, ฐานข้อมูล, หมวดหมู่/แท็ก, คอมเมนต์, ค้นหา, สถิติ — อยู่ในแผนแล้ว ดูรายละเอียดที่ [PLANNING.md](PLANNING.md)
+ล็อกอิน/สิทธิ์ผู้ใช้, ฐานข้อมูล, แท็กเต็มรูปแบบ, คอมเมนต์, ค้นหา, สถิติ — อยู่ในแผนแล้ว ดูรายละเอียดที่ [PLANNING.md](PLANNING.md)
 
 ## รันโปรเจกต์
 
-ใช้ PHP + Apache (เช่น XAMPP) ชี้ document root มาที่โฟลเดอร์นี้ แล้วเปิด `index.php`
+1. คัดลอก `config.example.php` เป็น `config.php` (ไฟล์นี้ไม่ถูก commit เข้า git)
+2. ใช้ PHP + Apache (เช่น XAMPP) ชี้ document root มาที่โฟลเดอร์นี้ แล้วเปิด `index.php`

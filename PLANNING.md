@@ -158,13 +158,13 @@
 - **URL สวย** (`/article/slug` แทน `article.php?slug=`) — ผูกกับเรื่อง routing ที่ยังไม่ตัดสินใจ (ดูหัวข้อ "สิ่งที่ยังไม่ตัดสินใจ") แต่เป็นอีกเหตุผลที่หนุนให้ทำ เพราะ Google ให้น้ำหนัก URL ที่อ่านง่ายกว่าเล็กน้อย
 
 **สิ่งที่ต้องทำ:**
-- [ ] เพิ่ม field excerpt/สรุปสั้นในบทความ (ใช้ทำ meta description + og:description)
-- [ ] เพิ่ม field featured image ต่อบทความ
-- [ ] เพิ่ม meta description + OG tags + Twitter Card ใน `article.php`
-- [ ] สร้าง `sitemap.php`
-- [ ] เพิ่ม `robots.txt`
-- [ ] เพิ่ม canonical tag
-- [ ] เพิ่ม JSON-LD Article schema
+- [x] เพิ่ม field excerpt/สรุปสั้นในบทความ (ใช้ทำ meta description + og:description) — ไม่กรอกจะตัดจาก content อัตโนมัติ (`articleExcerpt()` ใน `includes/articles.php`)
+- [x] เพิ่ม field featured image ต่อบทความ — มี UI อัปโหลด/พรีวิว/ลบใน `editor.php` แบบ WP (field `featured_image`) ถ้าไม่เลือกเอง fallback ใช้รูปแรกที่เจอในเนื้อหาอัตโนมัติ (`articleFeaturedImage()`) — หน้า `article.php` โชว์เป็น banner เหนือหัวข้อด้วย เฉพาะตอนเลือกเองเท่านั้น (fallback ไม่โชว์ซ้ำ เพราะเป็นรูปแรกในเนื้อหาอยู่แล้ว)
+- [x] เพิ่ม meta description + OG tags + Twitter Card ใน `article.php`
+- [x] สร้าง `sitemap.php`
+- [x] เพิ่ม `robots.txt`
+- [x] เพิ่ม canonical tag
+- [x] เพิ่ม JSON-LD Article schema
 - [ ] (รอ routing ตัดสินใจ) ทำ URL สวยผ่าน `.htaccess` + `mod_rewrite`
 
 ### 11. Backup ระบบ (ครอบคลุมทั้งเว็บ ไม่ใช่แค่รูป)
@@ -180,12 +180,12 @@
 - ถ้าใช้ hosting ที่มี backup อัตโนมัติให้อยู่แล้ว (VPS/hosting บางเจ้ามี) ควรใช้ของที่มีให้ก่อน แล้วค่อยเสริมด้วยของที่ทำเอง ไม่ต้องเริ่มจากศูนย์เสมอไป
 
 **สิ่งที่ต้องทำ:**
-- [ ] เขียนสคริปต์ backup (บีบอัด `articles/` + `uploads/`, และ `mysqldump` เมื่อมี DB)
-- [ ] ตั้ง cron job รันอัตโนมัติตามตาราง
-- [ ] ส่งไฟล์ backup ไปเก็บนอกเซิร์ฟเวอร์หลัก (คนละดิสก์/cloud storage)
-- [ ] ตั้ง retention policy (เก็บกี่ชุดย้อนหลัง)
-- [ ] ทดสอบ restore จริงอย่างน้อย 1 ครั้ง
-- [ ] เก็บสำเนา `config.php`/credentials ไว้ที่ปลอดภัยแยกจาก backup ทั่วไป
+- [x] เขียนสคริปต์ backup (บีบอัด `articles/` + `uploads/`) — `scripts/backup.php` (PHP CLI, ใช้ ZipArchive ไม่พึ่ง `tar` เพื่อความพกพา) `mysqldump` ยังไม่เกี่ยวข้องเพราะยังไม่มี DB
+- [ ] ตั้ง cron job รันอัตโนมัติตามตาราง — **ตั้งใจไม่ติดตั้งให้เอง** (แก้ crontab เป็นการเปลี่ยนค่าระบบถาวร ต้องให้เจ้าของเครื่องสั่งเอง) บรรทัด cron ที่ต้องใช้เขียนไว้เป็นคอมเมนต์บนสุดของ `scripts/backup.php` แล้ว
+- [ ] ส่งไฟล์ backup ไปเก็บนอกเซิร์ฟเวอร์หลัก (คนละดิสก์/cloud storage) — ยังไม่ทำ ต้องรู้ปลายทางจริงก่อน (S3/cloud/ดิสก์อื่น)
+- [x] ตั้ง retention policy (เก็บกี่ชุดย้อนหลัง) — ลบ backup ที่เก่ากว่า 14 วันอัตโนมัติทุกครั้งที่รัน (แก้ค่าได้ที่ `RETENTION_DAYS` ในสคริปต์)
+- [x] ทดสอบ restore จริงอย่างน้อย 1 ครั้ง — รันจริง, extract แล้ว `diff -rq` เทียบกับต้นฉบับ ไม่มีความต่างเลย
+- [ ] เก็บสำเนา `config.php`/credentials ไว้ที่ปลอดภัยแยกจาก backup ทั่วไป — ยังไม่มี credentials จริงให้เก็บ (รอ MySQL) `scripts/backup.php` ตั้งใจไม่รวม `config.php` เข้าไปในไฟล์ backup ไว้แล้ว
 
 ### 12. Error handling และความพร้อมสำหรับ Production
 - **แยกพฤติกรรม dev vs production** — ตอนนี้โค้ดรันบน XAMPP local ทั้งหมด ยังไม่มีการแยกโหมด ต้องมี flag ใน `config.php` (เช่น `APP_ENV = local` หรือ `production`) ควบคุมว่า error จะโชว์ตรงๆ (dev เพื่อ debug ง่าย) หรือซ่อนไว้ (production ป้องกันข้อมูลระบบหลุด)
@@ -196,12 +196,12 @@
 - **เช็ค `json_decode` คืนค่า `null`** — ถ้าไฟล์ `.json` เสียหายหรือถูกแก้ทับผิดจากภายนอก การเรียก `$article['title']` โดยไม่เช็คก่อนจะทำให้ PHP error/warning หลุดออกมาได้ ควรเช็คก่อนใช้งานทุกจุดที่โหลดไฟล์บทความ
 
 **สิ่งที่ต้องทำ:**
-- [ ] เพิ่ม environment flag ใน `config.php` (local/production)
-- [ ] ตั้งค่า `display_errors=Off`, `log_errors=On` สำหรับ production
-- [ ] ทำหน้า error กลาง (404, 500) ใช้ร่วมกันทุกหน้า
-- [ ] ตั้ง `set_error_handler()`/`set_exception_handler()` log ลงไฟล์
-- [ ] ตรวจสอบทุกจุดที่เขียนไฟล์/DB ว่าเช็ค return value ครบ
-- [ ] เพิ่มการเช็ค `json_decode() === null` ก่อนใช้งานทุกจุดที่โหลดบทความ
+- [x] เพิ่ม environment flag ใน `config.php` (local/production) — ทำไปแล้วตั้งแต่ Phase 1
+- [x] ตั้งค่า `display_errors=Off`, `log_errors=On` สำหรับ production — `includes/error-handling.php` อ่าน `APP_ENV` แล้วตั้งให้อัตโนมัติ, log ไปที่ `logs/php-error.log`
+- [x] ทำหน้า error กลาง (404, 500) ใช้ร่วมกันทุกหน้า — `error.php` (ไม่พึ่ง config/menu อื่นเลย กันพังซ้ำ) เรียกผ่าน `renderErrorPage()`, `article.php` ใช้แล้วสำหรับ 404 — **หมายเหตุ**: ยังไม่ได้ผูกกับ Apache `ErrorDocument` สำหรับ URL ที่ไม่มีอยู่จริงเลย (เช่น `.php` ที่ไม่มีไฟล์) เพราะ path ของ `ErrorDocument` ขึ้นกับว่า document root ชี้ตรงไหน ซึ่งตอนนี้เครื่อง dev (`htdocs/z/mblog/`) กับที่ตั้งใจ deploy จริง (docroot = โฟลเดอร์นี้เลย ตาม README) ไม่ตรงกัน ต้องรอตอน deploy จริงค่อยตั้ง
+- [x] ตั้ง `set_error_handler()`/`set_exception_handler()` log ลงไฟล์ — exception ที่ไม่มีใครดักไว้จะ log + โชว์หน้า 500 ที่เป็นมิตร (ทดสอบจริงด้วยการโยน exception จำลองแล้ว), warning/notice แค่ log ไม่เปลี่ยนพฤติกรรมเดิม
+- [x] ตรวจสอบทุกจุดที่เขียนไฟล์/DB ว่าเช็ค return value ครบ — `api/save.php`, `api/upload.php` เช็คอยู่แล้วตั้งแต่ก่อนหน้านี้
+- [x] เพิ่มการเช็ค `json_decode() === null` ก่อนใช้งานทุกจุดที่โหลดบทความ — `includes/articles.php` เช็คอยู่แล้วตั้งแต่ Phase 1 (`readArticleFile()`, `getAllArticles()`)
 
 ---
 
@@ -249,11 +249,11 @@
 ### Phase 2 — งานคู่ขนาน (ทำระหว่าง/หลัง Phase 1 ก็ได้ ไม่บล็อกกัน)
 - [x] `partials/header.php` + `partials/footer.php` ดึงส่วนซ้ำออกจาก 3 ไฟล์ปัจจุบัน (ส่วน 1)
 - [x] `config/menu.php` ข้อมูลเมนูแยกจาก header (ส่วน 1)
-- [ ] CSS custom properties (ตัวแปรสี) ใน `assets/style.css` — สีหลัก `#2563eb` ตอนนี้เขียนซ้ำอยู่ 5 จุด ต้องรวมเป็นตัวแปรใน `:root`
-- [ ] SEO พื้นฐาน (ส่วน 10): field excerpt + featured image ต่อบทความ, meta description, OG/Twitter tags, `robots.txt`, `sitemap.php` (ใช้ `getArticles()` จาก Phase 1 ได้เลย), canonical tag, JSON-LD Article schema
-- [ ] Error handling พื้นฐาน (ส่วน 12): ใช้ environment flag จาก Phase 1 คุม `display_errors`/`log_errors`, หน้า error กลาง (404/500), `set_error_handler()`/`set_exception_handler()`, เช็ค `json_decode() === null` ทุกจุดที่โหลดบทความ
-- [ ] Backup script เบื้องต้น (ส่วน 11): บีบอัด `articles/`+`uploads/` (ยังไม่มี DB ก็ backup ได้เลย), cron job, เก็บนอกเซิร์ฟเวอร์, ทดสอบ restore จริง 1 ครั้ง
-- [ ] หมวดหมู่ (category) แบบง่าย — เพิ่ม field เดียวต่อบทความบนไฟล์/DB (ส่วน 3 เวอร์ชันเริ่มต้น ยังไม่ใช่ระบบแท็กเต็ม)
+- [x] CSS custom properties (ตัวแปรสี) ใน `assets/style.css` — สีหลัก `#2563eb` ตอนนี้เขียนซ้ำอยู่ 5 จุด ต้องรวมเป็นตัวแปรใน `:root`
+- [x] SEO พื้นฐาน (ส่วน 10): field excerpt + featured image ต่อบทความ, meta description, OG/Twitter tags, `robots.txt`, `sitemap.php` (ใช้ `getArticles()` จาก Phase 1 ได้เลย), canonical tag, JSON-LD Article schema
+- [x] Error handling พื้นฐาน (ส่วน 12): ใช้ environment flag จาก Phase 1 คุม `display_errors`/`log_errors`, หน้า error กลาง (404/500), `set_error_handler()`/`set_exception_handler()`, เช็ค `json_decode() === null` ทุกจุดที่โหลดบทความ
+- [x] Backup script เบื้องต้น (ส่วน 11): บีบอัด `articles/`+`uploads/` (ยังไม่มี DB ก็ backup ได้เลย), ตั้ง retention, ทดสอบ restore จริง 1 ครั้ง — **เหลือ**: ติดตั้ง cron job จริง (ตั้งใจไม่ทำเอง ต้องให้เจ้าของเครื่องสั่ง) และส่ง backup ออกนอกเซิร์ฟเวอร์ (ยังไม่รู้ปลายทาง)
+- [x] หมวดหมู่ (category) แบบง่าย — เพิ่ม field เดียวต่อบทความบนไฟล์/DB (ส่วน 3 เวอร์ชันเริ่มต้น ยังไม่ใช่ระบบแท็กเต็ม)
 
 ### Phase 3 — ระบบล็อกอิน/สิทธิ์ (ประเด็นที่วนกลับมาซ้ำๆ) — ต้องมี MySQL จาก Phase 1 ก่อน
 - [ ] ตาราง `users` (email, password_hash ผ่าน `password_hash()`, role)

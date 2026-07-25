@@ -14,7 +14,7 @@ include __DIR__ . '/partials/header.php';
   <?php else: ?>
     <?php foreach ($articles as $a): ?>
       <div class="card article-list-item">
-        <h2><a href="article.php?slug=<?= urlencode($a['slug']) ?>"><?= htmlspecialchars($a['title']) ?></a></h2>
+        <h2><a href="article.php?slug=<?= urlencode($a['slug']) ?>"><?= htmlspecialchars($a['title']) ?></a> <span class="category-tag"><?= htmlspecialchars(articleCategory($a)) ?></span></h2>
         <div class="meta">อัปเดตล่าสุด: <?= htmlspecialchars($a['updated_at']) ?></div>
         <div class="row-actions">
           <a href="article.php?slug=<?= urlencode($a['slug']) ?>">อ่าน</a>

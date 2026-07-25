@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+
+# เพิ่มบรรทัดนี้พร้อมโดเมนจริงตอน deploy ขึ้นเซิร์ฟเวอร์จริง:
+# Sitemap: https://yourdomain.com/sitemap.php
