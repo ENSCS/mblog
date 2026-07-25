@@ -1,0 +1,207 @@
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 20px 80px;
+}
+.topbar {
+  background: #1f2937;
+  color: #fff;
+  padding: 14px 20px;
+}
+.site-footer {
+  border-top: 1px solid #e5e7eb;
+  color: #888;
+  font-size: 13px;
+  text-align: center;
+}
+.site-footer .container {
+  padding: 20px;
+}
+.topbar .container {
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.topbar a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.topbar-menu {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.topbar-menu a {
+  font-weight: 500;
+  opacity: 0.85;
+}
+.topbar-menu a:hover {
+  opacity: 1;
+}
+
+/* --- Submenu dropdown (click-to-toggle, see assets/menu.js) --- */
+.menu-item-has-children {
+  position: relative;
+}
+.menu-toggle {
+  background: none;
+  border: none;
+  font: inherit;
+  color: #fff;
+  font-weight: 500;
+  opacity: 0.85;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.menu-toggle:hover {
+  opacity: 1;
+}
+.menu-caret {
+  font-size: 10px;
+}
+.submenu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  /* Anchored to the toggle's left edge — this dropdown only ever shows
+     inside .topbar-menu-desktop (hidden below 600px, see the mobile
+     accordion menu instead), so there's always room for it to extend
+     rightward without running off the viewport. */
+  left: 0;
+  margin: 10px 0 0;
+  padding: 6px;
+  min-width: 200px;
+  background: #1f2937;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
+  list-style: none;
+  z-index: 20;
+}
+.menu-item-has-children.open .submenu {
+  display: block;
+}
+.submenu li a {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-weight: 500;
+  opacity: 0.85;
+  /* Thai (and CJK) text has no spaces between words, so the browser has no
+     natural break point — without this, a long label overflows the fixed-
+     width dropdown instead of wrapping. */
+  overflow-wrap: break-word;
+}
+.submenu li a:hover {
+  opacity: 1;
+  background: #374151;
+}
+.topbar .actions a {
+  background: var(--color-primary);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+/* --- Mobile nav: hamburger + full-width accordion (hidden on desktop) --- */
+.mobile-menu-toggle,
+.mobile-menu {
+  display: none;
+}
+
+/* --- Mobile --- */
+@media (max-width: 600px) {
+  .container {
+    padding: 16px 14px 60px;
+  }
+  .topbar {
+    padding: 12px 14px;
+  }
+  .topbar .container {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .topbar .actions a {
+    padding: 7px 10px;
+    font-size: 14px;
+    margin-left: 6px;
+  }
+
+  /* Click-to-open dropdown makes no sense on a narrow screen — swap to the
+     hamburger + full-width accordion below instead. */
+  .topbar-menu-desktop {
+    display: none;
+  }
+  .mobile-menu-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: #16202e;
+    color: #fff;
+    border: none;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .mobile-menu {
+    display: none;
+    width: 100%;
+  }
+  .mobile-menu.open {
+    display: block;
+  }
+  .mobile-menu-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: var(--color-primary);
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, .15);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    text-align: left;
+    padding: 14px;
+    cursor: pointer;
+  }
+  .mobile-menu-item-has-children .menu-caret {
+    transition: transform .15s;
+  }
+  .mobile-menu-item-has-children.open .menu-caret {
+    transform: rotate(180deg);
+  }
+  .mobile-submenu {
+    display: none;
+    background: #1f2937;
+  }
+  .mobile-menu-item-has-children.open .mobile-submenu {
+    display: block;
+  }
+  .mobile-submenu-link {
+    display: block;
+    color: #fff;
+    opacity: .85;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 12px 14px 12px 28px;
+    border-top: 1px solid rgba(255, 255, 255, .08);
+  }
+  .mobile-submenu-link:hover {
+    opacity: 1;
+  }
+}

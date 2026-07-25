@@ -4,13 +4,16 @@ require __DIR__ . '/includes/articles.php';
 $slug = $_GET['slug'] ?? '';
 $article = getArticleForEdit($slug);
 $currentStatus = $article ? articleStatus($article) : 'draft';
+$currentType = $article['type'] ?? 'post';
 $categories = getCategories();
 $currentCategory = $article ? articleCategory($article) : $categories[0];
 $currentFeaturedImage = $article['featured_image'] ?? '';
 
-$pageTitle = ($article ? 'แก้ไข: ' . htmlspecialchars($article['title']) : 'เขียนบทความใหม่') . ' — mBlog';
+$pageTitle = ($article ? 'แก้ไข: ' . htmlspecialchars($article['title']) : 'เขียนบทความใหม่') . ' — ' . siteSetting('site_name');
 $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">' . "\n"
-    . '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">';
+    . '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">' . "\n"
+    . '<link rel="stylesheet" href="assets/article.css">' . "\n"
+    . '<link rel="stylesheet" href="assets/editor.css">';
 $topbarActions = '<a href="index.php">รายการบทความ</a>';
 
 ob_start();
@@ -23,11 +26,15 @@ ob_start();
   const quill = initArticleEditor(existingContent);
   setupFeaturedImagePicker();
 
+  document.getElementById('type').addEventListener('change', (e) => {
+    document.getElementById('category-field').style.display = e.target.value === 'page' ? 'none' : 'block';
+  });
+
   document.getElementById('save-draft-btn').addEventListener('click', () => {
-    saveArticle(quill, document.getElementById('slug').value, 'draft');
+    saveArticle(quill, document.getElementById('article-id').value, document.getElementById('slug').value, 'draft');
   });
   document.getElementById('publish-btn').addEventListener('click', () => {
-    saveArticle(quill, document.getElementById('slug').value, 'published');
+    saveArticle(quill, document.getElementById('article-id').value, document.getElementById('slug').value, 'published');
   });
 </script>
 <?php
@@ -40,6 +47,13 @@ include __DIR__ . '/partials/header.php';
     <input type="text" id="title" value="<?= $article ? htmlspecialchars($article['title']) : '' ?>" placeholder="ใส่ชื่อบทความ...">
   </div>
   <div class="field">
+    <label for="type">ประเภท</label>
+    <select id="type">
+      <option value="post" <?= $currentType === 'post' ? 'selected' : '' ?>>บทความ</option>
+      <option value="page" <?= $currentType === 'page' ? 'selected' : '' ?>>หน้า (About/ติดต่อ/นโยบาย ฯลฯ)</option>
+    </select>
+  </div>
+  <div class="field" id="category-field" style="display:<?= $currentType === 'page' ? 'none' : 'block' ?>;">
     <label for="category">หมวดหมู่</label>
     <select id="category">
       <?php foreach ($categories as $cat): ?>
@@ -60,7 +74,14 @@ include __DIR__ . '/partials/header.php';
     <input type="file" id="featured-image-input" accept="image/*" style="display:<?= $currentFeaturedImage ? 'none' : 'block' ?>;">
     <input type="hidden" id="featured-image" value="<?= htmlspecialchars($currentFeaturedImage) ?>">
   </div>
-  <input type="hidden" id="slug" value="<?= $article ? htmlspecialchars($article['slug']) : '' ?>">
+  <div class="field">
+    <label for="slug">Slug (URL ของบทความ — ไม่ใส่จะสร้างจากชื่อบทความให้อัตโนมัติ)</label>
+    <input type="text" id="slug" value="<?= $article ? htmlspecialchars($article['slug']) : '' ?>" placeholder="เว้นว่างไว้ให้สร้างอัตโนมัติจากชื่อบทความ">
+    <div id="slug-warning" style="display:<?= $currentStatus === 'published' ? 'block' : 'none' ?>; margin-top:4px; font-size:13px; color:#92400e;">
+      ⚠ บทความนี้เผยแพร่แล้ว — แก้ slug จะทำให้ลิงก์เดิมที่แชร์ไปแล้วใช้ไม่ได้ (404)
+    </div>
+  </div>
+  <input type="hidden" id="article-id" value="<?= $article['id'] ?? '' ?>">
 
   <div id="editor-container"></div>
 
@@ -69,7 +90,7 @@ include __DIR__ . '/partials/header.php';
     <button class="btn" id="publish-btn">เผยแพร่</button>
     <span id="status-badge" class="status-badge status-<?= $currentStatus ?>"><?= $currentStatus === 'published' ? 'เผยแพร่แล้ว' : 'ร่าง' ?></span>
     <span id="save-status"></span>
-    <a id="view-link" href="<?= $article ? 'article.php?slug=' . urlencode($article['slug']) : '#' ?>"
+    <a id="view-link" href="<?= $article ? ($currentType === 'page' ? 'page.php' : 'article.php') . '?slug=' . urlencode($article['slug']) : '#' ?>"
        style="margin-left:16px; display:<?= $article ? 'inline' : 'none' ?>;">ดูบทความ &rarr;</a>
   </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>

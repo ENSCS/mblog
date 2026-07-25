@@ -4,6 +4,11 @@ require __DIR__ . '/includes/articles.php';
 $slug = $_GET['slug'] ?? '';
 $article = getArticle($slug);
 if (!$article) {
+    $redirectSlug = findRedirectSlug($slug, 'post');
+    if ($redirectSlug) {
+        header('Location: article.php?slug=' . urlencode($redirectSlug), true, 301);
+        exit;
+    }
     renderErrorPage(404, 'ไม่พบบทความนี้');
 }
 
@@ -16,9 +21,10 @@ $imageUrl = $featuredImage ? siteBaseUrl() . '/' . ltrim($featuredImage, '/') : 
 // again here would just duplicate it.
 $manualFeaturedImage = $article['featured_image'] ?? '';
 
-$pageTitle = htmlspecialchars($article['title']) . ' — mBlog';
+$pageTitle = htmlspecialchars($article['title']) . ' — ' . siteSetting('site_name');
 $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">' . "\n"
-    . '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">'
+    . '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">' . "\n"
+    . '<link rel="stylesheet" href="assets/article.css">'
     . "\n" . '<meta name="description" content="' . htmlspecialchars($description) . '">'
     . "\n" . '<link rel="canonical" href="' . htmlspecialchars($canonicalUrl) . '">'
     . "\n" . '<meta property="og:type" content="article">'

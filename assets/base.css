@@ -1,0 +1,11 @@
+:root {
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: "Segoe UI", "Sarabun", Tahoma, sans-serif;
+  background: #f4f5f7;
+  margin: 0;
+  color: #222;
+}

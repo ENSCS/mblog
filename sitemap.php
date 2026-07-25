@@ -4,6 +4,7 @@ require __DIR__ . '/includes/articles.php';
 header('Content-Type: application/xml; charset=utf-8');
 
 $articles = getArticles();
+$pages = getPages();
 $base = siteBaseUrl();
 
 echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
@@ -16,6 +17,12 @@ echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
   <url>
     <loc><?= htmlspecialchars($base . '/article.php?slug=' . urlencode($a['slug'])) ?></loc>
     <lastmod><?= htmlspecialchars(substr($a['updated_at'], 0, 10)) ?></lastmod>
+  </url>
+<?php endforeach; ?>
+<?php foreach ($pages as $p): ?>
+  <url>
+    <loc><?= htmlspecialchars($base . '/page.php?slug=' . urlencode($p['slug'])) ?></loc>
+    <lastmod><?= htmlspecialchars(substr($p['updated_at'], 0, 10)) ?></lastmod>
   </url>
 <?php endforeach; ?>
 </urlset>

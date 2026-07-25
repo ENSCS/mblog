@@ -31,28 +31,39 @@
 - เช็คสิทธิ์ด้วยชื่อ capability (`userCan('publish_articles')`) ไม่ใช่ชื่อ role ตรงๆ — เพราะ "ใครมีสิทธิ์อะไร" ก็คือข้อมูลอีกแบบหนึ่งที่เปลี่ยนได้
 
 **ตัวอย่างที่ตัดสินใจแล้วตามหลักนี้:**
-- **เมนู** — `config/menu.php` (ข้อมูล) ↔ `partials/header.php` (แสดงผล, ไม่รู้จักชื่อเมนูตรงๆ วน loop จาก array ที่ได้มาเท่านั้น) — ดูรายละเอียดหัวข้อ 1
-- **บทความ (ทำแล้ว)** — `includes/articles.php` มีฟังก์ชัน `getArticles()`/`getArticle($slug)` คั่นกลาง `index.php`, `article.php`, `editor.php` เรียกผ่านฟังก์ชันแทนอ่านไฟล์ตรงๆ ทั้งหมดแล้ว — จุดเดียวที่ต้องแก้ตอนย้ายไป MySQL
+- **เมนู (ทำแล้ว)** — `includes/menu.php` (`getMenuItems()`) ↔ `partials/header.php` (แสดงผล, วน loop จาก array ที่ได้มาเท่านั้น ไม่รู้จักชื่อเมนูตรงๆ) — ข้อมูลอยู่ในตาราง `mblog_menu_items` (MySQL) แล้ว รองรับเมนูย่อยผ่าน `parent_id` (self-reference) ด้วย **มี UI ครบทั้ง desktop (dropdown คลิกเปิด) และ mobile (hamburger + accordion เต็มความกว้าง) แล้ว** — ดูรายละเอียดหัวข้อ 1
+- **บทความ (ทำแล้ว — ย้ายเข้า MySQL สมบูรณ์แล้ว)** — `includes/articles.php` มีฟังก์ชันกลางครบ (`getArticles()`, `getArticle($slug)`, `getArticleById($id)` ฯลฯ) คั่นกลางทุกหน้า อ่าน/เขียนตาราง `mblog_articles` จริง — พิสูจน์หลักการสำเร็จ: ตอนสลับจากไฟล์ json มา MySQL `index.php`/`article.php`/`editor.php` ไม่ต้องแก้โค้ด render เลยสักบรรทัด
+- **หมวดหมู่ (ทำแล้ว)** — เดิมวางแผนเป็นไฟล์ (`config/categories.php`) แต่เปลี่ยนใจทำเป็นตาราง `mblog_categories` ตั้งแต่ต้นเลย เพราะรู้ล่วงหน้าว่าจะมีหน้าแอดมินเพิ่ม/ลบหมวดในอนาคตแน่ๆ — ทำพร้อมกับตอนย้าย MySQL ครั้งเดียว ไม่ต้องย้ายซ้ำสองรอบ
+- **ค่าตั้งค่าเว็บ (ทำแล้ว)** — `config/settings.php` (ข้อมูล: `site_name`, `timezone`, `owner_email`, `footer_tagline`) ↔ `includes/settings.php` (`siteSetting($key)`) — ตรงข้ามกับหมวดหมู่/เมนู คือ**ตั้งใจให้ยังเป็นไฟล์อยู่** เพราะยังไม่มีความจำเป็นเร่งด่วนให้เป็นตาราง จนกว่าจะมีหน้าแอดมินจริง
 - **สิทธิ์ผู้ใช้** (แผนงาน) — `userCan()` แบบ capability-based ตามที่คุยไว้ในหัวข้อล็อกอิน (ดูหัวข้อ "ประเด็นที่วนกลับมาซ้ำๆ")
 
 ---
 
 ## สิ่งที่สร้างไปแล้ว (ใช้งานได้จริงตอนนี้)
 
-ระบบเขียนบทความแบบ WYSIWYG (ยังไม่มีฐานข้อมูล เก็บเป็นไฟล์):
+ระบบเขียนบทความแบบ WYSIWYG พร้อม **MySQL เต็มระบบแล้ว** (ย้ายออกจากไฟล์ json/array เดิมทั้งหมด — รายละเอียดการย้ายดู Phase 1 ในหัวข้อ Roadmap ด้านล่าง):
 
 - **โครงสร้างไฟล์**
   - `index.php` — รายการบทความ (เฉพาะที่เผยแพร่แล้ว)
   - `drafts.php` — รายการร่าง (ชั่วคราว ยังไม่ผูกสิทธิ์เจ้าของ เพราะยังไม่มีระบบล็อกอิน — ดู "ประเด็นที่วนกลับมาซ้ำๆ")
-  - `editor.php` — หน้าเขียน/แก้ไข (ใช้ [Quill.js](https://quilljs.com)) แยกปุ่ม "บันทึกร่าง"/"เผยแพร่"
-  - `article.php` — หน้าอ่านบทความ (เฉพาะที่เผยแพร่แล้ว)
-  - `api/save.php`, `api/upload.php` — บันทึกบทความ / อัปโหลดรูป
-  - `includes/articles.php` — ฟังก์ชันกลางอ่านบทความ (`getArticles()`, `getArticle()`, `getArticleForEdit()`, `getDraftArticles()`)
-  - `config.php` (gitignored) / `config.example.php` — path + `APP_ENV`
-  - `config/menu.php` — ข้อมูลเมนู, `partials/header.php`+`footer.php` — layout ร่วม
-  - `articles/*.json` — เก็บบทความ พร้อมฟิลด์ `status` (draft/published), `published_at` (ยังไม่ใช้ DB)
-  - `uploads/` — เก็บรูปภาพที่แทรก
-  - `assets/style.css`, `assets/editor.js`, `assets/copy-button.js`
+  - `editor.php` — หน้าเขียน/แก้ไข (ใช้ [Quill.js](https://quilljs.com)) แยกปุ่ม "บันทึกร่าง"/"เผยแพร่" + **แก้ slug เองได้** (ไม่กรอกจะสลักจากชื่อบทความให้อัตโนมัติ, เตือนถ้าแก้ slug ของบทความที่เผยแพร่แล้ว)
+  - `article.php` — หน้าอ่านบทความ (`type='post'` เฉพาะที่เผยแพร่แล้ว) + **301 redirect อัตโนมัติ** ถ้ามีคนเข้าด้วย slug เก่าที่เคยเปลี่ยนไปแล้ว
+  - `page.php` — หน้าอ่าน "Page" (`type='page'` เช่น เกี่ยวกับเรา/ติดต่อเรา/นโยบายความเป็นส่วนตัว) คู่ขนานกับ `article.php` แต่ไม่มี badge หมวดหมู่/OG type เป็น `website` — ดูหัวข้อ 1 "Post vs Page"
+  - `api/save.php` — บันทึกบทความ/หน้าลง MySQL (คอลัมน์ `type` แยก post/page, หน้าไม่มีหมวดหมู่), sync รูปที่ใช้จริงเข้าตาราง `mblog_images`, บันทึก redirect อัตโนมัติถ้า slug เปลี่ยน — ระบุ "กำลังแก้บทความไหน" ด้วย `id` (ไม่ใช่ `slug` เพราะแก้ slug เองได้แล้ว)
+  - `api/upload.php` — อัปโหลดรูป เก็บชื่อไฟล์เดิม (sanitize แบบ WP รองรับทุกภาษา ไม่สุ่มชื่อทิ้งเหมือนเดิม) แยกโฟลเดอร์ตามเดือน `uploads/YYYY/MM/`
+  - `includes/articles.php` — ฟังก์ชันกลางอ่าน/เขียนบทความ+หน้าทั้งหมด (`getArticles()`, `getArticle()`, `getPages()`, `getPage()`, `getArticleForEdit()`, `getArticleById()`, `getDraftArticles()`, `getCategories()`, `syncArticleImages()`, `sanitizeSlug()`/`uniqueSlug()`, `recordSlugRedirect()`/`findRedirectSlug()`)
+  - `includes/menu.php` — `getMenuItems()` อ่านเมนูจากตาราง `mblog_menu_items` (คืนเป็น tree รองรับเมนูย่อย)
+  - `includes/settings.php` — `siteSetting($key)` อ่านค่าตั้งค่าเว็บจาก `config/settings.php`
+  - `includes/db.php` — จุดเชื่อมต่อ MySQL (PDO) เดียวของทั้งแอป ทุกฟังก์ชันข้างบนเรียกผ่าน `db()`
+  - `config.php` (gitignored) / `config.example.php` — path, `APP_ENV`, DB credentials, บังคับ timezone ตายตัวจาก `config/settings.php` (กัน php.ini ของแต่ละเครื่อง/แต่ละ PHP ที่รันไม่ตรงกัน)
+  - `config/settings.php` — ค่าตั้งค่าเว็บ (`site_name`, `timezone`, `owner_email`, `footer_tagline`) ไฟล์ธรรมดา รอหน้าแอดมินในอนาคต
+  - `database/*.sql` — SQL migration แยกไฟล์ตาม Phase (`phase1_core.sql` ถึง `phase9_stats.sql`) ทุกตารางขึ้นต้นด้วย `mblog_` กันชนกับระบบอื่นถ้าต้องใช้ฐานข้อมูลร่วมกันบนโฮสที่มีได้แค่ DB เดียว
+  - `uploads/YYYY/MM/` — เก็บรูปภาพที่แทรก แยกโฟลเดอร์ตามเดือนกันไฟล์บวมในโฟลเดอร์เดียว
+  - `assets/base.css`, `layout.css`, `components.css`, `article.css`, `editor.css` — แยกจาก `style.css` ไฟล์เดียวเดิม (`editor.css` โหลดเฉพาะหน้าแก้ไข ไม่ส่งให้ผู้อ่านทั่วไป), `assets/editor.js`, `assets/copy-button.js`, `assets/menu.js` — คลิกเปิด/ปิด dropdown เมนูย่อย (desktop) และ hamburger accordion (mobile) — ใช้คลิกไม่ใช่ hover ตั้งใจให้ทำงานเหมือนกันทั้งจอสัมผัส/เมาส์
+
+- **ฐานข้อมูล MySQL (`mblog`)** — ตาราง `mblog_*` ทั้งหมด 10 ตัว (คอลัมน์เต็มดู `database/*.sql`)
+  - ใช้งานจริงแล้ว (Phase 1): `mblog_articles`, `mblog_images`, `mblog_categories`, `mblog_menu_items`, `mblog_slug_redirects`
+  - สร้างตารางไว้รอล่วงหน้าแล้ว แต่ยังไม่มีโค้ดใช้งาน (Phase 3/4/7/9): `mblog_users`, `mblog_tags`, `mblog_article_tag`, `mblog_comments`, `mblog_article_stats`
 
 - **ฟีเจอร์ตัวเขียน (เทียบเท่า WP editor พื้นฐาน)**
   - หัวข้อ H1–H3, ตัวหนา/เอียง/ขีดเส้นใต้, สีตัวอักษร, จัดกึ่งกลาง/ซ้าย/ขวา/เต็มบรรทัด
@@ -74,6 +85,13 @@
   - highlight.js จาก jsDelivr path `lib/common.min.js` เป็นไฟล์สำหรับ bundler (`require()`) ใช้ตรงกับ `<script>` ไม่ได้ ต้องใช้ cdnjs build ที่ browser-ready
   - Quill แอบใส่ `<select>` เลือกภาษาโปรแกรม (UI ตอนแก้ไข) ติดไปกับเนื้อหาที่บันทึก ต้องซ่อน/ล้างออกตอนแสดงผลจริง
   - ไม่มี `<meta name="viewport">` เลยทั้ง 3 หน้า (บั๊กร้ายแรงสุดสำหรับ mobile — ถ้าไม่มี CSS responsive จะไม่มีผลอะไรเลย)
+  - **timezone ไม่ตรงกันระหว่าง PHP ที่รัน migration script (Homebrew CLI, default `UTC`) กับ PHP ของ XAMPP/Apache (`php.ini` ตั้ง `Europe/Berlin`)** — เวลาที่เขียนลง MySQL ถูกอ่านกลับมาคลาดเคลื่อนหลายชั่วโมงเพราะแต่ละฝั่งตีความ string เวลาเดียวกันเป็นคนละ timezone → แก้ด้วยการบังคับ `date_default_timezone_set()` ตายตัวใน `config.php` (อ่านค่าจาก `config/settings.php`) ไม่พึ่ง `php.ini` ของเครื่อง/โปรเซสที่รันเลย — ถ้าเปลี่ยน timezone ของเว็บ (เช่น UTC → Asia/Bangkok) ต้องแปลงข้อมูลเก่าที่เก็บไว้ด้วย (shift ชั่วโมงให้ตรง) ไม่งั้นข้อมูลเก่าจะตีความผิดทันที
+  - **Unicode combining marks (สระ/วรรณยุกต์) อยู่ในหมวด Mark (`\p{M}`) ไม่ใช่ Letter (`\p{L}`)** — regex sanitize ชื่อไฟล์/slug ที่อนุญาตแค่ `\p{L}\p{N}` จะตัดสระ/วรรณยุกต์ไทยทิ้งกลางคำ (เช่น "รูปภาพ" → "ร-ปภาพ") ต้องอนุญาต `\p{M}` เพิ่มด้วยเสมอเวลาทำ sanitize ที่ต้องรองรับภาษาไทย/สคริปต์ที่มี combining marks (จีน/ญี่ปุ่น/อาหรับ/ฮินดี/เวียดนามก็มีเช่นกัน)
+  - **จำกัดความยาวชื่อไฟล์ด้วย "จำนวนตัวอักษร" ไม่ปลอดภัยสำหรับภาษาที่ใช้หลายไบต์ต่อตัวอักษร** (ไทย/จีน/ญี่ปุ่น/ฮินดี ใช้ 3 ไบต์/ตัวอักษรใน UTF-8) — จำกัดที่ 100 ตัวอักษรทำให้ได้ชื่อไฟล์ยาวถึง 300 ไบต์ ซึ่งเกินขีดจำกัดทั่วไปของระบบไฟล์ (~255 ไบต์) บน macOS/APFS ไม่มีปัญหา (นับความยาวแบบ UTF-16 code unit) แต่ **Linux (ext4/XFS ซึ่งเป็น production hosting ส่วนใหญ่) จะเซฟไฟล์ไม่ได้เงียบๆ** — ต้องจำกัดด้วย "จำนวนไบต์" (`strlen()`) ไม่ใช่ "จำนวนตัวอักษร" (`mb_strlen()`) เวลา cap ความยาว path/filename
+  - **regex ตรวจสอบ `featured_image` ค้างจาก schema เก่า พอเปลี่ยนโครงสร้างโฟลเดอร์อัปโหลดแล้วลืมอัปเดตตาม** — เดิมรองรับแค่ `uploads/FILENAME.ext` (flat, อักษรละตินเท่านั้น) พอเปลี่ยนเป็น `uploads/YYYY/MM/` + ชื่อไฟล์ภาษาไทย/จีน (WP-style) ทำให้ featured image ที่เลือกไว้ถูกตัด/ปฏิเสธเงียบๆ ทุกครั้งโดยไม่มี error ใดๆ — บทเรียน: ทุกจุดที่ validate "รูปร่างข้อมูล" (path, format) ต้องอัปเดตตามทุกครั้งที่โครงสร้างข้อมูลนั้นเปลี่ยน ไม่งั้นจะเงียบและตรวจไม่เจอจนกว่าจะมีคนสังเกตผลลัพธ์ผิดปกติ
+  - **เบราว์เซอร์ cache ไฟล์ CSS/JS เก่าค้างหลังแก้ไข** — แก้ `assets/*.css`/`*.js` แล้วเบราว์เซอร์ยังโหลดไฟล์เก่าอยู่ (สังเกตผ่าน `document.styleSheets[].cssRules.length` เทียบกับไฟล์จริง) → แก้ด้วยการเติม cache-busting query string ต่อท้ายทุก asset ใน `partials/header.php` (`?v=` + `filemtime()` ของไฟล์นั้นๆ) เปลี่ยนไฟล์เมื่อไหร่ query string เปลี่ยนตาม บังคับโหลดใหม่ทันที — ปัญหานี้จะเกิดกับผู้ใช้จริงตอน deploy ด้วย ไม่ใช่แค่ตอน dev
+  - **ข้อความไทยยาวๆ ไม่มีช่องว่างเลย ล้นกรอบที่ความกว้างตายตัวแทนที่จะขึ้นบรรทัดใหม่** — เจอตอนทำ dropdown เมนู: "นโยบายความเป็นส่วนตัว" ไม่มีจุดให้ browser ตัดบรรทัดตามปกติ (wrap ที่ space) เพราะภาษาไทยไม่มี space คั่นคำ ต้องใส่ `overflow-wrap: break-word` ในทุก container ที่ความกว้างตายตัวและอาจรับข้อความไทย/CJK ยาวๆ ไม่งั้นข้อความจะทะลุกรอบแทนการ wrap
+  - **Dropdown เมนูวางตำแหน่งแบบ `left:0` เสี่ยงล้นขอบจอมือถือถ้าปุ่มอยู่ใกล้ขอบขวา** — แก้ไปมาหลายรอบระหว่างทำ desktop dropdown + mobile accordion คู่กัน สุดท้ายได้ข้อสรุป: ถ้า component เดียวกันต้องรองรับทั้ง 2 breakpoint ให้คิดเรื่อง anchor position ตามบริบทจริงของแต่ละจอ ไม่ใช้ค่าเดียวข้ามทั้งสองจอ — ทางแก้จริงที่ใช้คือแยก UI มือถือ/เดสก์ท็อปออกจากกันไปเลย (ดู "เมนู" หัวข้อ 1) ทำให้ desktop กลับไปใช้ `left:0` (สวยกว่า ไม่ล้นเพราะพื้นที่กว้างพอเสมอ) ได้อย่างอิสระโดยไม่ต้องกังวลเรื่องมือถือเลย เพราะมือถือไม่ใช้ component นี้อีกต่อไป
 
 ---
 
@@ -87,8 +105,8 @@
 - **แยกตามโมดูลธุรกิจ** — แนะนำแยกโฟลเดอร์ระดับบนสุด `/blog`, `/course`, `/stock` เพราะ 3 อย่างนี้ธรรมชาติต่างกันมาก (อ่านเนื้อหา vs ขายของ vs ข้อมูล/กราฟ)
 - **Auth/Admin** — เมื่อมีระบบล็อกอิน ควรแยกโซน admin เป็นโฟลเดอร์ของตัวเอง เช็คสิทธิ์จุดเดียว
 - **Git** — ยังไม่ได้ตั้ง git repo เลย แนะนำ `git init` ตั้งแต่ตอนนี้ที่โค้ดยังเล็ก พร้อม `.gitignore` (`articles/`, `uploads/`, `config.php`)
-- **Post vs Page (ตัดสินใจแล้ว)** — WP แยกเนื้อหาเป็น Post (บทความบล็อก) กับ Page (หน้าเดี่ยว เช่น landing page) เราเห็นด้วยกับแนวคิดนี้ แต่**ตอนนี้ยังใช้ editor เดียวกัน (Quill) สำหรับทั้งคู่ไปก่อน** ไม่สร้าง page-builder/block editor ใหม่ที่ซับซ้อนเกินจำเป็น — landing page ที่ต้องการดีไซน์เฉพาะ/ซับซ้อนมากๆ ให้**เขียนเป็นไฟล์ PHP แยกเอง** (ยัง include `partials/header.php`/`footer.php` เดิมเพื่อความสม่ำเสมอของเว็บ แต่เนื้อหาข้างในเขียนสดได้เต็มที่ ไม่ผ่าน Quill)
-- **Menu management (ตัดสินใจแล้ว)** — ยึดหลักการ "แยกข้อมูล-โค้ด" ข้างบน: `config/menu.php` เก็บข้อมูลเมนู (array: ชื่อ/ลิงก์/ลำดับ) ส่วน `partials/header.php` แค่วน loop render จาก array นี้ ไม่ฝังชื่อเมนูไว้ในโค้ด header เอง — วันนี้เป็น array ธรรมดา วันหน้ามีแอดมิน+DB แล้วเปลี่ยน `config/menu.php` ให้ query จากตาราง `menu_items` แทน โดยที่ `header.php` ไม่ต้องแก้เลย
+- **Post vs Page (ทำแล้ว)** — WP แยกเนื้อหาเป็น Post (บทความบล็อก) กับ Page (หน้าเดี่ยว เช่น เกี่ยวกับเรา/ติดต่อเรา/นโยบายความเป็นส่วนตัว) — ทำจริงแล้วด้วยแนวทาง **ตารางเดียวกัน** (`mblog_articles`) เติมคอลัมน์ `type ENUM('post','page')` แทนการแยกตาราง `mblog_pages` ใหม่ (field ที่ใช้ร่วมกันเยอะเกินไป — slug/status/excerpt/featured_image/images sync/redirect ใช้กลไกเดียวกันหมด ตรงกับที่ WP เองก็ใช้ `wp_posts` ตารางเดียว แยกด้วย `post_type` เหมือนกัน) **ยังใช้ editor เดียวกัน (Quill) สำหรับทั้งคู่ตามแผนเดิม** มี dropdown "ประเภท" ใน `editor.php` สลับ ซ่อนช่องหมวดหมู่อัตโนมัติเมื่อเลือก "หน้า" (หมวดหมู่เป็นแนวคิดของบทความ ไม่เกี่ยวกับหน้าเดี่ยว) — หน้าแสดงผลสาธารณะแยกเป็น `page.php` ต่างหากจาก `article.php` (ไม่มี badge หมวดหมู่/OG type เป็น `website` ไม่ใช่ `article`) — landing page ที่ต้องการดีไซน์เฉพาะ/ซับซ้อนมากๆ ยังคง**เขียนเป็นไฟล์ PHP แยกเอง** ตามแผนเดิม ไม่ผ่านระบบ Page นี้ (ยัง include `partials/header.php`/`footer.php` เพื่อความสม่ำเสมอของเว็บ)
+- **Menu management (ทำแล้ว)** — ยึดหลักการ "แยกข้อมูล-โค้ด" ข้างบน: `includes/menu.php` (`getMenuItems()`) เก็บข้อมูลเมนู ส่วน `partials/header.php` แค่วน loop render จาก array นี้ ไม่ฝังชื่อเมนูไว้ในโค้ด header เอง — ~~วันนี้เป็น array ธรรมดา วันหน้ามีแอดมิน+DB~~ ย้ายเข้าตาราง `mblog_menu_items` แล้วจริง (รองรับเมนูย่อยผ่าน `parent_id` ด้วย) โดยที่ `header.php` ไม่ต้องแก้เลยตามที่ตั้งใจไว้
 
 ### 2. ระบบค้นหา
 - ตอนนี้ (ไฟล์): วนอ่านทุกไฟล์ใช้ `stripos()` พอสำหรับบทความไม่เยอะ
@@ -98,11 +116,9 @@
 - ถ้าต้องการค้นฉลาดกว่านี้มาก (พิมพ์ผิดยังเจอ ฯลฯ) มี Meilisearch/Typesense/Algolia แต่เพิ่ม infra ไม่จำเป็นสำหรับตอนนี้
 
 ### 3. ระบบแท็ก/หมวดหมู่
-- **หมวดหมู่ (Category)** — 1 บทความอยู่ 1 หมวด (มักผูกกับเมนูเว็บ)
-- **แท็ก (Tag)** — many-to-many คำเฉพาะเจาะจงกว่า
-- ไฟล์: เพิ่มฟิลด์ใน json ได้เลย แต่เปลี่ยนชื่อแท็กต้องไล่แก้ทุกไฟล์เอง
-- MySQL: หมวดหมู่ = คอลัมน์ `category_id` ชี้ตาราง `categories`; แท็ก = ต้องมี 3 ตาราง (`articles`, `tags`, junction table `article_tag`)
-- Editor UI: หมวดหมู่ = dropdown, แท็ก = ช่อง chip input + autocomplete
+- **หมวดหมู่ (Category) — ทำแล้ว** — 1 บทความอยู่ 1 หมวด ตาราง `mblog_categories` + คอลัมน์ `mblog_articles.category_id` (FK, `ON DELETE SET NULL` — ลบหมวดแล้ว fallback ไปหมวดแรกอัตโนมัติ ไม่ต้องเขียนโค้ดกันลบเพิ่ม) Editor UI เป็น dropdown แล้ว
+- **แท็ก (Tag) — ยังไม่ทำ (Phase 4)** — many-to-many คำเฉพาะเจาะจงกว่า ตาราง `mblog_tags` + junction table `mblog_article_tag` สร้างรอไว้แล้วแต่ยังไม่มีโค้ดใช้งาน
+- Editor UI ของแท็ก (ยังไม่ทำ): ช่อง chip input + autocomplete
 
 ### 4. ระบบคอมเมนต์/รีวิว
 - สร้างเอง (คุมได้เต็มที่) vs ฝังสำเร็จรูป (giscus/Disqus/Cusdis — เร็วกว่ามาก)
@@ -137,13 +153,13 @@
 - Scheduled publish (ไว้ทำทีหลัง): ไม่ต้องมี cron job แยก แค่เทียบ `published_at <= เวลาปัจจุบัน` ตอน query
 - editor.php ควรแยกปุ่ม "บันทึกร่าง" กับ "เผยแพร่" ชัดเจน (แบบ WP)
 
-### 9. โครงสร้างเก็บรูปภาพ/ไฟล์ + แผน backup/migrate
-- ตอนนี้ (ไฟล์): `articles/*.json` + `uploads/` แบบ flat ทั้งคู่ — backup เต็มระบบง่ายมาก (แค่ copy/rsync/tar 2 โฟลเดอร์นี้ ไม่มี DB ต้อง dump)
-- **ย้ายเฉพาะบางบทความจาก local → โฮสจริง** เป็นจุดที่โครงสร้าง flat มีปัญหา: `uploads/` ไม่รู้ว่ารูปไหนเป็นของบทความไหน ต้อง parse เนื้อหา HTML หา path รูปเองถึงจะย้ายได้ครบ
-- พอมี MySQL: เพิ่มตาราง `images` (id, `article_id` FK, path, caption, created_at) ผูกรูปกับบทความด้วย foreign key แทนการเดาจาก path/parse HTML — ทำให้ backup/migrate เฉพาะบทความแม่นยำ (query หา path จาก `article_id` ได้ตรงๆ)
-- **โฟลเดอร์บนดิสก์เมื่อมี DB แล้ว**: ไม่ต้องผูกกับ slug/บทความอีกต่อไป (DB จัดการความสัมพันธ์แทนแล้ว) เหลือแค่แบ่งเพื่อสุขภาพ filesystem เท่านั้น → เลือกแบบ **รายเดือน** `uploads/YYYY/MM/` (เช่น `uploads/2026/07/xxxx.png`) ตามแนวทาง WordPress กัน `uploads/` บวมเป็นหมื่นไฟล์ในโฟลเดอร์เดียว
-- **แนวคิด backup/restore/migrate เมื่อมี DB**: กลายเป็น 2 ส่วนคู่กันเสมอ — `mysqldump` (หรือ export เฉพาะแถวที่ต้องการ) + rsync ไฟล์ใน `uploads/` ตาม path ที่ query ได้จากตาราง `images`
-- ใช้ `id` (auto-increment) เป็น primary key ภายในตาราง `articles`/`images`, ให้ `slug` เป็นแค่ unique column สำหรับ URL เท่านั้น — กันไม่ให้กระทบ foreign key ถ้าวันหนึ่งอยากเปลี่ยน slug ของบทความ
+### 9. โครงสร้างเก็บรูปภาพ/ไฟล์ + แผน backup/migrate — ✅ ทำแล้วเกือบหมด (เหลือ backup script)
+- ~~ตอนนี้ (ไฟล์): `articles/*.json` + `uploads/` แบบ flat ทั้งคู่~~ — เลิกใช้แล้ว บทความย้ายเข้า MySQL หมด, `uploads/` เปลี่ยนโครงสร้างแล้ว (ดูข้อถัดไป)
+- **ทำแล้ว** — ตาราง `mblog_images` (id, `article_id` FK `ON DELETE CASCADE`, path, caption, created_at) ผูกรูปกับบทความด้วย foreign key จริง ไม่ต้องเดาจาก path/parse HTML อีกต่อไป — sync อัตโนมัติทุกครั้งที่บันทึกบทความผ่าน `syncArticleImages()` ใน `api/save.php` (parse `<img>` ในเนื้อหา + featured_image, insert รูปใหม่/ลบแถวรูปที่ไม่ใช้แล้ว — **ลบแค่แถว DB ไม่ลบไฟล์จริง** กันเผลอลบรูปที่ยังใช้อยู่จาก false positive)
+- **ทำแล้ว** — โฟลเดอร์แบ่งรายเดือนจริงแล้ว `uploads/YYYY/MM/` (เช่น `uploads/2026/07/xxxx.jpg`) ไม่ต้องผูกกับ slug/บทความเลย (DB จัดการความสัมพันธ์แทนแล้วผ่าน `mblog_images`) ไฟล์เก่าที่เป็น flat path ยังอยู่ที่เดิมได้ ไม่ต้องย้าย เพราะ DB เก็บ path เต็มตรงๆ ไม่ได้คำนวณจาก pattern โฟลเดอร์
+- **ทำแล้ว** — ชื่อไฟล์อัปโหลดเปลี่ยนจากสุ่ม timestamp+random เป็นเก็บชื่อเดิม (sanitize แบบ WP `wp_unique_filename()`: คงชื่อที่มนุษย์อ่านออก รองรับทุกภาษา ชนกันแล้วเติม `-2`, `-3` ต่อท้าย) ดีต่อ SEO รูปภาพกว่าเดิมมาก
+- **ยังไม่ทำ** — `scripts/backup.php` ยัง backup แค่โฟลเดอร์ `articles/`+`uploads/` (คอมเมนต์เก่าบอก "mysqldump ยังไม่เกี่ยวข้องเพราะยังไม่มี DB" ซึ่งไม่จริงแล้ว) **ตอนนี้เนื้อหาจริงย้ายไป MySQL หมดแล้ว แปลว่า backup ปัจจุบันไม่ครอบคลุมเนื้อหาบทความเลย** ต้องเพิ่ม `mysqldump` เข้าไปคู่กับการ backup ไฟล์ก่อน ไม่งั้นเสี่ยงข้อมูลหายถ้าเครื่องพัง (มี task ที่ flag ไว้ให้แล้วรอทำ)
+- ใช้ `id` (auto-increment) เป็น primary key ภายในตาราง `mblog_articles`/`mblog_images` จริงตามที่วางแผนไว้, `slug` เป็นแค่ unique column สำหรับ URL — ผลคือแก้ slug บทความที่เผยแพร่แล้วได้อย่างปลอดภัยระดับ DB จริงๆ (ไม่กระทบ FK ใดๆ) ตามที่ตั้งใจไว้ตั้งแต่ต้น — ต่อยอดทำระบบ **301 redirect** (`mblog_slug_redirects`) เพิ่มด้วย กัน SEO/ลิงก์เก่าเสียตอนเปลี่ยน slug
 
 ### 10. SEO และการแชร์เนื้อหา (ยังไม่ได้ทำเลย)
 - **Meta tags พื้นฐาน** — ตอนนี้ `article.php` มีแค่ `<title>` ยังไม่มี meta description เลย ต้องเพิ่ม:
@@ -219,10 +235,10 @@
 ## สิ่งที่ยังไม่ตัดสินใจ (ต้องคุยต่อ)
 
 - Routing: multi-file เดิม vs router กลางไฟล์เดียว
-- จังหวะย้ายจากไฟล์ JSON ไป MySQL (ตอนนี้บาง feature ทำบนไฟล์ได้ เช่น draft/tag แต่บาง feature ต้องรอ MySQL เช่น comment)
 - โครงสร้างแยกโมดูล `/blog` `/course` `/stock` จะเริ่มทำเมื่อไหร่
 - รูปแบบระบบล็อกอิน (username/password เอง vs OAuth vs อื่นๆ)
-- จังหวะเริ่มแบ่ง `uploads/` เป็นรายเดือน (`uploads/YYYY/MM/`) — ผูกกับจังหวะย้ายไป MySQL ข้างบน ไม่รีบทำตอนไฟล์ยังน้อย
+
+*(ตัดออกเพราะตัดสินใจ/ทำเสร็จแล้ว: จังหวะย้าย JSON→MySQL — ตัดสินใจย้ายทีเดียวทั้งหมด ไม่ทยอยทำทีละ feature; จังหวะแบ่ง `uploads/` รายเดือน — ทำแล้วพร้อมกับตอนย้าย MySQL)*
 
 ---
 
@@ -238,32 +254,36 @@
 - [x] Git + GitHub (public repo สำหรับโครงโค้ด, จะแยก repo private ตอนมีเนื้อหาจริง)
 - [x] README.md
 
-### Phase 1 — โครงสร้างข้อมูลบทความ + เตรียม MySQL (ส่วน 1, 8, 9) 🔵 กำลังทำ
-เป้าหมาย: พิสูจน์หลักการ "แยกข้อมูล-โค้ด" ให้แน่นบนของเดิมก่อน แล้วค่อยย้าย MySQL จริง กันทำงานซ้ำสองรอบ
+### Phase 1 — โครงสร้างข้อมูลบทความ + เตรียม MySQL (ส่วน 1, 8, 9) ✅ เสร็จแล้ว
+เป้าหมาย: พิสูจน์หลักการ "แยกข้อมูล-โค้ด" ให้แน่นบนของเดิมก่อน แล้วค่อยย้าย MySQL จริง กันทำงานซ้ำสองรอบ — **สำเร็จตามเป้า**: ตอนสลับ storage จริง หน้าเว็บ (`index.php`/`article.php`/`editor.php`/`drafts.php`/`sitemap.php`) ไม่ต้องแก้โค้ด render แม้แต่บรรทัดเดียว
 - [x] เขียน `getArticles()` / `getArticle($slug)` ห่อการอ่านไฟล์ `articles/*.json` ปัจจุบัน แก้ `index.php`, `article.php`, `editor.php` ให้เรียกผ่านฟังก์ชันแทนอ่านไฟล์ตรงๆ (พฤติกรรมเว็บต้องเหมือนเดิมทุกอย่าง)
 - [x] ระหว่างเขียนฟังก์ชันข้อบน ใส่ตรรกะกรอง `status` (draft/published) เข้าไปด้วยเลย — จังหวะดีที่สุดที่จะทำ (ส่วน 8 บอกว่าทำได้บนไฟล์ json ไม่ต้องรอ MySQL อยู่แล้ว) เพิ่ม field `status`, `published_at` ในไฟล์ json + แยกปุ่ม "บันทึกร่าง"/"เผยแพร่" ใน `editor.php`
 - [x] สร้าง `config.php` (path/credentials รวมจุดเดียว + environment flag `local`/`production` ไว้ใช้ต่อใน Phase 2)
-- [ ] ออกแบบตาราง MySQL: `articles` อย่างน้อย, พิจารณาตาราง `images` (ผูก `article_id` FK ตามส่วน 9) ไปพร้อมกัน
-- [ ] สลับข้างในฟังก์ชันจากข้อแรกให้อ่าน MySQL แทนไฟล์ — `index.php`/`article.php`/`editor.php` ไม่ต้องแก้แม้แต่บรรทัดเดียวถ้าทำถูกต้อง (จุดพิสูจน์หลักการ)
+- [x] ออกแบบตาราง MySQL — ขยายขอบเขตกว่าที่วางแผนไว้เดิม: ออกแบบ**ทุกตารางของทุก Phase ล่วงหน้าทีเดียว** (`articles`, `images`, `categories`, `menu_items`, `slug_redirects` ใช้จริงใน Phase 1; `users`, `tags`, `article_tag`, `comments`, `article_stats` สร้างรอไว้สำหรับ Phase หลัง) ทุกตารางขึ้นต้น `mblog_` กันชนกับระบบอื่นบนโฮสที่มี DB เดียว — ไฟล์ SQL แยกตาม Phase ใน `database/*.sql`
+- [x] สลับข้างในฟังก์ชันจากข้อแรกให้อ่าน MySQL แทนไฟล์ — ย้ายข้อมูลบทความเดิมเข้า DB จริงก่อน (ไม่ทำให้ข้อมูลหาย) แล้วค่อยลบไฟล์ json/`config/categories.php`/`config/menu.php` ที่ไม่ใช้แล้วทิ้ง
+- [x] **(เพิ่มเติมนอกแผนเดิม)** แก้ slug บทความเองได้ผ่าน editor + auto-suggest จากชื่อบทความ + กันชนกัน (`-2`, `-3`) + ระบบ 301 redirect อัตโนมัติเมื่อ slug เปลี่ยน (`mblog_slug_redirects`) — ทำได้ปลอดภัยเพราะใช้ `id` เป็น PK ตามที่ออกแบบไว้แต่ต้น ไม่ใช่ `slug`
+- [x] **(เพิ่มเติมนอกแผนเดิม)** ระบบรูปภาพเต็มรูปแบบ: โฟลเดอร์ `uploads/YYYY/MM/`, ชื่อไฟล์อัปโหลดแบบ WP (คงชื่อเดิม+กันชน แทนสุ่ม), sync ตาราง `mblog_images` อัตโนมัติทุกครั้งที่บันทึกบทความ
+- [x] **(เพิ่มเติมนอกแผนเดิม)** ระบบค่าตั้งค่าเว็บ (`config/settings.php`/`includes/settings.php`) — `site_name`, `timezone` (Asia/Bangkok), `owner_email`, `footer_tagline`
 
 ### Phase 2 — งานคู่ขนาน (ทำระหว่าง/หลัง Phase 1 ก็ได้ ไม่บล็อกกัน)
 - [x] `partials/header.php` + `partials/footer.php` ดึงส่วนซ้ำออกจาก 3 ไฟล์ปัจจุบัน (ส่วน 1)
-- [x] `config/menu.php` ข้อมูลเมนูแยกจาก header (ส่วน 1)
-- [x] CSS custom properties (ตัวแปรสี) ใน `assets/style.css` — สีหลัก `#2563eb` ตอนนี้เขียนซ้ำอยู่ 5 จุด ต้องรวมเป็นตัวแปรใน `:root`
+- [x] ข้อมูลเมนูแยกจาก header (ส่วน 1) — เริ่มจาก `config/menu.php` (ไฟล์) ตอนนี้ย้ายเป็นตาราง `mblog_menu_items` (MySQL) แล้วผ่าน `includes/menu.php`
+- [x] CSS custom properties (ตัวแปรสี) ใน `:root` — สีหลัก `#2563eb` รวมเป็นตัวแปรแล้ว
+- [x] **(เพิ่มเติม)** แยกไฟล์ CSS เดี่ยวยาวๆ (`style.css`) เป็น `base.css`/`layout.css`/`components.css`/`article.css`/`editor.css` ตามที่ระบุไว้ในหัวข้อ 1 ("ควรแยก...") — `editor.css` โหลดเฉพาะหน้าแก้ไขจริงตามที่ตั้งใจไว้
 - [x] SEO พื้นฐาน (ส่วน 10): field excerpt + featured image ต่อบทความ, meta description, OG/Twitter tags, `robots.txt`, `sitemap.php` (ใช้ `getArticles()` จาก Phase 1 ได้เลย), canonical tag, JSON-LD Article schema
 - [x] Error handling พื้นฐาน (ส่วน 12): ใช้ environment flag จาก Phase 1 คุม `display_errors`/`log_errors`, หน้า error กลาง (404/500), `set_error_handler()`/`set_exception_handler()`, เช็ค `json_decode() === null` ทุกจุดที่โหลดบทความ
-- [x] Backup script เบื้องต้น (ส่วน 11): บีบอัด `articles/`+`uploads/` (ยังไม่มี DB ก็ backup ได้เลย), ตั้ง retention, ทดสอบ restore จริง 1 ครั้ง — **เหลือ**: ติดตั้ง cron job จริง (ตั้งใจไม่ทำเอง ต้องให้เจ้าของเครื่องสั่ง) และส่ง backup ออกนอกเซิร์ฟเวอร์ (ยังไม่รู้ปลายทาง)
-- [x] หมวดหมู่ (category) แบบง่าย — เพิ่ม field เดียวต่อบทความบนไฟล์/DB (ส่วน 3 เวอร์ชันเริ่มต้น ยังไม่ใช่ระบบแท็กเต็ม)
+- [x] Backup script เบื้องต้น (ส่วน 11): บีบอัด `articles/`+`uploads/` (ยังไม่มี DB ก็ backup ได้เลยตอนนั้น), ตั้ง retention, ทดสอบ restore จริง 1 ครั้ง — **⚠️ ตอนนี้ล้าสมัยแล้ว**: เนื้อหาย้ายเข้า MySQL หมดแล้ว แต่สคริปต์ยังไม่ dump DB เลย ต้องเพิ่ม `mysqldump` ก่อนถือว่า backup ใช้ได้จริง (ดูรายละเอียดหัวข้อ 9) + ยังไม่ได้ติดตั้ง cron job จริง (ตั้งใจไม่ทำเอง ต้องให้เจ้าของเครื่องสั่ง) และยังไม่ส่ง backup ออกนอกเซิร์ฟเวอร์ (ยังไม่รู้ปลายทาง)
+- [x] หมวดหมู่ (category) — เริ่มจาก field เดียวบนไฟล์ตามแผนเดิม แต่ท้ายที่สุดย้ายเป็นตาราง `mblog_categories` เต็มรูปแบบพร้อมกับตอนย้าย MySQL (เกินแผนเดิมที่ตั้งใจแค่ "เวอร์ชันเริ่มต้น")
 
-### Phase 3 — ระบบล็อกอิน/สิทธิ์ (ประเด็นที่วนกลับมาซ้ำๆ) — ต้องมี MySQL จาก Phase 1 ก่อน
-- [ ] ตาราง `users` (email, password_hash ผ่าน `password_hash()`, role)
+### Phase 3 — ระบบล็อกอิน/สิทธิ์ (ประเด็นที่วนกลับมาซ้ำๆ) — MySQL พร้อมแล้วจาก Phase 1
+- [x] ตาราง `mblog_users` (email, password_hash ผ่าน `password_hash()`, role) — สร้างรอไว้ล่วงหน้าแล้ว (`database/phase3_users.sql`, มี `ALTER` เพิ่ม `author_id` บน `mblog_articles` รวมอยู่ด้วย) ยังไม่มีโค้ดใช้งาน
 - [ ] 2 roles เริ่มต้น: Admin, Editor — เช็คแบบ capability-based (`userCan('publish_articles')` ฯลฯ) ไม่เช็คชื่อ role ตรงๆ
 - [ ] `includes/auth.php` bootstrap (session, `requireLogin()`, `requireCapability()`) + ย้ายหน้าที่ต้องล็อกอินเข้าโฟลเดอร์ `/admin/`
 - [ ] CSRF token บนฟอร์มที่ทำงานหลังล็อกอิน
 - [ ] อัปเกรดความปลอดภัยของ draft จาก Phase 1 — ให้เจ้าของพรีวิวร่างได้จริงแบบปลอดภัย (ไม่ใช่แค่อาศัย slug เดายาก)
 
 ### Phase 4 — แท็ก (tag) เต็มรูปแบบ (ส่วน 3) — ต้องมี MySQL
-- [ ] ตาราง `tags` + junction table `article_tag` (many-to-many)
+- [x] ตาราง `mblog_tags` + junction table `mblog_article_tag` (many-to-many) — สร้างรอไว้ล่วงหน้าแล้วตั้งแต่ Phase 1 (`database/phase4_tags.sql`) ยังไม่มีโค้ดใช้งาน
 - [ ] Editor UI: chip input + autocomplete
 - [ ] หน้าแสดงบทความตามแท็ก/หมวดหมู่ (`tag.php?slug=`, `category.php?slug=`)
 
@@ -278,8 +298,8 @@
 - [ ] นำเข้าเป็นสถานะ **ร่าง** เสมอ ไม่ auto-publish
 - [ ] เก็บ URL ต้นฉบับเป็น metadata ไว้อ้างอิง/ให้เครดิต
 
-### Phase 7 — คอมเมนต์/รีวิว (ส่วน 4) — ต้องมี MySQL + Auth (Phase 3) ก่อน
-- [ ] ตาราง `comments` (article_id, parent_id เผื่ออนาคต, สถานะรอตรวจ/อนุมัติ/สแปม)
+### Phase 7 — คอมเมนต์/รีวิว (ส่วน 4) — MySQL พร้อมแล้ว, ยังต้องรอ Auth (Phase 3)
+- [x] ตาราง `mblog_comments` (article_id, parent_id เผื่ออนาคต, สถานะรอตรวจ/อนุมัติ/สแปม) — สร้างรอไว้ล่วงหน้าแล้ว (`database/phase7_comments.sql`) ยังไม่มีโค้ดใช้งาน
 - [ ] Honeypot field + rate limit ต่อ IP
 - [ ] หน้า moderation ในโซน `/admin/`
 - [ ] Sanitize เข้มงวด (`htmlspecialchars` ทุกจุด ห้าม HTML ดิบ)
@@ -290,7 +310,8 @@
 - [ ] อัปเกรดเป็น `FULLTEXT` + **n-gram parser** (จำเป็นเพราะเนื้อหาไทย) เมื่อบทความเยอะขึ้น
 
 ### Phase 9 — สถิติ (ส่วน 5)
-- [ ] นับยอดอ่านต่อบทความ (ตาราง/คอลัมน์ง่ายๆ บน MySQL)
+- [x] ตาราง `mblog_article_stats` (`article_id` PK/FK, `view_count`) — สร้างรอไว้ล่วงหน้าแล้ว (`database/phase9_stats.sql`) แยกจาก `mblog_articles` ตั้งใจ เพราะยอดอ่านเป็นข้อมูลที่ระบบนับเองถี่มาก คนละธรรมชาติกับข้อมูลที่คนเขียนกรอก
+- [ ] นับยอดอ่านต่อบทความ (โค้ดจริงที่ increment `view_count` ตอนมีคนเปิดอ่าน — ยังไม่ทำ)
 - [ ] พิจารณาเครื่องมือ traffic analytics ภายนอก (privacy-friendly เช่น Umami) + PDPA consent ถ้าจำเป็น
 - [ ] Custom event tracking (เตรียมไว้เผื่อ Phase ขายของในอนาคต)
 
@@ -313,4 +334,19 @@
 
 ---
 
-รอผู้ใช้ยืนยันว่าจะเริ่มลงมือ Phase 1 ข้อแรกเลย หรืออยากปรับลำดับ/ขอบเขตก่อน
+## สถานะล่าสุด — Phase 1 เสร็จสมบูรณ์ ✅ + ระบบ Page/เมนูย่อยเพิ่มเติม
+
+บทความ/รูปภาพ/หมวดหมู่/เมนู ย้ายเข้า MySQL ครบทั้งหมดแล้ว (ดูหัวข้อ "สิ่งที่สร้างไปแล้ว") พร้อมของแถมนอกแผนเดิม (แก้ slug เองได้ + 301 redirect, ระบบค่าตั้งค่าเว็บ, ชื่อไฟล์อัปโหลดแบบ SEO-friendly) ตารางของทุก Phase ถัดไปก็สร้างรอไว้ล่วงหน้าหมดแล้วด้วย (`database/phase3_users.sql` ถึง `phase9_stats.sql`)
+
+**เพิ่มเติมหลังจากนั้น (นอกแผนเดิม เช่นกัน):**
+- **ระบบ Page** — `mblog_articles.type` (`post`/`page`) แยกบทความบล็อกกับหน้าเดี่ยว (เกี่ยวกับเรา/ติดต่อเรา/นโยบายความเป็นส่วนตัว — เผยแพร่จริงแล้วทั้ง 3 หน้า เนื้อหายังเป็น placeholder รอคุณเขียนจริง) หน้าแสดงผลแยกเป็น `page.php`
+- **เมนูย่อยมี UI จริงแล้ว** — desktop dropdown (คลิกเปิด, ชิดซ้ายของปุ่ม), mobile hamburger + accordion เต็มความกว้าง (แยก markup กันคนละ breakpoint ไปเลย ไม่ใช้ CSS บีบอันเดียวให้ทำงาน 2 แบบ)
+- เมนู "หน้า" ผูก 3 หน้าข้างต้นเป็นเมนูย่อยแล้ว ทดสอบทั้ง desktop/mobile จริงผ่านเบราว์เซอร์
+
+**งานค้างที่สำคัญที่สุดตอนนี้:** `scripts/backup.php` ยังไม่ dump MySQL (ดูหัวข้อ 9/Phase 2) — เนื้อหาจริงย้ายออกจากไฟล์หมดแล้ว แปลว่า backup ปัจจุบัน**ไม่ครอบคลุมเนื้อหาบทความเลย** ควรทำก่อนเรื่องอื่น
+
+**ตัวเลือกขั้นต่อไป:**
+- แก้ backup script ให้ครอบคลุม MySQL (ด่วน — ความเสี่ยงข้อมูลหาย)
+- เขียนเนื้อหาจริงให้ 3 หน้าที่สร้างไว้ (ตอนนี้ยังเป็น placeholder "เนื้อหากำลังจัดเตรียม")
+- Phase 3 (ระบบล็อกอิน/สิทธิ์) — ตัวบล็อกฟีเจอร์อื่นอีกหลายตัว ตารางพร้อมแล้ว
+- Phase 8 (ค้นหา) — ทำได้ทันทีด้วย `LIKE` query บน MySQL ที่มีอยู่แล้ว ไม่ต้องรอ Phase ไหน

@@ -11,7 +11,9 @@ $errorMessage = $errorMessage ?? 'เกิดข้อผิดพลาดบ�
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ข้อผิดพลาด <?= htmlspecialchars((string) $errorCode) ?> — mBlog</title>
-<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/layout.css">
+<link rel="stylesheet" href="assets/components.css">
 </head>
 <body>
 <div class="topbar">

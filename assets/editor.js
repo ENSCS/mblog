@@ -473,8 +473,9 @@ function setupFeaturedImagePicker() {
   });
 }
 
-function saveArticle(quill, slug, status) {
+function saveArticle(quill, articleId, slug, status) {
   const title = document.getElementById('title').value.trim();
+  const type = document.getElementById('type').value;
   const category = document.getElementById('category').value;
   const excerpt = document.getElementById('excerpt').value.trim();
   const featuredImage = document.getElementById('featured-image').value;
@@ -495,10 +496,12 @@ function saveArticle(quill, slug, status) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      id: articleId || '',
       slug: slug || '',
       title: title,
       content: clone.innerHTML,
       status: status,
+      type: type,
       category: category,
       excerpt: excerpt,
       featured_image: featuredImage
@@ -508,14 +511,17 @@ function saveArticle(quill, slug, status) {
     .then(data => {
       if (data.success) {
         statusEl.textContent = data.status === 'published' ? 'เผยแพร่แล้ว' : 'บันทึกร่างแล้ว';
+        document.getElementById('article-id').value = data.id;
         document.getElementById('slug').value = data.slug;
         window.history.replaceState({}, '', 'editor.php?slug=' + data.slug);
-        document.getElementById('view-link').href = 'article.php?slug=' + data.slug;
+        const viewBase = data.type === 'page' ? 'page.php' : 'article.php';
+        document.getElementById('view-link').href = viewBase + '?slug=' + data.slug;
         document.getElementById('view-link').style.display = 'inline';
 
         const badge = document.getElementById('status-badge');
         badge.textContent = data.status === 'published' ? 'เผยแพร่แล้ว' : 'ร่าง';
         badge.className = 'status-badge status-' + data.status;
+        document.getElementById('slug-warning').style.display = data.status === 'published' ? 'block' : 'none';
       } else {
         statusEl.textContent = '';
         alert('บันทึกไม่สำเร็จ: ' + (data.error || 'unknown error'));

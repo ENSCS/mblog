@@ -7,21 +7,34 @@ $data = json_decode($raw, true);
 
 $title = isset($data['title']) ? trim($data['title']) : '';
 $content = isset($data['content']) ? $data['content'] : '';
-$slug = isset($data['slug']) ? trim($data['slug']) : '';
+$requestedSlug = isset($data['slug']) ? trim($data['slug']) : '';
 $status = (isset($data['status']) && $data['status'] === 'published') ? 'published' : 'draft';
+$type = (isset($data['type']) && $data['type'] === 'page') ? 'page' : 'post';
 $excerpt = isset($data['excerpt']) ? trim($data['excerpt']) : '';
 
 // Only accept a path that looks like one of our own uploads (matches the
 // naming api/upload.php produces) — never trust an arbitrary URL into og:image.
+// Allows uploads/YYYY/MM/ subfolders and non-ASCII filenames (Thai/Chinese/...,
+// since api/upload.php keeps the sanitized original name) but rejects "..".
 $featuredImage = isset($data['featured_image']) ? trim($data['featured_image']) : '';
-if ($featuredImage !== '' && !preg_match('#^uploads/[A-Za-z0-9_.-]+\.(jpg|jpeg|png|gif|webp)$#i', $featuredImage)) {
+if ($featuredImage !== '' && (
+    str_contains($featuredImage, '..')
+    || !preg_match('#^uploads/[\p{L}\p{N}\p{M}_./-]+\.(jpg|jpeg|png|gif|webp)$#iu', $featuredImage)
+)) {
     $featuredImage = '';
 }
 
-$categories = getCategories();
-$category = isset($data['category']) ? trim($data['category']) : '';
-if (!in_array($category, $categories, true)) {
-    $category = $categories[0];
+// Pages don't have a category — it's a blog-content concept, doesn't apply
+// to a standalone page like "About"/"Privacy Policy".
+if ($type === 'page') {
+    $categoryId = null;
+} else {
+    $categories = getCategories();
+    $category = isset($data['category']) ? trim($data['category']) : '';
+    if (!in_array($category, $categories, true)) {
+        $category = $categories[0];
+    }
+    $categoryId = categoryIdByName($category);
 }
 
 if ($title === '') {
@@ -30,45 +43,62 @@ if ($title === '') {
     exit;
 }
 
-// Only accept an existing slug that matches our safe pattern and file;
-// otherwise generate a fresh one to avoid path traversal / overwrite risk.
-$existing = ($slug !== '') ? getArticleForEdit($slug) : null;
+// Look up "which article is this" by id — not by slug, since the slug is now
+// user-editable and can no longer double as a stable identifier.
+$id = isset($data['id']) && $data['id'] !== '' ? (int) $data['id'] : null;
+$existing = $id !== null ? getArticleById($id) : null;
 
-if (!$existing) {
-    $slug = date('Ymd-His') . '-' . substr(bin2hex(random_bytes(3)), 0, 6);
+// Slug the author wants to save. Empty means: for a new article, suggest one
+// from the title; for an existing one, leave the current slug untouched
+// (an empty field is treated as "no change", not "regenerate").
+if ($requestedSlug !== '') {
+    $baseSlug = sanitizeSlug($requestedSlug);
+} elseif ($existing) {
+    $baseSlug = $existing['slug'];
+} else {
+    $baseSlug = sanitizeSlug($title);
 }
 
-$now = date('c');
+if ($baseSlug === '') {
+    $baseSlug = date('Ymd-His') . '-' . substr(bin2hex(random_bytes(3)), 0, 6);
+}
+
+$slug = uniqueSlug($baseSlug, $existing['id'] ?? null);
+
+$now = date('Y-m-d H:i:s');
 
 // published_at is set once, the first time an article goes live, and kept
 // after that — switching back to draft and re-publishing doesn't reset it.
 $publishedAt = $existing['published_at'] ?? null;
 if ($status === 'published' && $publishedAt === null) {
     $publishedAt = $now;
+} elseif ($publishedAt !== null) {
+    $publishedAt = date('Y-m-d H:i:s', strtotime($publishedAt));
 }
 
-$article = [
-    'slug' => $slug,
-    'title' => $title,
-    'content' => $content,
-    'status' => $status,
-    'category' => $category,
-    'excerpt' => $excerpt,
-    'featured_image' => $featuredImage,
-    'created_at' => $existing['created_at'] ?? $now,
-    'published_at' => $publishedAt,
-    'updated_at' => $now,
-];
+if ($existing) {
+    $stmt = db()->prepare(
+        'UPDATE mblog_articles
+         SET slug = ?, title = ?, content = ?, excerpt = ?, category_id = ?, featured_image = ?,
+             status = ?, type = ?, updated_at = ?, published_at = ?
+         WHERE id = ?'
+    );
+    $stmt->execute([$slug, $title, $content, $excerpt, $categoryId, $featuredImage, $status, $type, $now, $publishedAt, $existing['id']]);
+    $articleId = (int) $existing['id'];
 
-$ok = file_put_contents(
-    getArticlesDir() . $slug . '.json',
-    json_encode($article, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
-);
-
-if ($ok === false) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'could not write file']);
-    exit;
+    if ($existing['slug'] !== $slug) {
+        recordSlugRedirect($existing['slug'], $articleId);
+    }
+} else {
+    $stmt = db()->prepare(
+        'INSERT INTO mblog_articles
+            (slug, title, content, excerpt, category_id, featured_image, status, type, created_at, updated_at, published_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    );
+    $stmt->execute([$slug, $title, $content, $excerpt, $categoryId, $featuredImage, $status, $type, $now, $now, $publishedAt]);
+    $articleId = (int) db()->lastInsertId();
 }
 
-echo json_encode(['success' => true, 'slug' => $slug, 'status' => $status]);
+syncArticleImages($articleId, $content, $featuredImage);
+
+echo json_encode(['success' => true, 'id' => $articleId, 'slug' => $slug, 'status' => $status, 'type' => $type]);

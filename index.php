@@ -3,7 +3,7 @@ require __DIR__ . '/includes/articles.php';
 
 $articles = getArticles();
 
-$pageTitle = 'mBlog';
+$pageTitle = siteSetting('site_name');
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 include __DIR__ . '/partials/header.php';
 ?>
