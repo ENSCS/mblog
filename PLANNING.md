@@ -31,10 +31,10 @@
 - เช็คสิทธิ์ด้วยชื่อ capability (`userCan('publish_articles')`) ไม่ใช่ชื่อ role ตรงๆ — เพราะ "ใครมีสิทธิ์อะไร" ก็คือข้อมูลอีกแบบหนึ่งที่เปลี่ยนได้
 
 **ตัวอย่างที่ตัดสินใจแล้วตามหลักนี้:**
-- **เมนู (ทำแล้ว)** — `includes/menu.php` (`getMenuItems()`) ↔ `partials/header.php` (แสดงผล, วน loop จาก array ที่ได้มาเท่านั้น ไม่รู้จักชื่อเมนูตรงๆ) — ข้อมูลอยู่ในตาราง `mblog_menu_items` (MySQL) แล้ว รองรับเมนูย่อยผ่าน `parent_id` (self-reference) ด้วย **มี UI ครบทั้ง desktop (dropdown เปิดตอน hover แบบ WP, ตัวคำหลักเป็นลิงก์จริงคลิกได้) และ mobile (hamburger + accordion เต็มความกว้าง) แล้ว** — ดูรายละเอียดหัวข้อ 1
+- **เมนู (ทำแล้ว)** — `includes/menu.php` (`getMenuItems()`) ↔ `partials/header.php` (แสดงผล, วน loop จาก array ที่ได้มาเท่านั้น ไม่รู้จักชื่อเมนูตรงๆ) — ข้อมูลอยู่ในตาราง `mblog_menu_items` (MySQL) แล้ว รองรับเมนูย่อยผ่าน `parent_id` (self-reference) ด้วย **มี UI ครบทั้ง desktop (dropdown เปิดตอน hover แบบ WP, ตัวคำหลักเป็นลิงก์จริงคลิกได้) และ mobile (hamburger + accordion เต็มความกว้าง) แล้ว** — ดูรายละเอียดหัวข้อ 1 — **หน้าแอดมินจัดการเมนู (ทำแล้ว)** `menu.php`: เพิ่ม/แก้/ลบเมนู, จำกัด parent dropdown ให้เลือกได้แค่เมนูระดับบนสุด (กันซ้อนเกิน 2 ชั้นที่ header.php รองรับจริง), เตือนก่อนลบเมนูที่มีลูกเพราะ FK ตั้ง `ON DELETE CASCADE` ไว้, เว้นช่องลำดับว่างไว้ให้ต่อท้ายอัตโนมัติ — ยังไม่ล็อกอินก่อนเข้าได้เหมือน settings.php (รอ Phase 3)
 - **บทความ (ทำแล้ว — ย้ายเข้า MySQL สมบูรณ์แล้ว)** — `includes/articles.php` มีฟังก์ชันกลางครบ (`getArticles()`, `getArticle($slug)`, `getArticleById($id)` ฯลฯ) คั่นกลางทุกหน้า อ่าน/เขียนตาราง `mblog_articles` จริง — พิสูจน์หลักการสำเร็จ: ตอนสลับจากไฟล์ json มา MySQL `index.php`/`article.php`/`editor.php` ไม่ต้องแก้โค้ด render เลยสักบรรทัด
 - **หมวดหมู่ (ทำแล้ว)** — เดิมวางแผนเป็นไฟล์ (`config/categories.php`) แต่เปลี่ยนใจทำเป็นตาราง `mblog_categories` ตั้งแต่ต้นเลย เพราะรู้ล่วงหน้าว่าจะมีหน้าแอดมินเพิ่ม/ลบหมวดในอนาคตแน่ๆ — ทำพร้อมกับตอนย้าย MySQL ครั้งเดียว ไม่ต้องย้ายซ้ำสองรอบ — **สีของ badge หมวดหมู่ก็ยึดหลักเดียวกัน**: เก็บเป็น "โทนสี" (`color` column, ไม่ใช่ hex ตรงๆ) ใน DB แทนที่จะ hardcode สีไว้ในโค้ด เพราะเหตุผลเดียวกันเป๊ะ — ดูหัวข้อ 3
-- **ค่าตั้งค่าเว็บ (ทำแล้ว)** — `config/settings.php` (ข้อมูล: `site_name`, `timezone`, `owner_email`, `footer_tagline`) ↔ `includes/settings.php` (`siteSetting($key)`) — ตรงข้ามกับหมวดหมู่/เมนู คือ**ตั้งใจให้ยังเป็นไฟล์อยู่** เพราะยังไม่มีความจำเป็นเร่งด่วนให้เป็นตาราง จนกว่าจะมีหน้าแอดมินจริง
+- **ค่าตั้งค่าเว็บ (ทำแล้ว)** — ย้ายจากไฟล์ `config/settings.php` เข้าตาราง `mblog_settings` (key/value) แล้ว พร้อมหน้าแอดมิน `settings.php` จริง (ฟอร์มแก้ `site_name`/`timezone`/`owner_email`/`footer_tagline`, validate, PRG pattern กันฟอร์ม resubmit) — ตรงตามเงื่อนไขเดิมที่บอกว่า "เป็นไฟล์จนกว่าจะมีหน้าแอดมินจริง" ตอนนี้มีแล้วเลยย้าย `includes/settings.php` (`siteSetting($key)`, `updateSiteSettings()`) ไปอ่าน/เขียน DB แทน — **ผลข้างเคียงที่ต้องแก้**: `config.php` ต้อง define ค่า `DB_*` ก่อน require `includes/settings.php` แล้ว (เดิม timezone ถูก set ก่อนมี DB credentials ด้วยซ้ำ เพราะตอนนั้นยังไม่ต้องพึ่ง DB) — ยังไม่ล็อกอินก่อนเข้าหน้านี้ได้ (รอ Phase 3)
 - **สิทธิ์ผู้ใช้** (แผนงาน) — `userCan()` แบบ capability-based ตามที่คุยไว้ในหัวข้อล็อกอิน (ดูหัวข้อ "ประเด็นที่วนกลับมาซ้ำๆ")
 
 ---
@@ -55,18 +55,20 @@
   - `api/save.php` — บันทึกบทความ/หน้าลง MySQL (คอลัมน์ `type` แยก post/page, หน้าไม่มีหมวดหมู่), sync รูปที่ใช้จริงเข้าตาราง `mblog_images`, บันทึก redirect อัตโนมัติถ้า slug เปลี่ยน — ระบุ "กำลังแก้บทความไหน" ด้วย `id` (ไม่ใช่ `slug` เพราะแก้ slug เองได้แล้ว)
   - `api/upload.php` — อัปโหลดรูป เก็บชื่อไฟล์เดิม (sanitize แบบ WP รองรับทุกภาษา ไม่สุ่มชื่อทิ้งเหมือนเดิม) แยกโฟลเดอร์ตามเดือน `uploads/YYYY/MM/`
   - `includes/articles.php` — ฟังก์ชันกลางอ่าน/เขียนบทความ+หน้าทั้งหมด (`getArticles()`, `getArticle()`, `getPages()`, `getPage()`, `getArticlesByCategorySlug()`, `getCategoryBySlug()`, `articleCategorySlug()`/`articleCategoryColor()`, `getArticleForEdit()`, `getArticleById()`, `getDraftArticles()`, `getCategories()`, `syncArticleImages()`, `sanitizeSlug()`/`uniqueSlug()`, `recordSlugRedirect()`/`findRedirectSlug()`)
-  - `includes/menu.php` — `getMenuItems()` อ่านเมนูจากตาราง `mblog_menu_items` (คืนเป็น tree รองรับเมนูย่อย)
-  - `includes/settings.php` — `siteSetting($key)` อ่านค่าตั้งค่าเว็บจาก `config/settings.php`
+  - `includes/menu.php` — `getMenuItems()` อ่านเมนูจากตาราง `mblog_menu_items` (คืนเป็น tree รองรับเมนูย่อย) + ฟังก์ชันสำหรับหน้าแอดมิน (`getAllMenuItems()`, `getTopLevelMenuItems()`, `getMenuItemById()`, `countMenuItemChildren()`, `nextMenuSortOrder()`, `createMenuItem()`/`updateMenuItem()`/`deleteMenuItem()`)
+  - `menu.php` — หน้าแอดมินจัดการเมนู (ยังไม่ล็อกอินก่อนเข้าได้ — รอ Phase 3) มีลิงก์ในเมนูหลักแล้ว
+  - `includes/settings.php` — `siteSetting($key)`/`updateSiteSettings()` อ่าน/เขียนค่าตั้งค่าเว็บจากตาราง `mblog_settings`
+  - `settings.php` — หน้าแอดมินตั้งค่าเว็บ (ยังไม่ล็อกอินก่อนเข้าได้ — รอ Phase 3) มีลิงก์ในเมนูหลักแล้ว — `require config.php` ตรงๆ ไม่ผ่าน `includes/articles.php` เหมือนหน้าอื่น เพราะไม่ใช้ฟังก์ชันบทความเลยสักตัว
   - `includes/db.php` — จุดเชื่อมต่อ MySQL (PDO) เดียวของทั้งแอป ทุกฟังก์ชันข้างบนเรียกผ่าน `db()`
-  - `config.php` (gitignored) / `config.example.php` — path, `APP_ENV`, DB credentials, บังคับ timezone ตายตัวจาก `config/settings.php` (กัน php.ini ของแต่ละเครื่อง/แต่ละ PHP ที่รันไม่ตรงกัน)
-  - `config/settings.php` — ค่าตั้งค่าเว็บ (`site_name`, `timezone`, `owner_email`, `footer_tagline`) ไฟล์ธรรมดา รอหน้าแอดมินในอนาคต
+  - `config.php` (gitignored) / `config.example.php` — path, `APP_ENV`, DB credentials (ต้อง define ก่อน require `includes/settings.php` เพราะ `siteSetting()` ต้องใช้ `db()` แล้ว), บังคับ timezone ตายตัวจาก `mblog_settings` (กัน php.ini ของแต่ละเครื่อง/แต่ละ PHP ที่รันไม่ตรงกัน)
   - `database/*.sql` — SQL migration แยกไฟล์ตาม Phase (`phase1_core.sql` ถึง `phase9_stats.sql`) ทุกตารางขึ้นต้นด้วย `mblog_` กันชนกับระบบอื่นถ้าต้องใช้ฐานข้อมูลร่วมกันบนโฮสที่มีได้แค่ DB เดียว
   - `uploads/YYYY/MM/` — เก็บรูปภาพที่แทรก แยกโฟลเดอร์ตามเดือนกันไฟล์บวมในโฟลเดอร์เดียว
   - `assets/base.css`, `layout.css`, `components.css`, `article.css`, `editor.css` — แยกจาก `style.css` ไฟล์เดียวเดิม (`editor.css` โหลดเฉพาะหน้าแก้ไข ไม่ส่งให้ผู้อ่านทั่วไป), `assets/editor.js`, `assets/copy-button.js`, `assets/menu.js` — เมนูย่อย desktop เปิดด้วย CSS `:hover`/`:focus-within` ล้วนๆ (ไม่ใช้ JS toggle อีกต่อไป เพราะตัวคำหลักกลายเป็นลิงก์จริงแล้ว), ส่วน mobile accordion ยังคลิกเปิด/ปิดผ่าน JS เหมือนเดิม (คนละ component กันกับ desktop โดยสิ้นเชิง)
 
-- **ฐานข้อมูล MySQL (`mblog`)** — ตาราง `mblog_*` ทั้งหมด 10 ตัว (คอลัมน์เต็มดู `database/*.sql`)
+- **ฐานข้อมูล MySQL (`mblog`)** — ตาราง `mblog_*` ทั้งหมด 11 ตัว (คอลัมน์เต็มดู `database/*.sql`)
   - ใช้งานจริงแล้ว (Phase 1): `mblog_articles` (มีคอลัมน์ `type` แยก post/page), `mblog_images`, `mblog_categories` (มีคอลัมน์ `color` เก็บโทนสี badge), `mblog_menu_items`, `mblog_slug_redirects`
   - ใช้งานจริงแล้ว (Phase 4): `mblog_tags`, `mblog_article_tag`
+  - ใช้งานจริงแล้ว (นอกแผน Phase เดิม — ย้ายจากไฟล์ตอนทำหน้าแอดมิน settings.php): `mblog_settings`
   - สร้างตารางไว้รอล่วงหน้าแล้ว แต่ยังไม่มีโค้ดใช้งาน (Phase 3/7/9): `mblog_users`, `mblog_comments`, `mblog_article_stats`
 
 - **ฟีเจอร์ตัวเขียน (เทียบเท่า WP editor พื้นฐาน)**
