@@ -13,5 +13,6 @@ INSERT INTO mblog_settings (setting_key, value) VALUES
     ('site_name', 'mBlog Web'),
     ('timezone', 'Asia/Bangkok'),
     ('owner_email', 'mblog@mblogofficial.com'),
-    ('footer_tagline', 'สร้างด้วย PHP ล้วนๆ กับ ai อยากทำเองใช้เอง')
+    ('footer_tagline', 'สร้างด้วย PHP ล้วนๆ กับ ai อยากทำเองใช้เอง'),
+    ('articles_per_page', '10')
 ON DUPLICATE KEY UPDATE value = VALUES(value);

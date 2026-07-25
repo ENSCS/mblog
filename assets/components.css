@@ -4,6 +4,48 @@
   padding: 20px;
   margin-bottom: 16px;
 }
+
+/* --- Admin dashboard (admin.php) --- */
+.admin-section-title {
+  font-size: 15px;
+  color: var(--text-muted);
+  margin: 24px 0 10px;
+}
+.admin-section-title:first-of-type {
+  margin-top: 0;
+}
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.dashboard-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 90px;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  text-align: center;
+  text-decoration: none;
+}
+.dashboard-card:hover {
+  background: var(--btn-secondary-bg-hover);
+}
+.dashboard-card-count {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.dashboard-card-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
 .article-list-item h2 {
   margin: 0 0 6px;
   font-size: 20px;
@@ -84,6 +126,29 @@
   margin-right: 8px;
 }
 .btn-secondary:hover { background: var(--btn-secondary-bg-hover); }
+
+/* Restyles the native file input's button (browser-default OS chrome
+   otherwise) to match .btn-secondary — ::file-selector-button is the
+   standard pseudo-element for this, supported in all current browsers. */
+input[type=file] {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+input[type=file]::file-selector-button {
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
+  border: 1px solid var(--btn-secondary-border);
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  margin-right: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+input[type=file]::file-selector-button:hover {
+  background: var(--btn-secondary-bg-hover);
+}
 #save-status {
   margin-left: 12px;
   font-size: 14px;
@@ -215,6 +280,116 @@ a.tag-badge:hover {
 }
 .row-actions button.link-danger:hover {
   text-decoration: underline;
+}
+.row-actions button.link-plain {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-primary);
+  text-decoration: none;
+  cursor: pointer;
+  margin-right: 12px;
+}
+.row-actions button.link-plain:hover {
+  text-decoration: underline;
+}
+
+/* --- manage-articles.php --- */
+.status-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.status-tab {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+.status-tab:hover {
+  background: var(--btn-secondary-bg-hover);
+}
+.status-tab-active {
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.filter-bar input[type=text],
+.filter-bar select,
+.filter-bar input[type=date] {
+  padding: 8px 10px;
+  font-size: 14px;
+  color: var(--input-text);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-md);
+  background: var(--input-bg);
+}
+.filter-date-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.bulk-bar select {
+  padding: 8px 10px;
+  font-size: 14px;
+  color: var(--input-text);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-md);
+  background: var(--input-bg);
+}
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 16px;
+  font-size: 14px;
+}
+.pagination a,
+.pagination span.pagination-current,
+.pagination span.pagination-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+}
+.pagination a {
+  color: var(--text-secondary);
+}
+.pagination a:hover {
+  background: var(--btn-secondary-bg-hover);
+}
+.pagination span.pagination-current {
+  background: var(--color-primary);
+  color: var(--text-on-primary);
+  font-weight: 600;
+}
+.pagination span.pagination-ellipsis {
+  color: var(--text-muted);
 }
 
 /* --- Mobile --- */

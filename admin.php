@@ -1,0 +1,53 @@
+<?php
+require __DIR__ . '/includes/articles.php';
+require __DIR__ . '/includes/menu.php';
+
+$draftCount = count(getDraftArticles());
+$articleCount = count(getArticles());
+$pageCount = count(getPages());
+$categoryCount = count(getAllCategories());
+$menuCount = count(getAllMenuItems());
+
+$pageTitle = 'จัดการเว็บ — ' . siteSetting('site_name');
+$topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
+include __DIR__ . '/partials/header.php';
+?>
+  <h1 class="article-title">จัดการเว็บ</h1>
+
+  <h2 class="admin-section-title">เนื้อหา</h2>
+  <div class="dashboard-grid">
+    <a class="dashboard-card" href="editor.php">
+      <div class="dashboard-card-label">+ เขียนบทความใหม่</div>
+    </a>
+    <a class="dashboard-card" href="manage-articles.php">
+      <div class="dashboard-card-label">จัดการบทความ</div>
+    </a>
+    <a class="dashboard-card" href="drafts.php">
+      <div class="dashboard-card-count"><?= $draftCount ?></div>
+      <div class="dashboard-card-label">ร่าง</div>
+    </a>
+    <a class="dashboard-card" href="articles.php">
+      <div class="dashboard-card-count"><?= $articleCount ?></div>
+      <div class="dashboard-card-label">บทความทั้งหมด</div>
+    </a>
+    <a class="dashboard-card" href="pages.php">
+      <div class="dashboard-card-count"><?= $pageCount ?></div>
+      <div class="dashboard-card-label">หน้า</div>
+    </a>
+  </div>
+
+  <h2 class="admin-section-title">ตั้งค่าเว็บ</h2>
+  <div class="dashboard-grid">
+    <a class="dashboard-card" href="settings.php">
+      <div class="dashboard-card-label">ตั้งค่าเว็บ</div>
+    </a>
+    <a class="dashboard-card" href="menu.php">
+      <div class="dashboard-card-count"><?= $menuCount ?></div>
+      <div class="dashboard-card-label">จัดการเมนู</div>
+    </a>
+    <a class="dashboard-card" href="categories.php">
+      <div class="dashboard-card-count"><?= $categoryCount ?></div>
+      <div class="dashboard-card-label">จัดการหมวดหมู่</div>
+    </a>
+  </div>
+<?php include __DIR__ . '/partials/footer.php'; ?>

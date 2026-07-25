@@ -18,9 +18,9 @@
   --color-accent-teal: #5db8a6;
   --color-accent-amber: #e8a55a;
 
-  --color-canvas: #faf9f5;
+  --color-canvas: #efe9de;
   --color-surface-soft: #f5f0e8;
-  --color-surface-card: #efe9de;
+  --color-surface-card: #faf9f5;
   --color-surface-cream-strong: #e8e0d2;
   --color-surface-dark: #181715;
   --color-surface-dark-elevated: #252320;
@@ -73,11 +73,11 @@
   --dropdown-bg: var(--color-surface-card);
   --dropdown-shadow: 0 4px 16px rgba(20, 20, 19, 0.10);
 
-  --input-bg: var(--color-canvas);
+  --input-bg: var(--color-surface-card);
   --input-border: var(--color-hairline);
   --input-text: var(--color-ink);
 
-  --btn-secondary-bg: var(--color-canvas);
+  --btn-secondary-bg: var(--color-surface-soft);
   --btn-secondary-border: var(--color-hairline);
   --btn-secondary-text: var(--color-ink);
   --btn-secondary-bg-hover: var(--color-surface-card);

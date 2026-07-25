@@ -10,6 +10,7 @@ $values = [
     'timezone' => siteSetting('timezone'),
     'owner_email' => siteSetting('owner_email'),
     'footer_tagline' => siteSetting('footer_tagline'),
+    'articles_per_page' => siteSetting('articles_per_page', 10),
 ];
 $errors = [];
 $saved = isset($_GET['saved']);
@@ -19,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $values['timezone'] = trim($_POST['timezone'] ?? '');
     $values['owner_email'] = trim($_POST['owner_email'] ?? '');
     $values['footer_tagline'] = trim($_POST['footer_tagline'] ?? '');
+    $values['articles_per_page'] = trim($_POST['articles_per_page'] ?? '');
 
     if ($values['site_name'] === '') {
         $errors[] = 'กรุณาใส่ชื่อเว็บ';
@@ -28,6 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if ($values['owner_email'] !== '' && !filter_var($values['owner_email'], FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'รูปแบบอีเมลไม่ถูกต้อง';
+    }
+    if (!ctype_digit((string) $values['articles_per_page']) || (int) $values['articles_per_page'] < 1) {
+        $errors[] = 'จำนวนบทความต่อหน้าต้องเป็นตัวเลขมากกว่า 0';
     }
 
     // Redirect-after-POST so a page refresh after saving doesn't resubmit the
@@ -76,6 +81,10 @@ include __DIR__ . '/partials/header.php';
       <div class="field">
         <label for="footer_tagline">ข้อความท้ายเว็บ (footer tagline, ไม่บังคับ)</label>
         <input type="text" id="footer_tagline" name="footer_tagline" value="<?= htmlspecialchars($values['footer_tagline']) ?>">
+      </div>
+      <div class="field">
+        <label for="articles_per_page">จำนวนบทความต่อหน้า (หน้ารายการบทความ)</label>
+        <input type="number" id="articles_per_page" name="articles_per_page" value="<?= htmlspecialchars((string) $values['articles_per_page']) ?>" min="1" style="max-width:100px;">
       </div>
       <button type="submit" class="btn">บันทึก</button>
     </form>
