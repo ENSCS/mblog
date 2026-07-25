@@ -1,0 +1,12 @@
+# User content — not code, and this repo is public. Real content stays out
+# until it's synced to the private repo mentioned in PLANNING.md.
+articles/*.json
+uploads/*
+!uploads/.gitkeep
+
+# Future config (DB credentials, API keys, etc.)
+config.php
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db
