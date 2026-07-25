@@ -1,26 +1,23 @@
 <?php
 require __DIR__ . '/includes/articles.php';
 
-$articles = getDraftArticles();
+$perPage = max(1, (int) siteSetting('articles_per_page', 10));
+$page = max(1, (int) ($_GET['page'] ?? 1));
+
+$result = getArticleList(['status' => 'draft'], $page, $perPage);
+$articles = $result['items'];
+$totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
 $pageTitle = 'ร่างบทความ — ' . siteSetting('site_name');
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 include __DIR__ . '/partials/header.php';
 ?>
-  <?php if (empty($articles)): ?>
-    <div class="empty-state">
-      ไม่มีร่างบทความ
-    </div>
-  <?php else: ?>
-    <?php foreach ($articles as $a): ?>
-      <div class="card article-list-item">
-        <h2><a href="editor.php?slug=<?= urlencode($a['slug']) ?>"><?= htmlspecialchars($a['title']) ?></a> <span class="status-badge status-draft">ร่าง</span> <span class="category-tag <?= $a['type'] === 'page' ? '' : 'category-tag-' . htmlspecialchars(articleCategoryColor($a)) ?>"><?= $a['type'] === 'page' ? 'หน้า' : htmlspecialchars(articleCategory($a)) ?></span></h2>
-        <?php // a draft that's never been published has no published_at yet — fall back to updated_at ?>
-        <div class="meta"><?= relativeTimeTag($a['published_at'] ?? $a['updated_at']) ?></div>
-        <div class="row-actions">
-          <a href="editor.php?slug=<?= urlencode($a['slug']) ?>">แก้ไข</a>
-        </div>
-      </div>
-    <?php endforeach; ?>
-  <?php endif; ?>
+  <?php
+  $emptyMessage = 'ไม่มีร่างบทความ';
+  $showCategoryBadge = true;
+  $showStatusBadge = true;
+  $linkToView = false;
+  $pageUrl = fn(int $p) => 'drafts.php?page=' . $p;
+  include __DIR__ . '/partials/article-list.php';
+  ?>
 <?php include __DIR__ . '/partials/footer.php'; ?>

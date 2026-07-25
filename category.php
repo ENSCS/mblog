@@ -7,27 +7,22 @@ if (!$category) {
     renderErrorPage(404, 'ไม่พบหมวดหมู่นี้');
 }
 
-$articles = getArticlesByCategorySlug($slug);
+$perPage = max(1, (int) siteSetting('articles_per_page', 10));
+$page = max(1, (int) ($_GET['page'] ?? 1));
+
+$result = getArticleList(['type' => 'post', 'status' => 'published', 'category_slug' => $slug], $page, $perPage);
+$articles = $result['items'];
+$totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
 $pageTitle = 'หมวด: ' . htmlspecialchars($category['name']) . ' — ' . siteSetting('site_name');
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 include __DIR__ . '/partials/header.php';
 ?>
   <h1 class="article-title"><?= htmlspecialchars($category['name']) ?></h1>
-  <?php if (empty($articles)): ?>
-    <div class="empty-state">
-      ยังไม่มีบทความในหมวดนี้
-    </div>
-  <?php else: ?>
-    <?php foreach ($articles as $a): ?>
-      <div class="card article-list-item">
-        <h2><a href="article.php?slug=<?= urlencode($a['slug']) ?>"><?= htmlspecialchars($a['title']) ?></a></h2>
-        <div class="meta"><?= relativeTimeTag($a['published_at']) ?></div>
-        <div class="row-actions">
-          <a href="article.php?slug=<?= urlencode($a['slug']) ?>">อ่าน</a>
-          <a href="editor.php?slug=<?= urlencode($a['slug']) ?>">แก้ไข</a>
-        </div>
-      </div>
-    <?php endforeach; ?>
-  <?php endif; ?>
+  <?php
+  $emptyMessage = 'ยังไม่มีบทความในหมวดนี้';
+  $showCategoryBadge = true;
+  $pageUrl = fn(int $p) => 'category.php?slug=' . urlencode($slug) . '&page=' . $p;
+  include __DIR__ . '/partials/article-list.php';
+  ?>
 <?php include __DIR__ . '/partials/footer.php'; ?>

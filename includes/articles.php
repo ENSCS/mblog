@@ -44,26 +44,25 @@ function categoryIdByName(string $name): ?int
     return $id !== false ? (int) $id : null;
 }
 
-// Articles with no category (legacy, or their category was deleted) — fall
-// back to the first configured category so they still show something.
-function articleCategory(array $article): string
+// Null when the article has no category — either it was never given one, or
+// its category was deleted (category_id gets set to NULL, not reassigned to
+// another category — see the FK in database/phase1_core.sql). Callers skip
+// the badge entirely in this case rather than showing a fake fallback category.
+function articleCategory(array $article): ?string
 {
-    $categories = getCategories();
-
-    return $article['category'] ?? $categories[0];
+    return $article['category'] ?? null;
 }
 
 // Slug for linking the category badge to category.php?slug=... — null (no
-// link, badge shows as plain text) when the article has no real category,
-// since there's no slug to fall back to for the "first category" case above.
+// badge at all) when the article has no category, same as articleCategory().
 function articleCategorySlug(array $article): ?string
 {
     return $article['category_slug'] ?? null;
 }
 
 // Color token for the category badge (see .category-tag-* in
-// assets/components.css) — falls back to "gray" (the original badge look)
-// when the article has no real category, same spirit as articleCategory().
+// assets/components.css) — only meaningful when articleCategory() is non-null;
+// callers that skip the badge for a null category never call this either.
 function articleCategoryColor(array $article): string
 {
     return $article['category_color'] ?? 'gray';
@@ -80,12 +79,81 @@ function getCategoryBySlug(string $slug): ?array
     return $row ?: null;
 }
 
-// Published posts within one category — powers category.php, which stays in
-// sync automatically as articles are added to/removed from the category
-// (no menu item to hand-maintain per article).
-function getArticlesByCategorySlug(string $slug): array
+// Full rows (id, slug, name, color, sort_order) for the admin screen —
+// unlike getCategories() this isn't just names, since the admin form needs
+// actual ids/colors/order to edit individual rows.
+function getAllCategories(): array
 {
-    return fetchArticles('c.slug = ? AND a.status = ? AND a.type = ?', [$slug, 'published', 'post'], 'a.published_at DESC');
+    return db()->query(
+        'SELECT id, slug, name, color, sort_order FROM mblog_categories ORDER BY sort_order'
+    )->fetchAll();
+}
+
+function getCategoryById(int $id): ?array
+{
+    $stmt = db()->prepare('SELECT id, slug, name, color, sort_order FROM mblog_categories WHERE id = ?');
+    $stmt->execute([$id]);
+    $row = $stmt->fetch();
+
+    return $row ?: null;
+}
+
+// Used by the admin form to warn before deleting a category that's still in
+// use — deleting is non-destructive either way (category_id has
+// ON DELETE SET NULL, articles just end up with no category — see
+// articleCategory()), but an author should know that's about to happen.
+function countArticlesInCategory(int $id): int
+{
+    $stmt = db()->prepare('SELECT COUNT(*) FROM mblog_articles WHERE category_id = ?');
+    $stmt->execute([$id]);
+
+    return (int) $stmt->fetchColumn();
+}
+
+// Auto-append-to-end default when the admin leaves "sort order" blank.
+function nextCategorySortOrder(): int
+{
+    $max = db()->query('SELECT MAX(sort_order) FROM mblog_categories')->fetchColumn();
+
+    return $max !== null ? ((int) $max + 1) : 1;
+}
+
+// True if another category already uses this slug — $excludeId lets a
+// category keep its own current slug when re-saved unchanged, same pattern
+// as slugExists() for articles.
+function categorySlugExists(string $slug, ?int $excludeId): bool
+{
+    if ($excludeId !== null) {
+        $stmt = db()->prepare('SELECT 1 FROM mblog_categories WHERE slug = ? AND id != ? LIMIT 1');
+        $stmt->execute([$slug, $excludeId]);
+    } else {
+        $stmt = db()->prepare('SELECT 1 FROM mblog_categories WHERE slug = ? LIMIT 1');
+        $stmt->execute([$slug]);
+    }
+
+    return (bool) $stmt->fetchColumn();
+}
+
+function createCategory(string $slug, string $name, string $color, int $sortOrder): void
+{
+    $stmt = db()->prepare(
+        'INSERT INTO mblog_categories (slug, name, color, sort_order, created_at) VALUES (?, ?, ?, ?, ?)'
+    );
+    $stmt->execute([$slug, $name, $color, $sortOrder, date('Y-m-d H:i:s')]);
+}
+
+function updateCategory(int $id, string $slug, string $name, string $color, int $sortOrder): void
+{
+    $stmt = db()->prepare(
+        'UPDATE mblog_categories SET slug = ?, name = ?, color = ?, sort_order = ? WHERE id = ?'
+    );
+    $stmt->execute([$slug, $name, $color, $sortOrder, $id]);
+}
+
+function deleteCategory(int $id): void
+{
+    $stmt = db()->prepare('DELETE FROM mblog_categories WHERE id = ?');
+    $stmt->execute([$id]);
 }
 
 // Uses the author-written excerpt if there is one, otherwise auto-generates
@@ -219,13 +287,18 @@ function relativeTimeTag(string $dateString): string
 // that makes sense for getDraftArticles() — a draft may have no published_at
 // at all yet. Published-only lists pass 'a.published_at DESC' explicitly, to
 // match the published_at now shown next to them (see relativeTimeTag()).
+//
+// "a.deleted_at IS NULL" is baked in here (not left to each caller) so a
+// trashed article can never leak back out through any of the functions below
+// — getArticlesForAdmin() is the one deliberate exception, and it bypasses
+// this helper entirely with its own query for exactly that reason.
 function fetchArticles(string $whereSql, array $params, string $orderBy = 'a.updated_at DESC'): array
 {
     $stmt = db()->prepare(
         'SELECT a.*, c.name AS category, c.slug AS category_slug, c.color AS category_color
          FROM mblog_articles a
          LEFT JOIN mblog_categories c ON a.category_id = c.id
-         WHERE ' . $whereSql . '
+         WHERE a.deleted_at IS NULL AND (' . $whereSql . ')
          ORDER BY ' . $orderBy
     );
     $stmt->execute($params);
@@ -239,7 +312,7 @@ function fetchOneArticle(string $whereSql, array $params): ?array
         'SELECT a.*, c.name AS category, c.slug AS category_slug, c.color AS category_color
          FROM mblog_articles a
          LEFT JOIN mblog_categories c ON a.category_id = c.id
-         WHERE ' . $whereSql . '
+         WHERE a.deleted_at IS NULL AND (' . $whereSql . ')
          LIMIT 1'
     );
     $stmt->execute($params);
@@ -248,25 +321,143 @@ function fetchOneArticle(string $whereSql, array $params): ?array
     return $row ? normalizeArticleRow($row) : null;
 }
 
+// Unified query behind the five "browse" screens (articles.php, pages.php,
+// category.php, tag.php, drafts.php) — one query builder instead of five
+// near-identical ones, so a new filter or pagination lands everywhere at
+// once instead of needing to be copied five times. $filters: type
+// ('post'/'page', omit for both — used by drafts.php which mixes them),
+// status ('published'/'draft', omit for either), category_slug, tag_slug.
+// $perPage = 0 means "no pagination, return every match in one page".
+// Returns ['items' => [...], 'total' => N] so the caller can render
+// "หน้า X จาก Y" without a second query.
+function getArticleList(array $filters, int $page = 1, int $perPage = 0): array
+{
+    $joinSql = '';
+    $joinParams = [];
+    if (!empty($filters['tag_slug'])) {
+        $joinSql = 'JOIN mblog_article_tag lat ON lat.article_id = a.id
+                    JOIN mblog_tags lt ON lt.id = lat.tag_id AND lt.slug = ?';
+        $joinParams[] = $filters['tag_slug'];
+    }
+
+    $where = ['a.deleted_at IS NULL'];
+    $params = [];
+    if (!empty($filters['type'])) {
+        $where[] = 'a.type = ?';
+        $params[] = $filters['type'];
+    }
+    if (!empty($filters['status'])) {
+        $where[] = 'a.status = ?';
+        $params[] = $filters['status'];
+    }
+    if (!empty($filters['category_slug'])) {
+        $where[] = 'c.slug = ?';
+        $params[] = $filters['category_slug'];
+    }
+
+    $whereSql = implode(' AND ', $where);
+    $allParams = array_merge($joinParams, $params);
+    // A draft may have no published_at yet, so drafts sort by edit-recency;
+    // everything else sorts by publish date, matching what's shown next to
+    // each item (see relativeTimeTag() calls in partials/article-list.php).
+    $orderBy = ($filters['status'] ?? '') === 'draft' ? 'a.updated_at DESC' : 'a.published_at DESC';
+
+    $countStmt = db()->prepare(
+        "SELECT COUNT(*) FROM mblog_articles a
+         LEFT JOIN mblog_categories c ON a.category_id = c.id
+         $joinSql
+         WHERE $whereSql"
+    );
+    $countStmt->execute($allParams);
+    $total = (int) $countStmt->fetchColumn();
+
+    // $perPage/$offset are inlined (not bound as ? params) — same reasoning
+    // as getArticlesForAdmin(): PDO's LIMIT/OFFSET binding is unreliable
+    // across drivers, and both are already int-cast so there's no injection risk.
+    $limitSql = '';
+    if ($perPage > 0) {
+        $perPage = max(1, $perPage);
+        $offset = max(0, ($page - 1) * $perPage);
+        $limitSql = "LIMIT $perPage OFFSET $offset";
+    }
+
+    $stmt = db()->prepare(
+        "SELECT a.*, c.name AS category, c.slug AS category_slug, c.color AS category_color
+         FROM mblog_articles a
+         LEFT JOIN mblog_categories c ON a.category_id = c.id
+         $joinSql
+         WHERE $whereSql
+         ORDER BY $orderBy
+         $limitSql"
+    );
+    $stmt->execute($allParams);
+    $items = array_map('normalizeArticleRow', $stmt->fetchAll());
+
+    return ['items' => $items, 'total' => $total];
+}
+
+// article.php for a post, page.php for a page — the "read this" link shown
+// by partials/article-list.php whenever an item is published.
+function articleViewUrl(array $article): string
+{
+    $script = ($article['type'] ?? 'post') === 'page' ? 'page.php' : 'article.php';
+
+    return $script . '?slug=' . urlencode($article['slug']);
+}
+
 // Public article list — published posts only (not pages — see getPages()).
+// Thin wrapper kept for sitemap.php/admin.php, which want every match in one
+// go rather than one page at a time.
 function getArticles(): array
 {
-    return fetchArticles('a.status = ? AND a.type = ?', ['published', 'post'], 'a.published_at DESC');
+    return getArticleList(['type' => 'post', 'status' => 'published'])['items'];
+}
+
+// Which page numbers to show in a WP-style pagination bar (1, current-delta
+// .. current+delta, total — with '...' filling any gap) instead of every
+// single page number once there are many. Returns a flat list of ints and
+// '...' strings for the template to loop over; page-1 and last-page links
+// are handled separately by the template since they're always shown, not
+// windowed.
+function paginationWindow(int $current, int $total, int $delta = 2): array
+{
+    $range = [];
+    for ($i = max(1, $current - $delta); $i <= min($total, $current + $delta); $i++) {
+        $range[] = $i;
+    }
+
+    if ($range[0] > 1) {
+        if ($range[0] > 2) {
+            array_unshift($range, '...');
+        }
+        array_unshift($range, 1);
+    }
+
+    $last = end($range);
+    if ($last < $total) {
+        if ($last < $total - 1) {
+            $range[] = '...';
+        }
+        $range[] = $total;
+    }
+
+    return $range;
 }
 
 // Public page list — published pages only (About/Contact/Privacy Policy/...).
 // Pages aren't browsed as a feed like posts; mainly used by sitemap.php.
 function getPages(): array
 {
-    return fetchArticles('a.status = ? AND a.type = ?', ['published', 'page'], 'a.published_at DESC');
+    return getArticleList(['type' => 'page', 'status' => 'published'])['items'];
 }
 
 // Draft list — for the "ร่าง" screen so drafts stay findable now that they're
-// hidden from the public list. No ownership check yet (no login system exists
-// yet — see PLANNING.md), so this is visible to anyone for now.
+// hidden from the public list, and for admin.php's count. No ownership check
+// yet (no login system exists yet — see PLANNING.md), so this is visible to
+// anyone for now.
 function getDraftArticles(): array
 {
-    return fetchArticles('a.status = ?', ['draft']);
+    return getArticleList(['status' => 'draft'])['items'];
 }
 
 // Public single-article lookup — published posts only (a draft's URL is not
@@ -295,6 +486,164 @@ function getArticleForEdit(string $slug): ?array
 function getArticleById(int $id): ?array
 {
     return fetchOneArticle('a.id = ?', [$id]);
+}
+
+// Counts for the status tabs on manage-articles.php ("ทั้งหมด (N)" etc.) —
+// one query instead of 4, since the admin screen needs all of them at once
+// on every load regardless of which tab is active.
+function getArticleStatusCounts(): array
+{
+    $row = db()->query(
+        "SELECT
+            SUM(CASE WHEN deleted_at IS NULL THEN 1 ELSE 0 END) AS all_count,
+            SUM(CASE WHEN deleted_at IS NULL AND status = 'published' THEN 1 ELSE 0 END) AS published_count,
+            SUM(CASE WHEN deleted_at IS NULL AND status = 'draft' THEN 1 ELSE 0 END) AS draft_count,
+            SUM(CASE WHEN deleted_at IS NOT NULL THEN 1 ELSE 0 END) AS trash_count
+         FROM mblog_articles WHERE type = 'post'"
+    )->fetch();
+
+    return [
+        'all' => (int) $row['all_count'],
+        'published' => (int) $row['published_count'],
+        'draft' => (int) $row['draft_count'],
+        'trash' => (int) $row['trash_count'],
+    ];
+}
+
+// Backs manage-articles.php — deliberately bypasses fetchArticles() (which
+// always excludes trashed rows) since this is the one screen that needs to
+// see into the trash. $filters: status ('all'/'published'/'draft'/'trash'),
+// search (title LIKE), category_id, tag_slug, date_from/date_to (against
+// created_at, not published_at — a draft may never have a published_at).
+// Returns ['items' => [...], 'total' => N] so the caller can paginate.
+function getArticlesForAdmin(array $filters, int $page, int $perPage): array
+{
+    $joinSql = '';
+    $joinParams = [];
+    if (!empty($filters['tag_slug'])) {
+        $joinSql = 'JOIN mblog_article_tag fat ON fat.article_id = a.id
+                    JOIN mblog_tags ft ON ft.id = fat.tag_id AND ft.slug = ?';
+        $joinParams[] = $filters['tag_slug'];
+    }
+
+    $where = ['a.type = ?'];
+    $params = ['post'];
+
+    $status = $filters['status'] ?? 'all';
+    if ($status === 'trash') {
+        $where[] = 'a.deleted_at IS NOT NULL';
+    } else {
+        $where[] = 'a.deleted_at IS NULL';
+        if (in_array($status, ['published', 'draft'], true)) {
+            $where[] = 'a.status = ?';
+            $params[] = $status;
+        }
+    }
+
+    if (($filters['search'] ?? '') !== '') {
+        $where[] = 'a.title LIKE ?';
+        $params[] = '%' . $filters['search'] . '%';
+    }
+    if (!empty($filters['category_id'])) {
+        $where[] = 'a.category_id = ?';
+        $params[] = (int) $filters['category_id'];
+    }
+    if (($filters['date_from'] ?? '') !== '') {
+        $where[] = 'a.created_at >= ?';
+        $params[] = $filters['date_from'] . ' 00:00:00';
+    }
+    if (($filters['date_to'] ?? '') !== '') {
+        $where[] = 'a.created_at <= ?';
+        $params[] = $filters['date_to'] . ' 23:59:59';
+    }
+
+    $whereSql = implode(' AND ', $where);
+    $allParams = array_merge($joinParams, $params);
+
+    $countStmt = db()->prepare("SELECT COUNT(*) FROM mblog_articles a $joinSql WHERE $whereSql");
+    $countStmt->execute($allParams);
+    $total = (int) $countStmt->fetchColumn();
+
+    // $perPage/$offset are inlined (not bound as ? params) — PDO's LIMIT/OFFSET
+    // binding is unreliable across drivers, and both are already int-cast
+    // above/below so there's no injection risk.
+    $perPage = max(1, $perPage);
+    $offset = max(0, ($page - 1) * $perPage);
+    $stmt = db()->prepare(
+        "SELECT a.*, c.name AS category, c.slug AS category_slug, c.color AS category_color
+         FROM mblog_articles a
+         LEFT JOIN mblog_categories c ON a.category_id = c.id
+         $joinSql
+         WHERE $whereSql
+         ORDER BY a.created_at DESC
+         LIMIT $perPage OFFSET $offset"
+    );
+    $stmt->execute($allParams);
+    $items = array_map('normalizeArticleRow', $stmt->fetchAll());
+
+    return ['items' => $items, 'total' => $total];
+}
+
+// Moves articles to the trash — sets deleted_at instead of touching status,
+// so restoreArticles() knows whether to bring each one back as a draft or
+// as published. $ids empty is a no-op (not an error) so callers don't need
+// to special-case "nothing selected".
+function bulkTrashArticles(array $ids): void
+{
+    if (!$ids) {
+        return;
+    }
+    $stmt = db()->prepare('UPDATE mblog_articles SET deleted_at = ? WHERE id = ?');
+    $now = date('Y-m-d H:i:s');
+    foreach ($ids as $id) {
+        $stmt->execute([$now, (int) $id]);
+    }
+}
+
+function bulkRestoreArticles(array $ids): void
+{
+    if (!$ids) {
+        return;
+    }
+    $stmt = db()->prepare('UPDATE mblog_articles SET deleted_at = NULL WHERE id = ?');
+    foreach ($ids as $id) {
+        $stmt->execute([(int) $id]);
+    }
+}
+
+// Only reachable from the trash tab — permanent, no recovery. DB cascades
+// the tag/image/redirect rows via FK, same as everywhere else in this app;
+// uploaded files on disk are left untouched (same reasoning as
+// syncArticleImages() — never auto-delete a file that might still be used).
+function bulkPermanentlyDeleteArticles(array $ids): void
+{
+    if (!$ids) {
+        return;
+    }
+    $stmt = db()->prepare('DELETE FROM mblog_articles WHERE id = ?');
+    foreach ($ids as $id) {
+        $stmt->execute([(int) $id]);
+    }
+}
+
+// Bulk publish/unpublish from manage-articles.php — same published_at-set-
+// once rule as api/save.php (switching back to draft and republishing later
+// doesn't reset it).
+function bulkUpdateArticleStatus(array $ids, string $status): void
+{
+    if (!$ids || !in_array($status, ['draft', 'published'], true)) {
+        return;
+    }
+    $now = date('Y-m-d H:i:s');
+    $stmt = db()->prepare(
+        "UPDATE mblog_articles
+         SET status = ?, updated_at = ?,
+             published_at = CASE WHEN ? = 'published' AND published_at IS NULL THEN ? ELSE published_at END
+         WHERE id = ?"
+    );
+    foreach ($ids as $id) {
+        $stmt->execute([$status, $now, $status, $now, (int) $id]);
+    }
 }
 
 // Same idea as the upload filename sanitizer in api/upload.php, but lower-
@@ -468,24 +817,6 @@ function getTagBySlug(string $slug): ?array
     $row = $stmt->fetch();
 
     return $row ?: null;
-}
-
-// Published posts carrying one tag — powers tag.php, same shape as
-// getArticlesByCategorySlug() but joined through the many-to-many tables.
-function getArticlesByTagSlug(string $slug): array
-{
-    $stmt = db()->prepare(
-        'SELECT a.*, c.name AS category, c.slug AS category_slug, c.color AS category_color
-         FROM mblog_articles a
-         LEFT JOIN mblog_categories c ON a.category_id = c.id
-         JOIN mblog_article_tag at ON at.article_id = a.id
-         JOIN mblog_tags t ON t.id = at.tag_id
-         WHERE t.slug = ? AND a.status = ? AND a.type = ?
-         ORDER BY a.published_at DESC'
-    );
-    $stmt->execute([$slug, 'published', 'post']);
-
-    return array_map('normalizeArticleRow', $stmt->fetchAll());
 }
 
 // Tags are freeform (unlike category, there's no admin-curated list) — an

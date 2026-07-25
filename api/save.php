@@ -25,17 +25,16 @@ if ($featuredImage !== '' && (
 }
 
 // Pages don't have a category — it's a blog-content concept, doesn't apply
-// to a standalone page like "About"/"Privacy Policy".
+// to a standalone page like "About"/"Privacy Policy". For posts, category is
+// optional — an empty (or unrecognized, e.g. a since-deleted category) value
+// means "no category" rather than silently falling back to the first one.
 if ($type === 'page') {
     $categoryId = null;
     $tagNames = [];
 } else {
     $categories = getCategories();
     $category = isset($data['category']) ? trim($data['category']) : '';
-    if (!in_array($category, $categories, true)) {
-        $category = $categories[0];
-    }
-    $categoryId = categoryIdByName($category);
+    $categoryId = in_array($category, $categories, true) ? categoryIdByName($category) : null;
     $tagNames = isset($data['tags']) && is_array($data['tags']) ? $data['tags'] : [];
 }
 

@@ -1,27 +1,22 @@
 <?php
 require __DIR__ . '/includes/articles.php';
 
-$pages = getPages();
+$perPage = max(1, (int) siteSetting('articles_per_page', 10));
+$page = max(1, (int) ($_GET['page'] ?? 1));
+
+$result = getArticleList(['type' => 'page', 'status' => 'published'], $page, $perPage);
+$articles = $result['items'];
+$totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
 $pageTitle = 'หน้าทั้งหมด — ' . siteSetting('site_name');
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 include __DIR__ . '/partials/header.php';
 ?>
   <h1 class="article-title">หน้าทั้งหมด</h1>
-  <?php if (empty($pages)): ?>
-    <div class="empty-state">
-      ยังไม่มีหน้า
-    </div>
-  <?php else: ?>
-    <?php foreach ($pages as $p): ?>
-      <div class="card article-list-item">
-        <h2><a href="page.php?slug=<?= urlencode($p['slug']) ?>"><?= htmlspecialchars($p['title']) ?></a></h2>
-        <div class="meta"><?= relativeTimeTag($p['published_at']) ?></div>
-        <div class="row-actions">
-          <a href="page.php?slug=<?= urlencode($p['slug']) ?>">อ่าน</a>
-          <a href="editor.php?slug=<?= urlencode($p['slug']) ?>">แก้ไข</a>
-        </div>
-      </div>
-    <?php endforeach; ?>
-  <?php endif; ?>
+  <?php
+  $emptyMessage = 'ยังไม่มีหน้า';
+  $showCategoryBadge = false;
+  $pageUrl = fn(int $p) => 'pages.php?page=' . $p;
+  include __DIR__ . '/partials/article-list.php';
+  ?>
 <?php include __DIR__ . '/partials/footer.php'; ?>

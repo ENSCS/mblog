@@ -6,7 +6,7 @@ $article = getArticleForEdit($slug);
 $currentStatus = $article ? articleStatus($article) : 'draft';
 $currentType = $article['type'] ?? 'post';
 $categories = getCategories();
-$currentCategory = $article ? articleCategory($article) : $categories[0];
+$currentCategory = $article ? (articleCategory($article) ?? '') : '';
 $currentFeaturedImage = $article['featured_image'] ?? '';
 $currentTags = $article ? array_column(getArticleTags($article['id']), 'name') : [];
 $allTagNames = array_column(getAllTags(), 'name');
@@ -60,6 +60,7 @@ include __DIR__ . '/partials/header.php';
   <div class="field" id="category-field" style="display:<?= $currentType === 'page' ? 'none' : 'block' ?>;">
     <label for="category">หมวดหมู่</label>
     <select id="category">
+      <option value="" <?= $currentCategory === '' ? 'selected' : '' ?>>ไม่ระบุหมวดหมู่</option>
       <?php foreach ($categories as $cat): ?>
         <option value="<?= htmlspecialchars($cat) ?>" <?= $cat === $currentCategory ? 'selected' : '' ?>><?= htmlspecialchars($cat) ?></option>
       <?php endforeach; ?>
