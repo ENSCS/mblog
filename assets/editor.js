@@ -436,7 +436,7 @@ function applyImageCaption(imgEl) {
   }
 }
 
-function saveArticle(quill, slug) {
+function saveArticle(quill, slug, status) {
   const title = document.getElementById('title').value.trim();
   const statusEl = document.getElementById('save-status');
   if (!title) {
@@ -450,24 +450,29 @@ function saveArticle(quill, slug) {
   linkifyPlainTextInDom(clone);
   expandImageCaptions(clone);
 
-  statusEl.textContent = 'กำลังบันทึก...';
+  statusEl.textContent = status === 'published' ? 'กำลังเผยแพร่...' : 'กำลังบันทึกร่าง...';
   fetch('api/save.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       slug: slug || '',
       title: title,
-      content: clone.innerHTML
+      content: clone.innerHTML,
+      status: status
     })
   })
     .then(r => r.json())
     .then(data => {
       if (data.success) {
-        statusEl.textContent = 'บันทึกแล้ว';
+        statusEl.textContent = data.status === 'published' ? 'เผยแพร่แล้ว' : 'บันทึกร่างแล้ว';
         document.getElementById('slug').value = data.slug;
         window.history.replaceState({}, '', 'editor.php?slug=' + data.slug);
         document.getElementById('view-link').href = 'article.php?slug=' + data.slug;
         document.getElementById('view-link').style.display = 'inline';
+
+        const badge = document.getElementById('status-badge');
+        badge.textContent = data.status === 'published' ? 'เผยแพร่แล้ว' : 'ร่าง';
+        badge.className = 'status-badge status-' + data.status;
       } else {
         statusEl.textContent = '';
         alert('บันทึกไม่สำเร็จ: ' + (data.error || 'unknown error'));

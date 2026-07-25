@@ -15,6 +15,15 @@ body {
   color: #fff;
   padding: 14px 20px;
 }
+.site-footer {
+  border-top: 1px solid #e5e7eb;
+  color: #888;
+  font-size: 13px;
+  text-align: center;
+}
+.site-footer .container {
+  padding: 20px;
+}
 .topbar .container {
   padding: 0;
   display: flex;
@@ -25,6 +34,22 @@ body {
   color: #fff;
   text-decoration: none;
   font-weight: 600;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.topbar-menu {
+  display: flex;
+  gap: 16px;
+}
+.topbar-menu a {
+  font-weight: 500;
+  opacity: 0.85;
+}
+.topbar-menu a:hover {
+  opacity: 1;
 }
 .topbar .actions a {
   background: #2563eb;
@@ -92,6 +117,13 @@ body {
   cursor: pointer;
 }
 .btn:hover { background: #1d4ed8; }
+.btn-secondary {
+  background: #fff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  margin-right: 8px;
+}
+.btn-secondary:hover { background: #f3f4f6; }
 #save-status {
   margin-left: 12px;
   font-size: 14px;
@@ -101,6 +133,21 @@ body {
   display: flex;
   align-items: center;
   margin-top: 16px;
+}
+.status-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-left: 12px;
+}
+.status-draft {
+  background: #fef3c7;
+  color: #92400e;
+}
+.status-published {
+  background: #dcfce7;
+  color: #166534;
 }
 
 /* --- Rendered article content --- */

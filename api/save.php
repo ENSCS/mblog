@@ -1,7 +1,6 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
-
-$articlesDir = __DIR__ . '/../articles/';
+require __DIR__ . '/../includes/articles.php';
 
 $raw = file_get_contents('php://input');
 $data = json_decode($raw, true);
@@ -9,6 +8,7 @@ $data = json_decode($raw, true);
 $title = isset($data['title']) ? trim($data['title']) : '';
 $content = isset($data['content']) ? $data['content'] : '';
 $slug = isset($data['slug']) ? trim($data['slug']) : '';
+$status = (isset($data['status']) && $data['status'] === 'published') ? 'published' : 'draft';
 
 if ($title === '') {
     http_response_code(400);
@@ -18,30 +18,33 @@ if ($title === '') {
 
 // Only accept an existing slug that matches our safe pattern and file;
 // otherwise generate a fresh one to avoid path traversal / overwrite risk.
-$isValidExistingSlug = $slug !== ''
-    && preg_match('/^[a-z0-9\-]+$/', $slug)
-    && is_file($articlesDir . $slug . '.json');
+$existing = ($slug !== '') ? getArticleForEdit($slug) : null;
 
-if (!$isValidExistingSlug) {
+if (!$existing) {
     $slug = date('Ymd-His') . '-' . substr(bin2hex(random_bytes(3)), 0, 6);
 }
 
 $now = date('c');
-$existing = null;
-if ($isValidExistingSlug) {
-    $existing = json_decode(file_get_contents($articlesDir . $slug . '.json'), true);
+
+// published_at is set once, the first time an article goes live, and kept
+// after that — switching back to draft and re-publishing doesn't reset it.
+$publishedAt = $existing['published_at'] ?? null;
+if ($status === 'published' && $publishedAt === null) {
+    $publishedAt = $now;
 }
 
 $article = [
     'slug' => $slug,
     'title' => $title,
     'content' => $content,
+    'status' => $status,
     'created_at' => $existing['created_at'] ?? $now,
+    'published_at' => $publishedAt,
     'updated_at' => $now,
 ];
 
 $ok = file_put_contents(
-    $articlesDir . $slug . '.json',
+    getArticlesDir() . $slug . '.json',
     json_encode($article, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
 );
 
@@ -51,4 +54,4 @@ if ($ok === false) {
     exit;
 }
 
-echo json_encode(['success' => true, 'slug' => $slug]);
+echo json_encode(['success' => true, 'slug' => $slug, 'status' => $status]);

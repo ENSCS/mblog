@@ -1,7 +1,8 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
+require __DIR__ . '/../config.php';
 
-$uploadsDir = __DIR__ . '/../uploads/';
+$uploadsDir = UPLOADS_DIR;
 $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
 if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
