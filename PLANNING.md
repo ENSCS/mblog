@@ -111,6 +111,14 @@
 - Scheduled publish (ไว้ทำทีหลัง): ไม่ต้องมี cron job แยก แค่เทียบ `published_at <= เวลาปัจจุบัน` ตอน query
 - editor.php ควรแยกปุ่ม "บันทึกร่าง" กับ "เผยแพร่" ชัดเจน (แบบ WP)
 
+### 9. โครงสร้างเก็บรูปภาพ/ไฟล์ + แผน backup/migrate
+- ตอนนี้ (ไฟล์): `articles/*.json` + `uploads/` แบบ flat ทั้งคู่ — backup เต็มระบบง่ายมาก (แค่ copy/rsync/tar 2 โฟลเดอร์นี้ ไม่มี DB ต้อง dump)
+- **ย้ายเฉพาะบางบทความจาก local → โฮสจริง** เป็นจุดที่โครงสร้าง flat มีปัญหา: `uploads/` ไม่รู้ว่ารูปไหนเป็นของบทความไหน ต้อง parse เนื้อหา HTML หา path รูปเองถึงจะย้ายได้ครบ
+- พอมี MySQL: เพิ่มตาราง `images` (id, `article_id` FK, path, caption, created_at) ผูกรูปกับบทความด้วย foreign key แทนการเดาจาก path/parse HTML — ทำให้ backup/migrate เฉพาะบทความแม่นยำ (query หา path จาก `article_id` ได้ตรงๆ)
+- **โฟลเดอร์บนดิสก์เมื่อมี DB แล้ว**: ไม่ต้องผูกกับ slug/บทความอีกต่อไป (DB จัดการความสัมพันธ์แทนแล้ว) เหลือแค่แบ่งเพื่อสุขภาพ filesystem เท่านั้น → เลือกแบบ **รายเดือน** `uploads/YYYY/MM/` (เช่น `uploads/2026/07/xxxx.png`) ตามแนวทาง WordPress กัน `uploads/` บวมเป็นหมื่นไฟล์ในโฟลเดอร์เดียว
+- **แนวคิด backup/restore/migrate เมื่อมี DB**: กลายเป็น 2 ส่วนคู่กันเสมอ — `mysqldump` (หรือ export เฉพาะแถวที่ต้องการ) + rsync ไฟล์ใน `uploads/` ตาม path ที่ query ได้จากตาราง `images`
+- ใช้ `id` (auto-increment) เป็น primary key ภายในตาราง `articles`/`images`, ให้ `slug` เป็นแค่ unique column สำหรับ URL เท่านั้น — กันไม่ให้กระทบ foreign key ถ้าวันหนึ่งอยากเปลี่ยน slug ของบทความ
+
 ---
 
 ## ประเด็นที่วนกลับมาซ้ำๆ (dependency สำคัญ)
@@ -130,6 +138,7 @@
 - จังหวะย้ายจากไฟล์ JSON ไป MySQL (ตอนนี้บาง feature ทำบนไฟล์ได้ เช่น draft/tag แต่บาง feature ต้องรอ MySQL เช่น comment)
 - โครงสร้างแยกโมดูล `/blog` `/course` `/stock` จะเริ่มทำเมื่อไหร่
 - รูปแบบระบบล็อกอิน (username/password เอง vs OAuth vs อื่นๆ)
+- จังหวะเริ่มแบ่ง `uploads/` เป็นรายเดือน (`uploads/YYYY/MM/`) — ผูกกับจังหวะย้ายไป MySQL ข้างบน ไม่รีบทำตอนไฟล์ยังน้อย
 
 ---
 
