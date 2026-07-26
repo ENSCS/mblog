@@ -180,13 +180,44 @@ function articleExcerpt(array $article): string
     return $truncated . '…';
 }
 
-// First paragraph of the actual content (not the manually-written excerpt —
-// that's for meta description/OG tags, a different job) trimmed to $maxLength
-// at a word boundary, so a card on articles.php/pages.php/category.php/
-// tag.php/drafts.php gets a taste of the article without overflowing the
-// card no matter how long the first paragraph runs.
-function articleContentPreview(array $article, int $maxLength = 500): string
+// Thai has no spaces between words, so cutting at "the last space before
+// $maxLength" (which works for English) can badly misfire — e.g. "TNP
+// ประกอบธุรกิจ..." has its only early space right after "TNP", so that
+// approach chopped the whole preview down to just "TNP". A plain
+// character-count cut instead can land mid-syllable in a way that reads as
+// broken — Thai vowel signs ั/็ (mai han akat/mai taikhu) always need a
+// following final consonant and can never end a syllable on their own, and
+// เ/แ/โ/ใ/ไ are written *before* the consonant they belong to — so "ตัด" (cut)
+// truncated to 2 characters becomes the meaningless "ตั" instead of "ต".
+// This isn't full Thai word segmentation (that needs a dictionary — ICU's
+// IntlBreakIterator can technically do it, but its Thai dictionary data
+// isn't reliably present, and produced garbage boundaries when tried here)
+// — it only backs off far enough to avoid landing on one of those, which
+// covers the common case without a dependency. Vowel signs that CAN validly
+// end a word on their own (ี/ู/่ etc. — ดู, ไม่, สี, ...) are deliberately
+// left alone.
+function trimTrailingThaiIncomplete(string $text): string
 {
+    while ($text !== '' && preg_match('/[\x{0E31}\x{0E40}-\x{0E44}\x{0E47}]$/u', $text)) {
+        $text = mb_substr($text, 0, -1);
+    }
+
+    return $text;
+}
+
+// First paragraph of the actual content (not the manually-written excerpt —
+// that's for meta description/OG tags, a different job) trimmed to
+// $maxLength characters (see trimTrailingThaiIncomplete() above for why this
+// is a plain character cut, not a word-boundary one), so a card on
+// articles.php/pages.php/category.php/tag.php/drafts.php gets a taste of the
+// article without overflowing the card no matter how long the first
+// paragraph runs. $maxLength defaults to the site's preview_max_length
+// setting (settings.php) — null (not a literal 500) since a function call
+// isn't a legal PHP default value; pass an explicit int to override it for
+// one call.
+function articleContentPreview(array $article, ?int $maxLength = null): string
+{
+    $maxLength = $maxLength ?? (int) siteSetting('preview_max_length', 500);
     $content = $article['content'] ?? '';
     $firstParagraph = preg_match('/<p[^>]*>(.*?)<\/p>/is', $content, $m) ? $m[1] : $content;
 
@@ -195,11 +226,7 @@ function articleContentPreview(array $article, int $maxLength = 500): string
         return $text;
     }
 
-    $truncated = mb_substr($text, 0, $maxLength);
-    $lastSpace = mb_strrpos($truncated, ' ');
-    if ($lastSpace !== false) {
-        $truncated = mb_substr($truncated, 0, $lastSpace);
-    }
+    $truncated = trimTrailingThaiIncomplete(mb_substr($text, 0, $maxLength));
 
     return $truncated . '…';
 }

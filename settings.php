@@ -63,6 +63,7 @@ $values = [
     'owner_email' => siteSetting('owner_email'),
     'footer_tagline' => siteSetting('footer_tagline'),
     'articles_per_page' => siteSetting('articles_per_page', 10),
+    'preview_max_length' => siteSetting('preview_max_length', 500),
     'site_logo' => siteSetting('site_logo', ''),
     'site_favicon' => siteSetting('site_favicon', ''),
     'site_tagline' => siteSetting('site_tagline', ''),
@@ -79,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $values['owner_email'] = trim($_POST['owner_email'] ?? '');
     $values['footer_tagline'] = trim($_POST['footer_tagline'] ?? '');
     $values['articles_per_page'] = trim($_POST['articles_per_page'] ?? '');
+    $values['preview_max_length'] = trim($_POST['preview_max_length'] ?? '');
     $values['site_tagline'] = trim($_POST['site_tagline'] ?? '');
     $values['site_tagline_enabled'] = !empty($_POST['site_tagline_enabled']) ? '1' : '0';
     $values['sidebar_position'] = ($_POST['sidebar_position'] ?? '') === 'left' ? 'left' : 'right';
@@ -95,6 +97,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (!ctype_digit((string) $values['articles_per_page']) || (int) $values['articles_per_page'] < 1) {
         $errors[] = 'จำนวนบทความต่อหน้าต้องเป็นตัวเลขมากกว่า 0';
+    }
+    if (!ctype_digit((string) $values['preview_max_length']) || (int) $values['preview_max_length'] < 1) {
+        $errors[] = 'ความยาวตัวอย่างเนื้อหาต้องเป็นตัวเลขมากกว่า 0';
     }
 
     // File uploads are only handled once the fields above are already valid —
@@ -207,6 +212,10 @@ include __DIR__ . '/partials/header.php';
       <div class="field">
         <label for="articles_per_page">จำนวนบทความต่อหน้า (หน้ารายการบทความ)</label>
         <input type="number" id="articles_per_page" name="articles_per_page" value="<?= htmlspecialchars((string) $values['articles_per_page']) ?>" min="1" style="max-width:100px;">
+      </div>
+      <div class="field">
+        <label for="preview_max_length">ความยาวตัวอย่างเนื้อหาสูงสุด (ตัวอักษร, แสดงในการ์ดรายการบทความ)</label>
+        <input type="number" id="preview_max_length" name="preview_max_length" value="<?= htmlspecialchars((string) $values['preview_max_length']) ?>" min="1" style="max-width:100px;">
       </div>
       <div class="field">
         <label style="font-weight:normal; display:flex; align-items:center; gap:6px;">
