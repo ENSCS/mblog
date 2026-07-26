@@ -43,6 +43,10 @@ $pageUrl = $pageUrl ?? null;
         <?php endif; ?>
       </h2>
       <div class="meta"><?= relativeTimeTag($a['published_at'] ?? $a['updated_at']) ?></div>
+      <?php $preview = articleContentPreview($a); ?>
+      <?php if ($preview !== ''): ?>
+        <p class="article-preview"><?= htmlspecialchars($preview) ?></p>
+      <?php endif; ?>
       <div class="row-actions">
         <?php if ($linkToView): ?>
           <a href="<?= htmlspecialchars(articleViewUrl($a)) ?>">อ่าน</a>

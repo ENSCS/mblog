@@ -180,6 +180,30 @@ function articleExcerpt(array $article): string
     return $truncated . '…';
 }
 
+// First paragraph of the actual content (not the manually-written excerpt —
+// that's for meta description/OG tags, a different job) trimmed to $maxLength
+// at a word boundary, so a card on articles.php/pages.php/category.php/
+// tag.php/drafts.php gets a taste of the article without overflowing the
+// card no matter how long the first paragraph runs.
+function articleContentPreview(array $article, int $maxLength = 500): string
+{
+    $content = $article['content'] ?? '';
+    $firstParagraph = preg_match('/<p[^>]*>(.*?)<\/p>/is', $content, $m) ? $m[1] : $content;
+
+    $text = trim(preg_replace('/\s+/u', ' ', strip_tags($firstParagraph)));
+    if ($text === '' || mb_strlen($text) <= $maxLength) {
+        return $text;
+    }
+
+    $truncated = mb_substr($text, 0, $maxLength);
+    $lastSpace = mb_strrpos($truncated, ' ');
+    if ($lastSpace !== false) {
+        $truncated = mb_substr($truncated, 0, $lastSpace);
+    }
+
+    return $truncated . '…';
+}
+
 // Uses the manually-picked featured image if the author set one, otherwise
 // falls back to the first image found in the content. Returns a path relative
 // to the site root (e.g. "uploads/xxx.png"), or null if there's no image at all.

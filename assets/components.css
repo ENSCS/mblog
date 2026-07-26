@@ -59,6 +59,12 @@
   font-size: 13px;
   margin-bottom: 10px;
 }
+.article-preview {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 10px;
+}
 .article-list-item .row-actions a {
   font-size: 13px;
   color: var(--color-primary);
