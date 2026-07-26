@@ -220,6 +220,21 @@ function articleFeaturedImage(array $article): ?string
     return null;
 }
 
+// show_sidebar: NULL means "follow the site-wide sidebar_enabled setting,
+// live" (not a snapshot — matches every article's behavior before this
+// column existed), 1/0 force it on/off for this one article/page regardless
+// of the site setting. Used by article.php/page.php only — list pages
+// (articles.php, category.php, ...) have no single item to hang this off of,
+// so they keep consulting sidebar_enabled directly via partials/header.php.
+function articleShowsSidebar(array $article): bool
+{
+    if (!isset($article['show_sidebar']) || $article['show_sidebar'] === null) {
+        return siteSetting('sidebar_enabled', '1') === '1';
+    }
+
+    return (bool) $article['show_sidebar'];
+}
+
 // MySQL DATETIME ("Y-m-d H:i:s") -> ISO 8601 ("c") so display text, OG tags
 // and JSON-LD look exactly like they did back when date('c') was used to
 // write the JSON files.

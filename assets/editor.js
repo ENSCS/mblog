@@ -564,6 +564,7 @@ function saveArticle(quill, articleId, slug, status) {
   const category = document.getElementById('category').value;
   const excerpt = document.getElementById('excerpt').value.trim();
   const featuredImage = document.getElementById('featured-image').value;
+  const showSidebar = document.getElementById('show-sidebar').value;
   const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(Boolean);
   const statusEl = document.getElementById('save-status');
   if (!title) {
@@ -591,6 +592,7 @@ function saveArticle(quill, articleId, slug, status) {
       category: category,
       excerpt: excerpt,
       featured_image: featuredImage,
+      show_sidebar: showSidebar,
       tags: tags
     })
   })

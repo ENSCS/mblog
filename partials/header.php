@@ -9,7 +9,13 @@ $menuItems = getMenuItems();
 // scope) additionally requires there to actually be an active item: a page
 // asking for a sidebar with nothing to put in it just renders single-column,
 // same as if it never asked.
-$sidebarItems = !empty($showSidebar) ? getActiveSidebarItems() : [];
+// article.php/page.php resolve their own $showSidebar already (site setting
+// vs. their own override, see articleShowsSidebar()) and set this false so
+// it isn't ANDed against sidebar_enabled a second time here. List pages
+// (articles.php, category.php, ...) leave it true — they have no single
+// article to hang a per-item override off of, so sidebar_enabled decides.
+$sidebarSiteGate = $sidebarSiteGate ?? true;
+$sidebarItems = (!empty($showSidebar) && (!$sidebarSiteGate || siteSetting('sidebar_enabled', '1') === '1')) ? getActiveSidebarItems() : [];
 $hasSidebar = !empty($sidebarItems);
 $sidebarPosition = siteSetting('sidebar_position', 'right');
 ?>
@@ -42,6 +48,14 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
 <?php if ($faviconPath): ?>
 <link rel="icon" type="<?= htmlspecialchars($faviconMime[strtolower(pathinfo($faviconPath, PATHINFO_EXTENSION))] ?? 'image/x-icon') ?>" href="<?= htmlspecialchars($faviconPath) ?><?= $assetVer($faviconPath) ?>">
 <?php endif; ?>
+<!-- Loaded globally (not per-page) because rendered Quill content
+     (.rich-content, see assets/layout.css) can appear in a sidebar card on
+     any page, not just article.php/page.php/editor.php — needed here for
+     things we don't reimplement ourselves, e.g. list markers/counters
+     (li[data-list]), which come purely from quill.snow.css and never worked
+     outside .ql-editor. Loads before our own stylesheets so our overrides
+     (dark code window, custom image align/caption, ...) still win ties. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
 <link rel="stylesheet" href="assets/base.css<?= $assetVer('assets/base.css') ?>">
 <link rel="stylesheet" href="assets/layout.css<?= $assetVer('assets/layout.css') ?>">
 <link rel="stylesheet" href="assets/components.css<?= $assetVer('assets/components.css') ?>">
@@ -56,7 +70,7 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
        just another item crowded next to the menu (a two-tier header is the
        common pattern most sites with a real logo use). -->
   <div class="topbar-brand-row">
-    <div class="container<?= $hasSidebar ? ' container-wide' : '' ?>">
+    <div class="container container-wide">
       <a href="index.php" class="brand">
         <?php if ($logoPath = siteSetting('site_logo')): ?>
           <img src="<?= htmlspecialchars($logoPath) ?><?= $assetVer($logoPath) ?>" alt="" class="brand-logo">
@@ -78,7 +92,7 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
     </div>
   </div>
   <div class="topbar-nav-row">
-    <div class="container<?= $hasSidebar ? ' container-wide' : '' ?>">
+    <div class="container container-wide">
       <!-- Desktop: click-to-open dropdown, submenu anchored right of the toggle -->
       <nav class="topbar-menu topbar-menu-desktop">
         <?php foreach ($menuItems as $item): ?>

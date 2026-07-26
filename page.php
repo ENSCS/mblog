@@ -22,8 +22,7 @@ $pageTitle = htmlspecialchars($page['title']) . ' — ' . siteSetting('site_name
 // Pages aren't blog posts — og:type "website" (not "article") and no JSON-LD
 // Article schema, unlike article.php, since that structured data doesn't fit
 // a static page like "About"/"Contact".
-$extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">' . "\n"
-    . '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">' . "\n"
+$extraHead = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">' . "\n"
     . '<link rel="stylesheet" href="assets/article.css">'
     . "\n" . '<meta name="description" content="' . htmlspecialchars($description) . '">'
     . "\n" . '<link rel="canonical" href="' . htmlspecialchars($canonicalUrl) . '">'
@@ -44,7 +43,11 @@ if ($imageUrl) {
 
 $topbarActions = '<a href="editor.php?slug=' . urlencode($slug) . '">แก้ไข</a><a href="editor.php">+ เขียนบทความใหม่</a>';
 $footerScripts = '<script src="assets/copy-button.js"></script>';
-$showSidebar = true;
+// Already resolved (site setting vs. this page's own override) — don't let
+// header.php re-check sidebar_enabled on top of that, see
+// articleShowsSidebar()/database/article_sidebar_toggle.sql.
+$showSidebar = articleShowsSidebar($page);
+$sidebarSiteGate = false;
 include __DIR__ . '/partials/header.php';
 ?>
     <div class="card">
@@ -52,6 +55,6 @@ include __DIR__ . '/partials/header.php';
         <img class="featured-image-banner" src="<?= htmlspecialchars($manualFeaturedImage) ?>" alt="">
       <?php endif; ?>
       <h1 class="article-title"><?= htmlspecialchars($page['title']) ?></h1>
-      <div class="article-content ql-editor" style="padding:0;"><?= $page['content'] ?></div>
+      <div class="article-content rich-content ql-editor"><?= $page['content'] ?></div>
     </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>

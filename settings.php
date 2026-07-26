@@ -68,6 +68,7 @@ $values = [
     'site_tagline' => siteSetting('site_tagline', ''),
     'site_tagline_enabled' => siteSetting('site_tagline_enabled', '0'),
     'sidebar_position' => siteSetting('sidebar_position', 'right'),
+    'sidebar_enabled' => siteSetting('sidebar_enabled', '1'),
 ];
 $errors = [];
 $saved = isset($_GET['saved']);
@@ -81,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $values['site_tagline'] = trim($_POST['site_tagline'] ?? '');
     $values['site_tagline_enabled'] = !empty($_POST['site_tagline_enabled']) ? '1' : '0';
     $values['sidebar_position'] = ($_POST['sidebar_position'] ?? '') === 'left' ? 'left' : 'right';
+    $values['sidebar_enabled'] = !empty($_POST['sidebar_enabled']) ? '1' : '0';
 
     if ($values['site_name'] === '') {
         $errors[] = 'กรุณาใส่ชื่อเว็บ';
@@ -205,6 +207,13 @@ include __DIR__ . '/partials/header.php';
       <div class="field">
         <label for="articles_per_page">จำนวนบทความต่อหน้า (หน้ารายการบทความ)</label>
         <input type="number" id="articles_per_page" name="articles_per_page" value="<?= htmlspecialchars((string) $values['articles_per_page']) ?>" min="1" style="max-width:100px;">
+      </div>
+      <div class="field">
+        <label style="font-weight:normal; display:flex; align-items:center; gap:6px;">
+          <input type="checkbox" id="sidebar_enabled" name="sidebar_enabled" value="1" <?= $values['sidebar_enabled'] === '1' ? 'checked' : '' ?>>
+          แสดง Sidebar
+        </label>
+        <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">ปิดไว้ก็ยังจัดการรายการเก็บไว้ได้ แค่ไม่แสดงบนเว็บจนกว่าจะเปิดอีกครั้ง</div>
       </div>
       <div class="field">
         <label for="sidebar_position">ตำแหน่ง Sidebar</label>

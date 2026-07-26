@@ -23,8 +23,7 @@ $manualFeaturedImage = $article['featured_image'] ?? '';
 $tags = getArticleTags($article['id']);
 
 $pageTitle = htmlspecialchars($article['title']) . ' — ' . siteSetting('site_name');
-$extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">' . "\n"
-    . '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
+$extraHead = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
     . '<link rel="stylesheet" href="assets/article.css">'
     . "\n" . '<meta name="description" content="' . htmlspecialchars($description) . '">'
     . "\n" . '<link rel="canonical" href="' . htmlspecialchars($canonicalUrl) . '">'
@@ -56,7 +55,11 @@ $extraHead .= "\n" . '<script type="application/ld+json">' . json_encode([
 
 $topbarActions = '<a href="editor.php?slug=' . urlencode($slug) . '">แก้ไข</a><a href="editor.php">+ เขียนบทความใหม่</a>';
 $footerScripts = '<script src="assets/copy-button.js"></script>';
-$showSidebar = true;
+// Already resolved (site setting vs. this article's own override) — don't
+// let header.php re-check sidebar_enabled on top of that, see
+// articleShowsSidebar()/database/article_sidebar_toggle.sql.
+$showSidebar = articleShowsSidebar($article);
+$sidebarSiteGate = false;
 include __DIR__ . '/partials/header.php';
 ?>
     <div class="card">
@@ -70,7 +73,7 @@ include __DIR__ . '/partials/header.php';
         <?php endif; ?>
         <?= relativeTimeTag($article['published_at']) ?>
       </div>
-      <div class="article-content ql-editor" style="padding:0;"><?= $article['content'] ?></div>
+      <div class="article-content rich-content ql-editor"><?= $article['content'] ?></div>
       <?php if (!empty($tags)): ?>
         <div class="tag-list">
           <?php foreach ($tags as $tag): ?>

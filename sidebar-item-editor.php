@@ -9,8 +9,7 @@ $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
 $sidebarItem = $id ? getSidebarItemById($id) : null;
 
 $pageTitle = ($sidebarItem ? 'แก้ไข Sidebar: ' . htmlspecialchars($sidebarItem['title']) : 'เพิ่มรายการ Sidebar ใหม่') . ' — ' . siteSetting('site_name');
-$extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">' . "\n"
-    . '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
+$extraHead = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
     . '<link rel="stylesheet" href="assets/article.css">' . "\n"
     . '<link rel="stylesheet" href="assets/editor.css">';
 $topbarActions = '<a href="sidebar-items.php">รายการ Sidebar</a>';

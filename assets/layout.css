@@ -8,18 +8,18 @@
      card list, a form) visibly collapses. width: 100% removes the ambiguity
      — max-width still caps it, margin: auto still centers it either way. */
   width: 100%;
-  max-width: 860px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 24px 20px 80px;
 }
-/* 860 (same reading width as the plain .container) + 32 gap + 280 sidebar —
-   the sidebar sits alongside the normal content column instead of shrinking
-   it, so paragraph width doesn't change just because a sidebar is present. */
+/* 800 content + 20 gap + 280 sidebar = 1100 — same total as .container-wide,
+   so the sidebar sits alongside the content column at a width that lines up
+   with the topbar/footer exactly, on every page that has one. */
 .container-with-sidebar,
 .container-wide {
-  max-width: 1172px;
+  max-width: 1100px;
 }
-/* Wider + two-column only when a page opts in (partials/header.php sets this
+/* Two-column only when a page opts in (partials/header.php sets this
    modifier class) AND there's at least one active sidebar item — see
    $hasSidebar in partials/header.php/footer.php. main-content/aside are DOM
    siblings in that fixed order regardless of visual position, so reading
@@ -27,14 +27,14 @@
    sidebar; .sidebar-left only flips where it's *drawn* via `order`. */
 .container-with-sidebar {
   display: flex;
-  gap: 32px;
+  gap: 20px;
   align-items: flex-start;
 }
 /* .container-wide (above, shares the max-width) is the same width without
-   the flex layout — lets the topbar rows (partials/header.php) widen to
-   match the content below them on pages with a sidebar, so both edges line
-   up instead of the topbar staying pinned at the plain .container width
-   while content bulges out. */
+   the flex layout — the topbar/footer rows always use this class regardless
+   of sidebar state (unconditional in header.php/footer.php), so the header
+   stays 1100 on every page and never jumps when navigating between a
+   sidebar page and a plain .container (960) one. */
 .main-content {
   flex: 1;
   min-width: 0;
@@ -63,6 +63,158 @@
 .sidebar-item img {
   width: 100%;
   display: block;
+}
+/* --- Shared Quill-rendered content ---
+   Everything here is *behavior* intrinsic to Quill's own output (alignment,
+   image float/caption, blockquote, code blocks, hr) — identical wherever it
+   renders, so it lives once instead of being copy-pasted per content type.
+   Add class="rich-content ql-editor" to a wrapper (.article-content in
+   article.php/page.php, .sidebar-item-content in partials/footer.php, ...)
+   to get all of it. .ql-editor specifically is what turns on list markers
+   (li[data-list=bullet/ordered/checked/...]) — those come from
+   quill.snow.css (loaded globally in partials/header.php, see the comment
+   there), not from anything in this file; we don't reimplement Quill's
+   counter/marker logic ourselves. .ql-editor is also present on the actual
+   live editing surface (Quill puts it there itself in editor.php/
+   sidebar-item-editor.php), so both match one set of rules automatically.
+   Lives here (not assets/article.css) because this file loads on every page
+   — article.css only ships to article.php/page.php/editor.php/
+   sidebar-item-editor.php, but a sidebar (and its rich content) can appear
+   on any page. Context-specific *sizing* (heading font-size, line-height,
+   list indent — tuned differently for an 800px article column vs a 280px
+   sidebar card) stays out of this block: see .article-content in
+   assets/article.css and .sidebar-item-content below. */
+.ql-align-center { text-align: center; }
+.ql-align-right { text-align: right; }
+.ql-align-justify { text-align: justify; }
+/* quill.snow.css styles .ql-editor as a live editing box (cursor hints,
+   fixed height, padding) — cancel the parts that don't make sense for
+   read-only rendered content (.ql-editor alone, without .rich-content, is
+   the actual editing surface and should keep all of it). Padding is *not*
+   included here: .sidebar-item-content already declares its own 14px below,
+   which needs to win over quill.snow.css's 12px/15px default — a shared
+   `padding: 0` here would be more specific than that and wipe it out.
+   .article-content has no card padding of its own to protect, so it gets
+   padding: 0 directly, next to its other sizing rules in assets/article.css. */
+.rich-content.ql-editor {
+  height: auto;
+}
+.rich-content.ql-editor > * {
+  cursor: auto;
+}
+.rich-content, .ql-editor {
+  overflow: auto; /* clearfix so floated images don't collapse the container */
+}
+.rich-content img, .ql-editor img {
+  max-width: 100%;
+  height: auto;
+}
+.rich-content a img, .ql-editor a img {
+  cursor: pointer;
+}
+.rich-content img.align-left, .ql-editor img.align-left {
+  float: left;
+  margin: 6px 20px 12px 0;
+}
+.rich-content img.align-right, .ql-editor img.align-right {
+  float: right;
+  margin: 6px 0 12px 20px;
+}
+.rich-content img.align-center, .ql-editor img.align-center {
+  display: block;
+  float: none;
+  margin: 12px auto;
+}
+.mblog-caption {
+  display: block;
+  max-width: 100%;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+  margin: -4px 0 14px;
+}
+.mblog-caption.cap-left {
+  float: left;
+  clear: left;
+  margin: -4px 20px 12px 0;
+}
+.mblog-caption.cap-right {
+  float: right;
+  clear: right;
+  margin: -4px 0 12px 20px;
+}
+.mblog-caption.cap-center {
+  display: block;
+  clear: both;
+  margin-left: auto;
+  margin-right: auto;
+}
+.rich-content blockquote, .ql-editor blockquote {
+  border-left: 4px solid var(--card-border);
+  margin: 16px 0;
+  padding: 4px 0 4px 16px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+/* Fixed dark "code window", independent of the light/dark site toggle —
+   matches claude-design.md's code-window-card, one of the handful of
+   surfaces (with the footer) that's deliberately always dark. The syntax
+   theme is pinned to github-dark.min.css (see article.php/editor.php) to
+   match — swapping only this CSS to a light theme without also swapping
+   that stylesheet would make code unreadable. */
+.rich-content pre.ql-syntax, .rich-content .ql-code-block-container,
+.ql-editor pre.ql-syntax, .ql-editor .ql-code-block-container {
+  position: relative;
+  background: var(--color-surface-dark-soft) !important;
+  color: var(--color-on-dark) !important;
+  padding: 14px 16px;
+  border: 1px solid #3a3730;
+  border-radius: var(--radius-lg);
+  overflow-x: auto;
+  font-size: 14px;
+  margin: 16px 0;
+  font-family: var(--font-mono);
+}
+.rich-content .ql-code-block-container .ql-code-block,
+.ql-editor .ql-code-block-container .ql-code-block {
+  white-space: pre-wrap;
+}
+/* Quill's language-picker <select> is editing-only UI; never show it on the published page */
+.rich-content .ql-code-block-container select.ql-ui {
+  display: none;
+}
+/* --- Copy button on published code blocks (GitHub-style) --- */
+.code-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-surface-dark-elevated);
+  border: 1px solid #3a3730;
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-on-dark-soft);
+  cursor: pointer;
+}
+.code-copy-btn:hover {
+  background: #302d27;
+}
+.code-copy-btn.copied {
+  color: #8fd6a2;
+  border-color: #8fd6a2;
+}
+.code-copy-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.rich-content hr, .ql-editor hr {
+  border: none;
+  border-top: 2px solid var(--card-border);
+  margin: 28px 0;
 }
 /* Deliberately not reusing .article-content's typography (assets/article.css)
    — that's sized for a full-width reading column (30px h1, 1.8 line-height),
@@ -393,5 +545,30 @@
   }
   .mobile-submenu-link:hover {
     color: var(--text-primary);
+  }
+
+  /* Left/right floated images leave too little room for wrapped text on a
+     narrow screen — stack them full-width instead, same as "center" */
+  .rich-content img.align-left,
+  .rich-content img.align-right,
+  .ql-editor img.align-left,
+  .ql-editor img.align-right {
+    float: none;
+    display: block;
+    width: auto !important;
+    max-width: 100%;
+    margin: 12px auto;
+  }
+  .mblog-caption.cap-left,
+  .mblog-caption.cap-right {
+    float: none;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .code-copy-btn span {
+    display: none; /* icon only, keeps the button from crowding narrow code blocks */
+  }
+  .code-copy-btn {
+    padding: 6px;
   }
 }

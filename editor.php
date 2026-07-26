@@ -8,12 +8,16 @@ $currentType = $article['type'] ?? 'post';
 $categories = getCategories();
 $currentCategory = $article ? (articleCategory($article) ?? '') : '';
 $currentFeaturedImage = $article['featured_image'] ?? '';
+// '' (ตามค่าเว็บ) เป็นค่าเริ่มต้นทั้งบทความใหม่และเก่าที่ยังไม่เคย override — ดู
+// show_sidebar ใน database/article_sidebar_toggle.sql สำหรับความหมาย NULL/1/0 เต็มๆ
+$currentShowSidebar = isset($article['show_sidebar']) && $article['show_sidebar'] !== null
+    ? (string) (int) $article['show_sidebar']
+    : '';
 $currentTags = $article ? array_column(getArticleTags($article['id']), 'name') : [];
 $allTagNames = array_column(getAllTags(), 'name');
 
 $pageTitle = ($article ? 'แก้ไข: ' . htmlspecialchars($article['title']) : 'เขียนบทความใหม่') . ' — ' . siteSetting('site_name');
-$extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">' . "\n"
-    . '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
+$extraHead = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
     . '<link rel="stylesheet" href="assets/article.css">' . "\n"
     . '<link rel="stylesheet" href="assets/editor.css">';
 $topbarActions = '<a href="articles.php">รายการบทความ</a>';
@@ -78,6 +82,14 @@ include __DIR__ . '/partials/header.php';
     </div>
     <input type="file" id="featured-image-input" accept="image/*" style="display:<?= $currentFeaturedImage ? 'none' : 'block' ?>;">
     <input type="hidden" id="featured-image" value="<?= htmlspecialchars($currentFeaturedImage) ?>">
+  </div>
+  <div class="field">
+    <label for="show-sidebar">Sidebar (สำหรับหน้านี้โดยเฉพาะ)</label>
+    <select id="show-sidebar">
+      <option value="" <?= $currentShowSidebar === '' ? 'selected' : '' ?>>ตามค่าเว็บ (ค่าเริ่มต้น)</option>
+      <option value="1" <?= $currentShowSidebar === '1' ? 'selected' : '' ?>>เปิด</option>
+      <option value="0" <?= $currentShowSidebar === '0' ? 'selected' : '' ?>>ปิด</option>
+    </select>
   </div>
   <div class="field" id="tags-field" style="display:<?= $currentType === 'page' ? 'none' : 'block' ?>;">
     <label for="tag-input">แท็ก (ไม่บังคับ — พิมพ์ชื่อแล้วกด Enter หรือเลือกจากรายการที่แนะนำ)</label>

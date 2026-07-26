@@ -12,6 +12,11 @@ $status = (isset($data['status']) && $data['status'] === 'published') ? 'publish
 $type = (isset($data['type']) && $data['type'] === 'page') ? 'page' : 'post';
 $excerpt = isset($data['excerpt']) ? trim($data['excerpt']) : '';
 
+// '' (ตามค่าเว็บ) -> NULL, '1'/'0' -> บังคับเปิด/ปิด ไม่สน sidebar_enabled ของเว็บ —
+// ดู show_sidebar ใน database/article_sidebar_toggle.sql สำหรับความหมายเต็ม
+$showSidebarRaw = isset($data['show_sidebar']) ? (string) $data['show_sidebar'] : '';
+$showSidebar = $showSidebarRaw === '1' ? 1 : ($showSidebarRaw === '0' ? 0 : null);
+
 // Only accept a path that looks like one of our own uploads (matches the
 // naming api/upload.php produces) — never trust an arbitrary URL into og:image.
 // Allows uploads/YYYY/MM/ subfolders and non-ASCII filenames (Thai/Chinese/...,
@@ -81,10 +86,10 @@ if ($existing) {
     $stmt = db()->prepare(
         'UPDATE mblog_articles
          SET slug = ?, title = ?, content = ?, excerpt = ?, category_id = ?, featured_image = ?,
-             status = ?, type = ?, updated_at = ?, published_at = ?
+             show_sidebar = ?, status = ?, type = ?, updated_at = ?, published_at = ?
          WHERE id = ?'
     );
-    $stmt->execute([$slug, $title, $content, $excerpt, $categoryId, $featuredImage, $status, $type, $now, $publishedAt, $existing['id']]);
+    $stmt->execute([$slug, $title, $content, $excerpt, $categoryId, $featuredImage, $showSidebar, $status, $type, $now, $publishedAt, $existing['id']]);
     $articleId = (int) $existing['id'];
 
     if ($existing['slug'] !== $slug) {
@@ -93,10 +98,10 @@ if ($existing) {
 } else {
     $stmt = db()->prepare(
         'INSERT INTO mblog_articles
-            (slug, title, content, excerpt, category_id, featured_image, status, type, created_at, updated_at, published_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            (slug, title, content, excerpt, category_id, featured_image, show_sidebar, status, type, created_at, updated_at, published_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
-    $stmt->execute([$slug, $title, $content, $excerpt, $categoryId, $featuredImage, $status, $type, $now, $now, $publishedAt]);
+    $stmt->execute([$slug, $title, $content, $excerpt, $categoryId, $featuredImage, $showSidebar, $status, $type, $now, $now, $publishedAt]);
     $articleId = (int) db()->lastInsertId();
 }
 
