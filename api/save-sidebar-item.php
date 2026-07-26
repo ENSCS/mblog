@@ -12,12 +12,14 @@ $isActive = !empty($data['is_active']) ? 1 : 0;
 
 // Quill never sends a true empty string — an untouched editor still submits
 // "<p><br></p>" — so store NULL instead of that markup whenever there's no
-// real text AND no image in it, otherwise partials/footer.php's
+// real text AND no image/video in it, otherwise partials/footer.php's
 // !empty($item['content']) check would still render an empty content box
-// under the image. Checked for "<img" before stripping tags so a photo
-// pasted directly into the editor (rather than the separate "รูป" field)
-// isn't mistaken for empty content.
-if (trim(strip_tags($content)) === '' && !str_contains($content, '<img')) {
+// under the image. Checked for "<img"/"<iframe" before stripping tags so a
+// photo (pasted directly rather than via the separate "รูป" field) or a
+// YouTube embed (see embedYoutubeLinks() in assets/editor.js) isn't mistaken
+// for empty content — strip_tags() removes both of those tags entirely,
+// leaving no text behind.
+if (trim(strip_tags($content)) === '' && !str_contains($content, '<img') && !str_contains($content, '<iframe')) {
     $content = null;
 }
 
