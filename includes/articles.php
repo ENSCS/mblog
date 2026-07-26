@@ -461,6 +461,46 @@ function getArticleList(array $filters, int $page = 1, int $perPage = 0): array
     return ['items' => $items, 'total' => $total];
 }
 
+// Public search (search.php) — published posts only, never pages/drafts/
+// trash. Plain LIKE, not a FULLTEXT index: MySQL/MariaDB's default FULLTEXT
+// parser splits words on whitespace, and Thai has none between words, so it
+// would barely match anything without the extra ngram parser config — LIKE's
+// substring match works regardless of that, and needs no schema change.
+// Title matches rank above content-only matches; published_at breaks ties.
+// Returns ['items' => [...], 'total' => N] so the caller can paginate.
+function searchArticles(string $query, int $page, int $perPage): array
+{
+    $like = '%' . $query . '%';
+
+    $countStmt = db()->prepare(
+        "SELECT COUNT(*) FROM mblog_articles a
+         WHERE a.type = 'post' AND a.status = 'published' AND a.deleted_at IS NULL
+           AND (a.title LIKE ? OR a.content LIKE ?)"
+    );
+    $countStmt->execute([$like, $like]);
+    $total = (int) $countStmt->fetchColumn();
+
+    // $perPage/$offset inlined, not bound — same reasoning as
+    // getArticlesForAdmin(): both are already int-cast, no injection risk.
+    $perPage = max(1, $perPage);
+    $offset = max(0, ($page - 1) * $perPage);
+    $stmt = db()->prepare(
+        "SELECT a.*, c.name AS category, c.slug AS category_slug, c.color AS category_color,
+                (CASE WHEN a.title LIKE ? THEN 2 ELSE 0 END
+                 + CASE WHEN a.content LIKE ? THEN 1 ELSE 0 END) AS relevance
+         FROM mblog_articles a
+         LEFT JOIN mblog_categories c ON a.category_id = c.id
+         WHERE a.type = 'post' AND a.status = 'published' AND a.deleted_at IS NULL
+           AND (a.title LIKE ? OR a.content LIKE ?)
+         ORDER BY relevance DESC, a.published_at DESC
+         LIMIT $perPage OFFSET $offset"
+    );
+    $stmt->execute([$like, $like, $like, $like]);
+    $items = array_map('normalizeArticleRow', $stmt->fetchAll());
+
+    return ['items' => $items, 'total' => $total];
+}
+
 // article.php for a post, page.php for a page — the "read this" link shown
 // by partials/article-list.php whenever an item is published.
 function articleViewUrl(array $article): string

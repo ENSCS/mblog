@@ -62,6 +62,7 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
 <script src="assets/menu.js<?= $assetVer('assets/menu.js') ?>" defer></script>
 <script src="assets/toast.js<?= $assetVer('assets/toast.js') ?>" defer></script>
 <script src="assets/theme.js<?= $assetVer('assets/theme.js') ?>" defer></script>
+<script src="assets/search.js<?= $assetVer('assets/search.js') ?>" defer></script>
 </head>
 <body>
 <div class="topbar">
@@ -83,6 +84,12 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
         </span>
       </a>
       <div class="actions">
+        <form action="search.php" method="get" class="site-search<?= !empty($_GET['q']) ? ' site-search-open' : '' ?>" id="site-search-form">
+          <button type="button" class="site-search-toggle" id="site-search-toggle" aria-label="ค้นหา">
+            <svg class="site-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.35-4.35"></path></svg>
+          </button>
+          <input type="text" name="q" id="site-search-input" class="site-search-input" placeholder="ค้นหาบทความ..." autocomplete="off" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
+        </form>
         <button type="button" id="theme-toggle" class="theme-toggle" aria-label="สลับธีมสว่าง/มืด">
           <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
           <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>

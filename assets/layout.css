@@ -387,6 +387,58 @@
   :root:not([data-theme="light"]) .theme-icon-moon { display: none; }
 }
 
+/* --- Search (collapsed icon that expands into a text input, see
+   assets/search.js) --- */
+.site-search {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 6px;
+  /* .actions (the parent) is a plain div, not a flex container — its
+     children lay out via normal inline flow, where each inline-level box's
+     own vertical-align decides cross-alignment. .theme-toggle sets
+     "middle" explicitly; without the same here, this form defaulted to
+     "baseline" and sat at a different height next to it. */
+  vertical-align: middle;
+}
+.site-search-toggle {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  color: var(--topbar-text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+.site-search-toggle:hover {
+  background: var(--btn-secondary-bg-hover);
+}
+.site-search-icon {
+  width: 18px;
+  height: 18px;
+}
+.site-search-input {
+  width: 0;
+  min-width: 0;
+  opacity: 0;
+  padding: 6px 0;
+  margin-left: 0;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--input-text);
+  font-size: 14px;
+  transition: width 0.2s ease, opacity 0.2s ease, padding 0.2s ease, margin-left 0.2s ease;
+}
+.site-search-open .site-search-input {
+  width: 160px;
+  opacity: 1;
+  padding: 6px 10px;
+  margin-left: 4px;
+}
+
 /* --- Submenu dropdown: hover to open (like WP), the label itself is a real
    link so clicking it navigates instead of just toggling --- */
 .menu-item-has-children {
@@ -489,6 +541,9 @@
     padding: 7px 10px;
     font-size: 14px;
     margin-left: 6px;
+  }
+  .site-search-open .site-search-input {
+    width: 120px;
   }
 
   /* Click-to-open dropdown makes no sense on a narrow screen — swap to the
