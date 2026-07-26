@@ -280,6 +280,53 @@ a.tag-badge:hover {
   background: var(--btn-secondary-bg-hover);
 }
 
+/* Credit link back to the original YouTube video on AI-summarized imports
+   (see includes/markdown-import.php) — plain muted text, not a pill, since
+   it's a single citation rather than a taxonomy chip like .tag-badge. */
+.source-credit {
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.source-credit a {
+  color: inherit;
+}
+
+/* Generic hover tooltip via [data-tooltip="..."] — used by relativeTimeTag()
+   (includes/articles.php) for the full-date-on-hover on "2 ชั่วโมง" style
+   labels. Built from scratch instead of a native title="" attribute because
+   native tooltips have a browser-fixed ~1s hover delay with no way for a
+   page to shorten it; this one appears after 300ms instead. The delay lives
+   only on the :hover rule (not the base rule), a standard CSS-only-tooltip
+   trick — leaving hover reverts to the base rule's un-delayed transition, so
+   dismissal is instant while the appearance keeps its delay. */
+[data-tooltip] {
+  position: relative;
+  cursor: default;
+}
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 6px;
+  background: var(--text-primary);
+  color: var(--card-bg);
+  font-size: 12px;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--dropdown-shadow);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+  z-index: 20;
+}
+[data-tooltip]:hover::after {
+  opacity: 1;
+  transition-delay: 0.3s;
+}
+
 /* "Toast" notification — a small floating message anchored to the top of
    the viewport that appears then dismisses itself, instead of a banner sitting
    inline in the page flow. `position: fixed` + centering keeps it in the same

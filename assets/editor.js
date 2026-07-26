@@ -523,6 +523,20 @@ function setupFeaturedImagePicker() {
   const preview = document.getElementById('featured-image-preview');
   const thumb = document.getElementById('featured-image-thumb');
   const removeBtn = document.getElementById('remove-featured-image-btn');
+  const uploadMode = document.getElementById('featured-image-upload-mode');
+  const urlMode = document.getElementById('featured-image-url-mode');
+  const urlToggle = document.getElementById('featured-image-url-toggle');
+  const urlCancel = document.getElementById('featured-image-url-cancel');
+  const urlInput = document.getElementById('featured-image-url-input');
+  const urlConfirmBtn = document.getElementById('featured-image-url-confirm-btn');
+
+  function showPreview(url) {
+    hidden.value = url;
+    thumb.src = url;
+    preview.style.display = 'flex';
+    uploadMode.style.display = 'none';
+    urlMode.style.display = 'none';
+  }
 
   input.addEventListener('change', () => {
     const file = input.files[0];
@@ -533,10 +547,7 @@ function setupFeaturedImagePicker() {
       .then(r => r.json())
       .then(data => {
         if (data.url) {
-          hidden.value = data.url;
-          thumb.src = data.url;
-          preview.style.display = 'flex';
-          input.style.display = 'none';
+          showPreview(data.url);
         } else {
           alert('อัปโหลดรูปไม่สำเร็จ: ' + (data.error || 'unknown error'));
         }
@@ -544,12 +555,47 @@ function setupFeaturedImagePicker() {
       .catch(() => alert('อัปโหลดรูปไม่สำเร็จ'));
   });
 
+  urlToggle.addEventListener('click', (e) => {
+    e.preventDefault();
+    uploadMode.style.display = 'none';
+    urlMode.style.display = 'block';
+    urlInput.value = '';
+    urlInput.focus();
+  });
+
+  urlCancel.addEventListener('click', (e) => {
+    e.preventDefault();
+    urlMode.style.display = 'none';
+    uploadMode.style.display = 'block';
+  });
+
+  urlConfirmBtn.addEventListener('click', () => {
+    const url = urlInput.value.trim();
+    if (!url) return;
+    // Confirm it actually loads as an image before committing it — a typo'd
+    // or dead URL would otherwise save silently and only show as a broken
+    // image once the article is already published.
+    urlConfirmBtn.disabled = true;
+    const probe = new Image();
+    probe.onload = () => {
+      urlConfirmBtn.disabled = false;
+      showPreview(url);
+    };
+    probe.onerror = () => {
+      urlConfirmBtn.disabled = false;
+      alert('โหลดรูปจาก URL นี้ไม่ได้ ตรวจสอบ URL อีกครั้ง');
+    };
+    probe.src = url;
+  });
+
   removeBtn.addEventListener('click', () => {
     hidden.value = '';
     thumb.src = '';
     preview.style.display = 'none';
     input.value = '';
-    input.style.display = 'block';
+    urlInput.value = '';
+    urlMode.style.display = 'none';
+    uploadMode.style.display = 'block';
   });
 }
 

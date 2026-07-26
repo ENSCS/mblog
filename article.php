@@ -73,6 +73,9 @@ include __DIR__ . '/partials/header.php';
         <?= relativeTimeTag($article['published_at']) ?>
       </div>
       <div class="article-content rich-content ql-editor"><?= $article['content'] ?></div>
+      <?php if (!empty($article['source_url'])): ?>
+        <p class="source-credit"><a href="<?= htmlspecialchars($article['source_url']) ?>" target="_blank" rel="noopener noreferrer">📺 ดูคลิปต้นฉบับบน YouTube</a></p>
+      <?php endif; ?>
       <?php if (!empty($tags)): ?>
         <div class="tag-list">
           <?php foreach ($tags as $tag): ?>

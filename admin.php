@@ -39,6 +39,9 @@ include __DIR__ . '/partials/header.php';
       <div class="dashboard-card-count"><?= $pageCount ?></div>
       <div class="dashboard-card-label">หน้า</div>
     </a>
+    <a class="dashboard-card" href="import-markdown.php">
+      <div class="dashboard-card-label">นำเข้าจาก Markdown</div>
+    </a>
   </div>
 
   <h2 class="admin-section-title">ตั้งค่าเว็บ</h2>

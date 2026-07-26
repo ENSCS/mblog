@@ -341,10 +341,12 @@ function thaiFullDateTime(int $timestamp): string
 }
 
 // Facebook-style relative time — "text" for the visible label ("12 นาที"),
-// "title" for the full date/time shown on hover (native <span title="">
-// tooltip, no JS needed). Both read off PHP's current timezone, which
-// config.php already pins to siteSetting('timezone') (Asia/Bangkok) — so this
-// needs no timezone conversion of its own.
+// "title" for the full date/time shown on hover (rendered via the
+// [data-tooltip] CSS component in assets/components.css, not a native <span
+// title="">, since native tooltips have a browser-fixed ~1s hover delay we
+// can't shorten). Both read off PHP's current timezone, which config.php
+// already pins to siteSetting('timezone') (Asia/Bangkok) — so this needs no
+// timezone conversion of its own.
 function formatRelativeTime(string $dateString): array
 {
     $timestamp = strtotime($dateString);
@@ -372,7 +374,7 @@ function relativeTimeTag(string $dateString): string
 {
     $rt = formatRelativeTime($dateString);
 
-    return '<span title="' . htmlspecialchars($rt['title']) . '">' . htmlspecialchars($rt['text']) . '</span>';
+    return '<span data-tooltip="' . htmlspecialchars($rt['title']) . '">' . htmlspecialchars($rt['text']) . '</span>';
 }
 
 // $orderBy defaults to updated_at (edit-recency) since that's the only sort

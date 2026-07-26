@@ -64,6 +64,7 @@ $values = [
     'footer_tagline' => siteSetting('footer_tagline'),
     'articles_per_page' => siteSetting('articles_per_page', 10),
     'preview_max_length' => siteSetting('preview_max_length', 500),
+    'markdown_import_token' => siteSetting('markdown_import_token', ''),
     'site_logo' => siteSetting('site_logo', ''),
     'site_favicon' => siteSetting('site_favicon', ''),
     'site_tagline' => siteSetting('site_tagline', ''),
@@ -81,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $values['footer_tagline'] = trim($_POST['footer_tagline'] ?? '');
     $values['articles_per_page'] = trim($_POST['articles_per_page'] ?? '');
     $values['preview_max_length'] = trim($_POST['preview_max_length'] ?? '');
+    $values['markdown_import_token'] = trim($_POST['markdown_import_token'] ?? '');
     $values['site_tagline'] = trim($_POST['site_tagline'] ?? '');
     $values['site_tagline_enabled'] = !empty($_POST['site_tagline_enabled']) ? '1' : '0';
     $values['sidebar_position'] = ($_POST['sidebar_position'] ?? '') === 'left' ? 'left' : 'right';
@@ -218,6 +220,14 @@ include __DIR__ . '/partials/header.php';
         <input type="number" id="preview_max_length" name="preview_max_length" value="<?= htmlspecialchars((string) $values['preview_max_length']) ?>" min="1" style="max-width:100px;">
       </div>
       <div class="field">
+        <label for="markdown_import_token">Token สำหรับนำเข้าบทความจาก Markdown (api/import-markdown.php — เว้นว่างเพื่อปิดการใช้งาน API นี้)</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="text" id="markdown_import_token" name="markdown_import_token" value="<?= htmlspecialchars($values['markdown_import_token']) ?>" style="max-width:340px; font-family:var(--font-mono);" autocomplete="off">
+          <button type="button" class="btn btn-secondary" id="generate-import-token-btn">สุ่ม Token ใหม่</button>
+        </div>
+        <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">ระบบภายนอกต้องส่ง header <code>X-Import-Token</code> ตรงกับค่านี้ ถึงจะนำเข้าบทความได้</div>
+      </div>
+      <div class="field">
         <label style="font-weight:normal; display:flex; align-items:center; gap:6px;">
           <input type="checkbox" id="sidebar_enabled" name="sidebar_enabled" value="1" <?= $values['sidebar_enabled'] === '1' ? 'checked' : '' ?>>
           แสดง Sidebar
@@ -235,4 +245,16 @@ include __DIR__ . '/partials/header.php';
       <button type="submit" class="btn">บันทึก</button>
     </form>
   </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php
+$footerScripts = <<<'HTML'
+<script>
+  document.getElementById('generate-import-token-btn').addEventListener('click', () => {
+    const bytes = new Uint8Array(24);
+    crypto.getRandomValues(bytes);
+    const token = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+    document.getElementById('markdown_import_token').value = token;
+  });
+</script>
+HTML;
+include __DIR__ . '/partials/footer.php';
+?>

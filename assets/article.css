@@ -17,7 +17,7 @@
 .featured-image-banner {
   display: block;
   width: 100%;
-  aspect-ratio: 14 / 9;
+  aspect-ratio: 15 / 9;
   height: auto;
   object-fit: cover;
   border-radius: var(--radius-lg);

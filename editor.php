@@ -80,7 +80,17 @@ include __DIR__ . '/partials/header.php';
       <img id="featured-image-thumb" src="<?= htmlspecialchars($currentFeaturedImage) ?>" alt="">
       <button type="button" class="btn btn-secondary" id="remove-featured-image-btn">ลบภาพหลัก</button>
     </div>
-    <input type="file" id="featured-image-input" accept="image/*" style="display:<?= $currentFeaturedImage ? 'none' : 'block' ?>;">
+    <div id="featured-image-upload-mode" style="display:<?= $currentFeaturedImage ? 'none' : 'block' ?>;">
+      <input type="file" id="featured-image-input" accept="image/*">
+      <div style="margin-top:6px;"><a href="#" id="featured-image-url-toggle" style="font-size:13px; color:var(--text-muted);">หรือใส่ URL แทน</a></div>
+    </div>
+    <div id="featured-image-url-mode" style="display:none;">
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="featured-image-url-input" placeholder="https://..." style="flex:1;">
+        <button type="button" class="btn btn-secondary" id="featured-image-url-confirm-btn">ใช้ภาพนี้</button>
+      </div>
+      <div style="margin-top:6px;"><a href="#" id="featured-image-url-cancel" style="font-size:13px; color:var(--text-muted);">กลับไปอัปโหลดไฟล์</a></div>
+    </div>
     <input type="hidden" id="featured-image" value="<?= htmlspecialchars($currentFeaturedImage) ?>">
   </div>
   <div class="field">
