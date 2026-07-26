@@ -10,15 +10,15 @@ $sidebarItem = $id ? getSidebarItemById($id) : null;
 
 $pageTitle = ($sidebarItem ? 'แก้ไข Sidebar: ' . htmlspecialchars($sidebarItem['title']) : 'เพิ่มรายการ Sidebar ใหม่') . ' — ' . siteSetting('site_name');
 $extraHead = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
-    . '<link rel="stylesheet" href="assets/article.css">' . "\n"
-    . '<link rel="stylesheet" href="assets/editor.css">';
+    . '<link rel="stylesheet" href="assets/article.css?v=' . @filemtime(__DIR__ . '/assets/article.css') . '">' . "\n"
+    . '<link rel="stylesheet" href="assets/editor.css?v=' . @filemtime(__DIR__ . '/assets/editor.css') . '">';
 $topbarActions = '<a href="sidebar-items.php">รายการ Sidebar</a>';
 
 ob_start();
 ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
-<script src="assets/editor.js"></script>
+<script src="assets/editor.js?v=<?= @filemtime(__DIR__ . '/assets/editor.js') ?>"></script>
 <script>
   const existingContent = <?= json_encode($sidebarItem['content'] ?? '') ?>;
   const quill = initArticleEditor(existingContent);

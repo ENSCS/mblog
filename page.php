@@ -22,7 +22,7 @@ $pageTitle = htmlspecialchars($page['title']) . ' — ' . siteSetting('site_name
 // Article schema, unlike article.php, since that structured data doesn't fit
 // a static page like "About"/"Contact".
 $extraHead = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">' . "\n"
-    . '<link rel="stylesheet" href="assets/article.css">'
+    . '<link rel="stylesheet" href="assets/article.css?v=' . @filemtime(__DIR__ . '/assets/article.css') . '">'
     . "\n" . '<meta name="description" content="' . htmlspecialchars($description) . '">'
     . "\n" . '<link rel="canonical" href="' . htmlspecialchars($canonicalUrl) . '">'
     . "\n" . '<meta property="og:type" content="website">'

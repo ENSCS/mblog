@@ -23,7 +23,7 @@ $tags = getArticleTags($article['id']);
 
 $pageTitle = htmlspecialchars($article['title']) . ' — ' . siteSetting('site_name');
 $extraHead = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
-    . '<link rel="stylesheet" href="assets/article.css">'
+    . '<link rel="stylesheet" href="assets/article.css?v=' . @filemtime(__DIR__ . '/assets/article.css') . '">'
     . "\n" . '<meta name="description" content="' . htmlspecialchars($description) . '">'
     . "\n" . '<link rel="canonical" href="' . htmlspecialchars($canonicalUrl) . '">'
     . "\n" . '<meta property="og:type" content="article">'
