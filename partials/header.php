@@ -24,7 +24,13 @@ $menuItems = getMenuItems();
 // Cache-bust with each file's mtime so a CSS/JS edit shows up immediately
 // instead of serving a stale cached copy from the visitor's browser.
 $assetVer = fn(string $path) => '?v=' . @filemtime(__DIR__ . '/../' . $path);
+
+$faviconPath = siteSetting('site_favicon');
+$faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/svg+xml', 'gif' => 'image/gif'];
 ?>
+<?php if ($faviconPath): ?>
+<link rel="icon" type="<?= htmlspecialchars($faviconMime[strtolower(pathinfo($faviconPath, PATHINFO_EXTENSION))] ?? 'image/x-icon') ?>" href="<?= htmlspecialchars($faviconPath) ?><?= $assetVer($faviconPath) ?>">
+<?php endif; ?>
 <link rel="stylesheet" href="assets/base.css<?= $assetVer('assets/base.css') ?>">
 <link rel="stylesheet" href="assets/layout.css<?= $assetVer('assets/layout.css') ?>">
 <link rel="stylesheet" href="assets/components.css<?= $assetVer('assets/components.css') ?>">
@@ -35,7 +41,12 @@ $assetVer = fn(string $path) => '?v=' . @filemtime(__DIR__ . '/../' . $path);
 <div class="topbar">
   <div class="container">
     <div class="topbar-left">
-      <a href="index.php" class="brand"><?= htmlspecialchars(siteSetting('site_name')) ?></a>
+      <a href="index.php" class="brand">
+        <?php if ($logoPath = siteSetting('site_logo')): ?>
+          <img src="<?= htmlspecialchars($logoPath) ?><?= $assetVer($logoPath) ?>" alt="" class="brand-logo">
+        <?php endif; ?>
+        <?= htmlspecialchars(siteSetting('site_name')) ?>
+      </a>
       <!-- Desktop: click-to-open dropdown, submenu anchored right of the toggle -->
       <nav class="topbar-menu topbar-menu-desktop">
         <?php foreach ($menuItems as $item): ?>

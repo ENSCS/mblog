@@ -46,6 +46,16 @@
   align-items: center;
   gap: 24px;
 }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-logo {
+  max-height: 55px;
+  max-width: 80px;
+  object-fit: contain;
+}
 .topbar-menu {
   display: flex;
   align-items: center;

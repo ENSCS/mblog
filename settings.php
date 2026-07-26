@@ -5,12 +5,66 @@ require __DIR__ . '/config.php';
 // 400-entry IANA timezone picker nobody here would use.
 $timezoneOptions = ['Asia/Bangkok' => 'Asia/Bangkok (ไทย)', 'UTC' => 'UTC'];
 
+// Saves an uploaded site asset (logo/favicon) to uploads/site/, replacing any
+// previous file for the same slot regardless of its old extension — unlike
+// per-article content images (which accumulate in mblog_images), there's only
+// ever one current logo/favicon, so the old file would otherwise be an orphan
+// nobody serves but nobody cleans up either. Returns the new relative path,
+// or null if this submit didn't include a file for $fieldName.
+function saveSiteAsset(string $fieldName, string $slotName, array $allowedExt, int $maxBytes): ?string
+{
+    if (!isset($_FILES[$fieldName]) || $_FILES[$fieldName]['error'] === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+    if ($_FILES[$fieldName]['error'] !== UPLOAD_ERR_OK) {
+        throw new RuntimeException('อัปโหลดไฟล์ไม่สำเร็จ');
+    }
+
+    $file = $_FILES[$fieldName];
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    if (!in_array($ext, $allowedExt, true)) {
+        throw new RuntimeException('ไฟล์ต้องเป็นสกุล ' . implode('/', $allowedExt) . ' เท่านั้น');
+    }
+    if ($file['size'] > $maxBytes) {
+        throw new RuntimeException('ไฟล์ใหญ่เกินไป (สูงสุด ' . round($maxBytes / 1024 / 1024, 1) . 'MB)');
+    }
+    // SVG has no raster dimensions getimagesize() can reliably read, so only
+    // enforce the "really is an image" check for the raster formats.
+    if ($ext !== 'svg' && @getimagesize($file['tmp_name']) === false) {
+        throw new RuntimeException('ไฟล์นี้ไม่ใช่รูปภาพที่ถูกต้อง');
+    }
+
+    $dir = UPLOADS_DIR . 'site/';
+    if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+        throw new RuntimeException('สร้างโฟลเดอร์อัปโหลดไม่สำเร็จ');
+    }
+    foreach (glob($dir . $slotName . '.*') as $old) {
+        unlink($old);
+    }
+
+    $filename = $slotName . '.' . $ext;
+    if (!move_uploaded_file($file['tmp_name'], $dir . $filename)) {
+        throw new RuntimeException('บันทึกไฟล์ไม่สำเร็จ');
+    }
+
+    return 'uploads/site/' . $filename;
+}
+
+function removeSiteAsset(string $slotName): void
+{
+    foreach (glob(UPLOADS_DIR . 'site/' . $slotName . '.*') as $old) {
+        unlink($old);
+    }
+}
+
 $values = [
     'site_name' => siteSetting('site_name'),
     'timezone' => siteSetting('timezone'),
     'owner_email' => siteSetting('owner_email'),
     'footer_tagline' => siteSetting('footer_tagline'),
     'articles_per_page' => siteSetting('articles_per_page', 10),
+    'site_logo' => siteSetting('site_logo', ''),
+    'site_favicon' => siteSetting('site_favicon', ''),
 ];
 $errors = [];
 $saved = isset($_GET['saved']);
@@ -33,6 +87,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (!ctype_digit((string) $values['articles_per_page']) || (int) $values['articles_per_page'] < 1) {
         $errors[] = 'จำนวนบทความต่อหน้าต้องเป็นตัวเลขมากกว่า 0';
+    }
+
+    // File uploads are only handled once the fields above are already valid —
+    // no point writing/deleting files on disk for a submit we're going to
+    // reject anyway.
+    if (!$errors) {
+        try {
+            if (!empty($_POST['remove_site_logo'])) {
+                removeSiteAsset('logo');
+                $values['site_logo'] = '';
+            } else {
+                $newLogo = saveSiteAsset('site_logo_file', 'logo', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'], 2 * 1024 * 1024);
+                if ($newLogo !== null) {
+                    $values['site_logo'] = $newLogo;
+                }
+            }
+            if (!empty($_POST['remove_site_favicon'])) {
+                removeSiteAsset('favicon');
+                $values['site_favicon'] = '';
+            } else {
+                $newFavicon = saveSiteAsset('site_favicon_file', 'favicon', ['ico', 'png', 'svg', 'gif'], 1024 * 1024);
+                if ($newFavicon !== null) {
+                    $values['site_favicon'] = $newFavicon;
+                }
+            }
+        } catch (RuntimeException $e) {
+            $errors[] = $e->getMessage();
+        }
     }
 
     // Redirect-after-POST so a page refresh after saving doesn't resubmit the
@@ -61,10 +143,30 @@ include __DIR__ . '/partials/header.php';
         <?php endforeach; ?>
       </div>
     <?php endif; ?>
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
       <div class="field">
         <label for="site_name">ชื่อเว็บ</label>
         <input type="text" id="site_name" name="site_name" value="<?= htmlspecialchars($values['site_name']) ?>">
+      </div>
+      <div class="field">
+        <label for="site_logo_file">โลโก้เว็บ (ไม่บังคับ — แสดงหน้าชื่อเว็บบน header, ย่อให้พอดีสูงไม่เกิน 55px กว้างไม่เกิน 80px เสมอ)</label>
+        <?php if ($values['site_logo']): ?>
+          <div class="featured-image-preview" style="display:flex; align-items:center;">
+            <img src="<?= htmlspecialchars($values['site_logo']) ?>" alt="" style="max-height:55px; max-width:80px; object-fit:contain;">
+            <label style="margin-left:12px; font-weight:normal;"><input type="checkbox" name="remove_site_logo" value="1"> ลบโลโก้</label>
+          </div>
+        <?php endif; ?>
+        <input type="file" id="site_logo_file" name="site_logo_file" accept=".jpg,.jpeg,.png,.gif,.webp,.svg">
+      </div>
+      <div class="field">
+        <label for="site_favicon_file">Favicon (ไม่บังคับ — ไอคอนบนแท็บเบราว์เซอร์ แนะนำไฟล์สี่เหลี่ยมจัตุรัส .ico/.png/.svg)</label>
+        <?php if ($values['site_favicon']): ?>
+          <div class="featured-image-preview" style="display:flex; align-items:center;">
+            <img src="<?= htmlspecialchars($values['site_favicon']) ?>" alt="" style="max-height:32px; max-width:32px; object-fit:contain;">
+            <label style="margin-left:12px; font-weight:normal;"><input type="checkbox" name="remove_site_favicon" value="1"> ลบ favicon</label>
+          </div>
+        <?php endif; ?>
+        <input type="file" id="site_favicon_file" name="site_favicon_file" accept=".ico,.png,.svg,.gif">
       </div>
       <div class="field">
         <label for="timezone">เขตเวลา</label>
