@@ -14,8 +14,7 @@ if (!$article) {
 
 $canonicalUrl = siteBaseUrl() . '/article.php?slug=' . urlencode($slug);
 $description = articleExcerpt($article);
-$featuredImage = articleFeaturedImage($article);
-$imageUrl = $featuredImage ? siteBaseUrl() . '/' . ltrim($featuredImage, '/') : null;
+$imageUrl = articleFeaturedImageUrl($article);
 // Only the manually-picked one is shown as a banner — the auto-detected
 // fallback is already the first image inside the content, so showing it
 // again here would just duplicate it.

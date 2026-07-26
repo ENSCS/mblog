@@ -14,8 +14,7 @@ if (!$page) {
 
 $canonicalUrl = siteBaseUrl() . '/page.php?slug=' . urlencode($slug);
 $description = articleExcerpt($page);
-$featuredImage = articleFeaturedImage($page);
-$imageUrl = $featuredImage ? siteBaseUrl() . '/' . ltrim($featuredImage, '/') : null;
+$imageUrl = articleFeaturedImageUrl($page);
 $manualFeaturedImage = $page['featured_image'] ?? '';
 
 $pageTitle = htmlspecialchars($page['title']) . ' — ' . siteSetting('site_name');
