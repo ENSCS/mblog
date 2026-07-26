@@ -568,7 +568,12 @@ function getArticlesForAdmin(array $filters, int $page, int $perPage): array
         $where[] = 'a.title LIKE ?';
         $params[] = '%' . $filters['search'] . '%';
     }
-    if (!empty($filters['category_id'])) {
+    if (($filters['category_id'] ?? '') === 'none') {
+        // 'none' is a UI-level sentinel (see manage-articles.php's filter
+        // dropdown), not a real category — category_id itself is never the
+        // string 'none' in the DB, uncategorized articles just have NULL.
+        $where[] = 'a.category_id IS NULL';
+    } elseif (!empty($filters['category_id'])) {
         $where[] = 'a.category_id = ?';
         $params[] = (int) $filters['category_id'];
     }

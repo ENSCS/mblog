@@ -118,6 +118,7 @@ include __DIR__ . '/partials/header.php';
       <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="ค้นหาชื่อบทความ...">
       <select name="category_id">
         <option value="">ทุกหมวดหมู่</option>
+        <option value="none" <?= $categoryId === 'none' ? 'selected' : '' ?>>ไม่มีหมวดหมู่</option>
         <?php foreach ($categories as $cat): ?>
           <option value="<?= $cat['id'] ?>" <?= (string) $categoryId === (string) $cat['id'] ? 'selected' : '' ?>><?= htmlspecialchars($cat['name']) ?></option>
         <?php endforeach; ?>
