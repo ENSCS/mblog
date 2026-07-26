@@ -67,6 +67,7 @@ $values = [
     'site_favicon' => siteSetting('site_favicon', ''),
     'site_tagline' => siteSetting('site_tagline', ''),
     'site_tagline_enabled' => siteSetting('site_tagline_enabled', '0'),
+    'sidebar_position' => siteSetting('sidebar_position', 'right'),
 ];
 $errors = [];
 $saved = isset($_GET['saved']);
@@ -79,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $values['articles_per_page'] = trim($_POST['articles_per_page'] ?? '');
     $values['site_tagline'] = trim($_POST['site_tagline'] ?? '');
     $values['site_tagline_enabled'] = !empty($_POST['site_tagline_enabled']) ? '1' : '0';
+    $values['sidebar_position'] = ($_POST['sidebar_position'] ?? '') === 'left' ? 'left' : 'right';
 
     if ($values['site_name'] === '') {
         $errors[] = 'กรุณาใส่ชื่อเว็บ';
@@ -203,6 +205,14 @@ include __DIR__ . '/partials/header.php';
       <div class="field">
         <label for="articles_per_page">จำนวนบทความต่อหน้า (หน้ารายการบทความ)</label>
         <input type="number" id="articles_per_page" name="articles_per_page" value="<?= htmlspecialchars((string) $values['articles_per_page']) ?>" min="1" style="max-width:100px;">
+      </div>
+      <div class="field">
+        <label for="sidebar_position">ตำแหน่ง Sidebar</label>
+        <select id="sidebar_position" name="sidebar_position">
+          <option value="right" <?= $values['sidebar_position'] === 'right' ? 'selected' : '' ?>>ขวา</option>
+          <option value="left" <?= $values['sidebar_position'] === 'left' ? 'selected' : '' ?>>ซ้าย</option>
+        </select>
+        <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">จัดการรายการที่แสดงได้ที่ <a href="sidebar-items.php">จัดการ Sidebar</a> — ไม่มีรายการที่เปิดใช้งานก็จะไม่แสดง sidebar เลย</div>
       </div>
       <button type="submit" class="btn">บันทึก</button>
     </form>

@@ -56,6 +56,7 @@ $extraHead .= "\n" . '<script type="application/ld+json">' . json_encode([
 
 $topbarActions = '<a href="editor.php?slug=' . urlencode($slug) . '">แก้ไข</a><a href="editor.php">+ เขียนบทความใหม่</a>';
 $footerScripts = '<script src="assets/copy-button.js"></script>';
+$showSidebar = true;
 include __DIR__ . '/partials/header.php';
 ?>
     <div class="card">

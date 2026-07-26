@@ -18,5 +18,6 @@ INSERT INTO mblog_settings (setting_key, value) VALUES
     ('site_logo', ''),
     ('site_favicon', ''),
     ('site_tagline', ''),
-    ('site_tagline_enabled', '0')
+    ('site_tagline_enabled', '0'),
+    ('sidebar_position', 'right')
 ON DUPLICATE KEY UPDATE value = VALUES(value);

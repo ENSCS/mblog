@@ -10,6 +10,7 @@ $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
 $pageTitle = 'บทความทั้งหมด — ' . siteSetting('site_name');
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
+$showSidebar = true;
 include __DIR__ . '/partials/header.php';
 ?>
   <h1 class="article-title">บทความทั้งหมด</h1>

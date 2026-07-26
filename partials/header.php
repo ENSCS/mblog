@@ -1,6 +1,17 @@
 <?php
 require_once __DIR__ . '/../includes/menu.php';
+require_once __DIR__ . '/../includes/sidebar.php';
 $menuItems = getMenuItems();
+
+// Only pages that opt in ($showSidebar = true, set before including this
+// file) query for sidebar items at all — no point running this on every
+// admin page load. $hasSidebar (used again in footer.php, same request
+// scope) additionally requires there to actually be an active item: a page
+// asking for a sidebar with nothing to put in it just renders single-column,
+// same as if it never asked.
+$sidebarItems = !empty($showSidebar) ? getActiveSidebarItems() : [];
+$hasSidebar = !empty($sidebarItems);
+$sidebarPosition = siteSetting('sidebar_position', 'right');
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -109,4 +120,5 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
     <?php endif; ?>
   <?php endforeach; ?>
 </nav>
-<div class="container">
+<div class="container<?= $hasSidebar ? ' container-with-sidebar' . ($sidebarPosition === 'left' ? ' sidebar-left' : '') : '' ?>">
+<?php if ($hasSidebar): ?><div class="main-content"><?php endif; ?>

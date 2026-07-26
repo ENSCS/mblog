@@ -1,12 +1,14 @@
 <?php
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/menu.php';
+require __DIR__ . '/includes/sidebar.php';
 
 $draftCount = count(getDraftArticles());
 $articleCount = count(getArticles());
 $pageCount = count(getPages());
 $categoryCount = count(getAllCategories());
 $menuCount = count(getAllMenuItems());
+$sidebarItemCount = count(getAllSidebarItems());
 
 $pageTitle = 'จัดการเว็บ — ' . siteSetting('site_name');
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
@@ -48,6 +50,10 @@ include __DIR__ . '/partials/header.php';
     <a class="dashboard-card" href="categories.php">
       <div class="dashboard-card-count"><?= $categoryCount ?></div>
       <div class="dashboard-card-label">จัดการหมวดหมู่</div>
+    </a>
+    <a class="dashboard-card" href="sidebar-items.php">
+      <div class="dashboard-card-count"><?= $sidebarItemCount ?></div>
+      <div class="dashboard-card-label">จัดการ Sidebar</div>
     </a>
   </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>

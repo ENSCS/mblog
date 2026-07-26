@@ -619,3 +619,54 @@ function saveArticle(quill, articleId, slug, status) {
       alert('บันทึกไม่สำเร็จ');
     });
 }
+
+// Same shape as saveArticle() above (reuses the same Quill content cleanup —
+// linkify + expand captions — since sidebar-item-editor.php uses the full
+// editor too) but posts to a different endpoint with a much smaller field
+// set: no slug/status/type/category/tags, just what a sidebar card needs.
+function saveSidebarItem(quill, itemId) {
+  const title = document.getElementById('title').value.trim();
+  const image = document.getElementById('featured-image').value;
+  const linkUrl = document.getElementById('link-url').value.trim();
+  const isActive = document.getElementById('is-active').checked;
+  const statusEl = document.getElementById('save-status');
+  if (!title) {
+    alert('กรุณาใส่ชื่อรายการ');
+    return;
+  }
+
+  const clone = quill.root.cloneNode(true);
+  clone.querySelectorAll('img.img-selected').forEach((img) => img.classList.remove('img-selected'));
+  clone.querySelectorAll('select.ql-ui').forEach((el) => el.remove());
+  linkifyPlainTextInDom(clone);
+  expandImageCaptions(clone);
+
+  statusEl.textContent = 'กำลังบันทึก...';
+  fetch('api/save-sidebar-item.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: itemId || '',
+      title: title,
+      content: clone.innerHTML,
+      image: image,
+      link_url: linkUrl,
+      is_active: isActive
+    })
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        statusEl.textContent = 'บันทึกแล้ว';
+        document.getElementById('item-id').value = data.id;
+        window.history.replaceState({}, '', 'sidebar-item-editor.php?id=' + data.id);
+      } else {
+        statusEl.textContent = '';
+        alert('บันทึกไม่สำเร็จ: ' + (data.error || 'unknown error'));
+      }
+    })
+    .catch(() => {
+      statusEl.textContent = '';
+      alert('บันทึกไม่สำเร็จ');
+    });
+}
