@@ -16,7 +16,34 @@
   background: var(--topbar-bg);
   color: var(--topbar-text);
   border-bottom: 1px solid var(--topbar-border);
+}
+.topbar-brand-row .container {
   padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+/* Solid accent color instead of the page-blending bg the rest of the topbar
+   uses — the nav row needs to read as a distinct "menu bar" on its own, not
+   just a thin border away from the page content below it. */
+.topbar-nav-row {
+  background: var(--color-primary);
+}
+.topbar-nav-row .container {
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+}
+/* Higher specificity than `.topbar a` / `.menu-toggle` below (2 classes vs
+   1) so this reliably wins regardless of where it sits in the file — white
+   text needed here since it's the only spot in the topbar sitting on a
+   solid accent-color background instead of the page-blending one.
+   `> a` (direct children only) deliberately excludes .submenu's links —
+   those sit in their own dropdown panel with a page-like (not accent) bg,
+   so they must keep using the normal readable text color, not white. */
+.topbar-nav-row .topbar-menu > a,
+.topbar-nav-row .menu-toggle {
+  color: var(--text-on-primary);
 }
 .site-footer {
   background: var(--footer-bg);
@@ -30,31 +57,34 @@
 .site-footer .container {
   padding: 24px 20px;
 }
-.topbar .container {
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 .topbar a {
   color: var(--topbar-text);
   text-decoration: none;
   font-weight: 600;
 }
-.topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
 }
 .brand-logo {
   max-height: 55px;
   max-width: 80px;
   object-fit: contain;
+}
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.brand-name {
+  font-size: 27px;
+  font-weight: 700;
+}
+.brand-tagline {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.7;
 }
 .topbar-menu {
   display: flex;
@@ -186,12 +216,16 @@
   .container {
     padding: 16px 14px 60px;
   }
-  .topbar {
+  .topbar-brand-row .container {
     padding: 12px 14px;
-  }
-  .topbar .container {
     flex-wrap: wrap;
     gap: 8px;
+  }
+  /* Desktop nav row is replaced by the hamburger + accordion below — hide
+     the whole row (not just the nav inside it) so its border-top doesn't
+     leave an empty strip between the brand row and the hamburger button. */
+  .topbar-nav-row {
+    display: none;
   }
   .topbar .actions a {
     padding: 7px 10px;
@@ -204,15 +238,16 @@
   .topbar-menu-desktop {
     display: none;
   }
+  /* Same accent-color treatment as .topbar-nav-row — this button IS the nav
+     row on mobile (replaces it), so it should read the same way. */
   .mobile-menu-toggle {
     display: flex;
     align-items: center;
     gap: 10px;
     width: 100%;
-    background: var(--topbar-bg);
-    color: var(--topbar-text);
+    background: var(--color-primary);
+    color: var(--text-on-primary);
     border: none;
-    border-top: 1px solid var(--topbar-border);
     padding: 14px;
     font-size: 16px;
     font-weight: 600;

@@ -104,6 +104,29 @@
   border: 1px solid var(--card-border);
   object-fit: cover;
 }
+.site-asset-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.site-asset-preview {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-border);
+  object-fit: contain;
+}
+/* Overrides the block-display `.field label` rule above — this is the
+   inline "remove" checkbox label sharing the row with the preview/file
+   input, not a field label of its own. */
+.site-asset-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+}
 .field textarea {
   font-family: inherit;
   resize: vertical;
@@ -228,19 +251,46 @@ a.tag-badge:hover {
   background: var(--btn-secondary-bg-hover);
 }
 
+/* "Toast" notification — a small floating message anchored to the top of
+   the viewport that appears then dismisses itself, instead of a banner sitting
+   inline in the page flow. `position: fixed` + centering keeps it in the same
+   spot regardless of scroll position; `pointer-events: none` means it never
+   blocks clicks on the page underneath it. */
 .settings-notice {
-  padding: 10px 14px;
+  padding: 12px 20px;
   border-radius: var(--radius-md);
   font-size: 14px;
-  margin-bottom: 16px;
+  box-shadow: var(--dropdown-shadow);
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  z-index: 1000;
+  max-width: min(90vw, 480px);
+  pointer-events: none;
+}
+@keyframes toast-in {
+  0%   { opacity: 0; transform: translate(-50%, -8px); }
+  100% { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes toast-fade {
+  0%   { opacity: 0; transform: translate(-50%, -8px); }
+  8%   { opacity: 1; transform: translate(-50%, 0); }
+  85%  { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -8px); }
 }
 .settings-notice-success {
   background: var(--success-bg);
   color: var(--success-text);
+  /* Auto-dismisses — a "saved" confirmation doesn't need to be acted on. */
+  animation: toast-fade 3.2s ease both;
 }
 .settings-notice-error {
   background: var(--error-bg);
   color: var(--error-text);
+  /* Slides in but does NOT auto-dismiss — unlike a save confirmation, an
+     error needs to be read and acted on, so it stays until the next
+     navigation instead of disappearing on a timer. */
+  animation: toast-in 0.3s ease both;
 }
 
 .table-scroll {

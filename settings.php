@@ -65,6 +65,8 @@ $values = [
     'articles_per_page' => siteSetting('articles_per_page', 10),
     'site_logo' => siteSetting('site_logo', ''),
     'site_favicon' => siteSetting('site_favicon', ''),
+    'site_tagline' => siteSetting('site_tagline', ''),
+    'site_tagline_enabled' => siteSetting('site_tagline_enabled', '0'),
 ];
 $errors = [];
 $saved = isset($_GET['saved']);
@@ -75,6 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $values['owner_email'] = trim($_POST['owner_email'] ?? '');
     $values['footer_tagline'] = trim($_POST['footer_tagline'] ?? '');
     $values['articles_per_page'] = trim($_POST['articles_per_page'] ?? '');
+    $values['site_tagline'] = trim($_POST['site_tagline'] ?? '');
+    $values['site_tagline_enabled'] = !empty($_POST['site_tagline_enabled']) ? '1' : '0';
 
     if ($values['site_name'] === '') {
         $errors[] = 'กรุณาใส่ชื่อเว็บ';
@@ -149,24 +153,36 @@ include __DIR__ . '/partials/header.php';
         <input type="text" id="site_name" name="site_name" value="<?= htmlspecialchars($values['site_name']) ?>">
       </div>
       <div class="field">
+        <label for="site_tagline">สโลแกนเว็บ (ไม่บังคับ — ขึ้นเป็นบรรทัดเล็กใต้ชื่อเว็บบน header)</label>
+        <input type="text" id="site_tagline" name="site_tagline" value="<?= htmlspecialchars($values['site_tagline']) ?>">
+        <label style="font-weight:normal; display:flex; align-items:center; gap:6px; margin-top:8px;">
+          <input type="checkbox" id="site_tagline_enabled" name="site_tagline_enabled" value="1" <?= $values['site_tagline_enabled'] === '1' ? 'checked' : '' ?>>
+          แสดงสโลแกนใน header (ปิดไว้ก็ยังพิมพ์เก็บไว้ได้ แค่ไม่ขึ้นจนกว่าจะเปิด)
+        </label>
+      </div>
+      <div class="field">
         <label for="site_logo_file">โลโก้เว็บ (ไม่บังคับ — แสดงหน้าชื่อเว็บบน header, ย่อให้พอดีสูงไม่เกิน 55px กว้างไม่เกิน 80px เสมอ)</label>
-        <?php if ($values['site_logo']): ?>
-          <div class="featured-image-preview" style="display:flex; align-items:center;">
-            <img src="<?= htmlspecialchars($values['site_logo']) ?>" alt="" style="max-height:55px; max-width:80px; object-fit:contain;">
-            <label style="margin-left:12px; font-weight:normal;"><input type="checkbox" name="remove_site_logo" value="1"> ลบโลโก้</label>
-          </div>
-        <?php endif; ?>
-        <input type="file" id="site_logo_file" name="site_logo_file" accept=".jpg,.jpeg,.png,.gif,.webp,.svg">
+        <div class="site-asset-row">
+          <?php if ($values['site_logo']): ?>
+            <img src="<?= htmlspecialchars($values['site_logo']) ?>" alt="" class="site-asset-preview" style="max-height:55px; max-width:80px;">
+          <?php endif; ?>
+          <input type="file" id="site_logo_file" name="site_logo_file" accept=".jpg,.jpeg,.png,.gif,.webp,.svg">
+          <?php if ($values['site_logo']): ?>
+            <label><input type="checkbox" name="remove_site_logo" value="1"> ลบโลโก้</label>
+          <?php endif; ?>
+        </div>
       </div>
       <div class="field">
         <label for="site_favicon_file">Favicon (ไม่บังคับ — ไอคอนบนแท็บเบราว์เซอร์ แนะนำไฟล์สี่เหลี่ยมจัตุรัส .ico/.png/.svg)</label>
-        <?php if ($values['site_favicon']): ?>
-          <div class="featured-image-preview" style="display:flex; align-items:center;">
-            <img src="<?= htmlspecialchars($values['site_favicon']) ?>" alt="" style="max-height:32px; max-width:32px; object-fit:contain;">
-            <label style="margin-left:12px; font-weight:normal;"><input type="checkbox" name="remove_site_favicon" value="1"> ลบ favicon</label>
-          </div>
-        <?php endif; ?>
-        <input type="file" id="site_favicon_file" name="site_favicon_file" accept=".ico,.png,.svg,.gif">
+        <div class="site-asset-row">
+          <?php if ($values['site_favicon']): ?>
+            <img src="<?= htmlspecialchars($values['site_favicon']) ?>" alt="" class="site-asset-preview" style="max-height:32px; max-width:32px;">
+          <?php endif; ?>
+          <input type="file" id="site_favicon_file" name="site_favicon_file" accept=".ico,.png,.svg,.gif">
+          <?php if ($values['site_favicon']): ?>
+            <label><input type="checkbox" name="remove_site_favicon" value="1"> ลบ favicon</label>
+          <?php endif; ?>
+        </div>
       </div>
       <div class="field">
         <label for="timezone">เขตเวลา</label>

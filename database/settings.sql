@@ -16,5 +16,7 @@ INSERT INTO mblog_settings (setting_key, value) VALUES
     ('footer_tagline', 'สร้างด้วย PHP ล้วนๆ กับ ai อยากทำเองใช้เอง'),
     ('articles_per_page', '10'),
     ('site_logo', ''),
-    ('site_favicon', '')
+    ('site_favicon', ''),
+    ('site_tagline', ''),
+    ('site_tagline_enabled', '0')
 ON DUPLICATE KEY UPDATE value = VALUES(value);

@@ -35,18 +35,39 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
 <link rel="stylesheet" href="assets/layout.css<?= $assetVer('assets/layout.css') ?>">
 <link rel="stylesheet" href="assets/components.css<?= $assetVer('assets/components.css') ?>">
 <script src="assets/menu.js<?= $assetVer('assets/menu.js') ?>" defer></script>
+<script src="assets/toast.js<?= $assetVer('assets/toast.js') ?>" defer></script>
 <script src="assets/theme.js<?= $assetVer('assets/theme.js') ?>" defer></script>
 </head>
 <body>
 <div class="topbar">
-  <div class="container">
-    <div class="topbar-left">
+  <!-- Brand gets its own row, separate from the nav links below, so the
+       logo/site name reads as the header's main identity instead of being
+       just another item crowded next to the menu (a two-tier header is the
+       common pattern most sites with a real logo use). -->
+  <div class="topbar-brand-row">
+    <div class="container">
       <a href="index.php" class="brand">
         <?php if ($logoPath = siteSetting('site_logo')): ?>
           <img src="<?= htmlspecialchars($logoPath) ?><?= $assetVer($logoPath) ?>" alt="" class="brand-logo">
         <?php endif; ?>
-        <?= htmlspecialchars(siteSetting('site_name')) ?>
+        <span class="brand-text">
+          <span class="brand-name"><?= htmlspecialchars(siteSetting('site_name')) ?></span>
+          <?php if (siteSetting('site_tagline_enabled', '0') === '1' && ($tagline = siteSetting('site_tagline', '')) !== ''): ?>
+            <span class="brand-tagline"><?= htmlspecialchars($tagline) ?></span>
+          <?php endif; ?>
+        </span>
       </a>
+      <div class="actions">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="สลับธีมสว่าง/มืด">
+          <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
+          <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+        <?= $topbarActions ?? '' ?>
+      </div>
+    </div>
+  </div>
+  <div class="topbar-nav-row">
+    <div class="container">
       <!-- Desktop: click-to-open dropdown, submenu anchored right of the toggle -->
       <nav class="topbar-menu topbar-menu-desktop">
         <?php foreach ($menuItems as $item): ?>
@@ -64,13 +85,6 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
           <?php endif; ?>
         <?php endforeach; ?>
       </nav>
-    </div>
-    <div class="actions">
-      <button type="button" id="theme-toggle" class="theme-toggle" aria-label="สลับธีมสว่าง/มืด">
-        <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
-        <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-      </button>
-      <?= $topbarActions ?? '' ?>
     </div>
   </div>
 </div>
