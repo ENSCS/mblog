@@ -32,6 +32,9 @@ include __DIR__ . '/partials/header.php';
       <div class="dashboard-card-count"><?= $articleCount ?></div>
       <div class="dashboard-card-label">บทความทั้งหมด</div>
     </a>
+    <a class="dashboard-card" href="manage-pages.php">
+      <div class="dashboard-card-label">จัดการหน้า</div>
+    </a>
     <a class="dashboard-card" href="pages.php">
       <div class="dashboard-card-count"><?= $pageCount ?></div>
       <div class="dashboard-card-label">หน้า</div>

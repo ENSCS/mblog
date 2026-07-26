@@ -23,15 +23,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (checked.length === 0) {
       e.preventDefault();
-      alert('กรุณาเลือกบทความอย่างน้อย 1 รายการ');
+      alert('กรุณาเลือกอย่างน้อย 1 รายการ');
       return;
     }
 
     // Only the destructive actions need a confirm — matches the per-row
     // buttons (WP itself doesn't prompt for bulk publish/draft either).
-    if (action === 'trash' && !confirm(`ย้ายบทความ ${checked.length} รายการไปถังขยะ?`)) {
+    // Wording stays generic ("รายการ", not "บทความ"/"หน้า") since this
+    // script is shared by manage-articles.php and manage-pages.php.
+    if (action === 'trash' && !confirm(`ย้าย ${checked.length} รายการไปถังขยะ?`)) {
       e.preventDefault();
-    } else if (action === 'permanently_delete' && !confirm(`ลบถาวรบทความ ${checked.length} รายการ — กู้คืนไม่ได้อีก ยืนยันลบถาวร?`)) {
+    } else if (action === 'permanently_delete' && !confirm(`ลบถาวร ${checked.length} รายการ — กู้คืนไม่ได้อีก ยืนยันลบถาวร?`)) {
       e.preventDefault();
     }
   });

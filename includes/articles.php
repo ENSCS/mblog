@@ -527,19 +527,23 @@ function getArticleById(int $id): ?array
     return fetchOneArticle('a.id = ?', [$id]);
 }
 
-// Counts for the status tabs on manage-articles.php ("ทั้งหมด (N)" etc.) —
-// one query instead of 4, since the admin screen needs all of them at once
-// on every load regardless of which tab is active.
-function getArticleStatusCounts(): array
+// Counts for the status tabs on manage-list.php ("ทั้งหมด (N)" etc.) — one
+// query instead of 4, since the admin screen needs all of them at once on
+// every load regardless of which tab is active. $type: 'post' or 'page',
+// same discriminator as everywhere else — shared by manage-articles.php and
+// manage-pages.php (see includes/manage-list.php).
+function getArticleStatusCounts(string $type = 'post'): array
 {
-    $row = db()->query(
+    $stmt = db()->prepare(
         "SELECT
             SUM(CASE WHEN deleted_at IS NULL THEN 1 ELSE 0 END) AS all_count,
             SUM(CASE WHEN deleted_at IS NULL AND status = 'published' THEN 1 ELSE 0 END) AS published_count,
             SUM(CASE WHEN deleted_at IS NULL AND status = 'draft' THEN 1 ELSE 0 END) AS draft_count,
             SUM(CASE WHEN deleted_at IS NOT NULL THEN 1 ELSE 0 END) AS trash_count
-         FROM mblog_articles WHERE type = 'post'"
-    )->fetch();
+         FROM mblog_articles WHERE type = ?"
+    );
+    $stmt->execute([$type]);
+    $row = $stmt->fetch();
 
     return [
         'all' => (int) $row['all_count'],
@@ -549,11 +553,13 @@ function getArticleStatusCounts(): array
     ];
 }
 
-// Backs manage-articles.php — deliberately bypasses fetchArticles() (which
-// always excludes trashed rows) since this is the one screen that needs to
-// see into the trash. $filters: status ('all'/'published'/'draft'/'trash'),
-// search (title LIKE), category_id, tag_slug, date_from/date_to (against
-// created_at, not published_at — a draft may never have a published_at).
+// Backs manage-articles.php/manage-pages.php (via includes/manage-list.php)
+// — deliberately bypasses fetchArticles() (which always excludes trashed
+// rows) since this is the one screen that needs to see into the trash.
+// $filters: type ('post'/'page', defaults to 'post'), status
+// ('all'/'published'/'draft'/'trash'), search (title LIKE), category_id,
+// tag_slug, date_from/date_to (against created_at, not published_at — a
+// draft may never have a published_at).
 // Returns ['items' => [...], 'total' => N] so the caller can paginate.
 function getArticlesForAdmin(array $filters, int $page, int $perPage): array
 {
@@ -566,7 +572,7 @@ function getArticlesForAdmin(array $filters, int $page, int $perPage): array
     }
 
     $where = ['a.type = ?'];
-    $params = ['post'];
+    $params = [$filters['type'] ?? 'post'];
 
     $status = $filters['status'] ?? 'all';
     if ($status === 'trash') {

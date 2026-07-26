@@ -318,6 +318,10 @@ a.tag-badge:hover {
   color: var(--text-muted);
   font-weight: 600;
   font-size: 13px;
+  /* var(--page-bg), not --input-bg — --input-bg equals --card-bg in the
+     light theme (both --color-surface-card), so the header row would've
+     been invisible there. --page-bg differs from --card-bg in both themes. */
+  background: var(--page-bg);
 }
 .admin-table-child {
   padding-left: 28px !important;
