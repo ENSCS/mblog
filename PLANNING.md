@@ -41,130 +41,39 @@
 
 ## สิ่งที่สร้างไปแล้ว (ใช้งานได้จริงตอนนี้)
 
-ระบบเขียนบทความแบบ WYSIWYG พร้อม **MySQL เต็มระบบแล้ว** (ย้ายออกจากไฟล์ json/array เดิมทั้งหมด — รายละเอียดการย้ายดู Phase 1 ในหัวข้อ Roadmap ด้านล่าง):
+รายละเอียดระดับไฟล์/ฟังก์ชัน/บั๊กที่แก้แล้วทั้งหมด ย้ายไปอยู่ที่ [BUILT.md](BUILT.md) แล้ว (แยกออกมากันไฟล์นี้ยาวเกินไป) — เปิดอ่านตอนต้องรู้รายละเอียดเชิงลึกของฟีเจอร์ใดฟีเจอร์หนึ่งเท่านั้น
 
-- **โครงสร้างไฟล์**
-  - `index.php` — **แค่ 302 redirect ไป `articles.php`** (ไม่ใช่ 301 — เป็นการจัดวางชั่วคราว วันหน้าจะเอา `index.php` ไปทำหน้าแรกจริงๆ ก็ลบ redirect นี้ได้ทันทีโดยไม่ทิ้งร่องรอยกับ browser/Google)
-  - `articles.php`, `pages.php`, `category.php`, `tag.php`, `drafts.php` — 5 หน้ารายการที่หน้าตา/พฤติกรรมคล้ายกันมาก (การ์ด + badge + pagination) **รวมให้ใช้ query กลางและ partial กลางตัวเดียวแล้ว** แทนที่จะแยกกันคนละชุดโค้ด: `getArticleList($filters, $page, $perPage)` ใน `includes/articles.php` (filter `type`/`status`/`category_slug`/`tag_slug`) ↔ `partials/article-list.php` (render การ์ด+badge+pagination, ควบคุมด้วยตัวแปร `$showCategoryBadge`/`$showStatusBadge`/`$linkToView` ต่อหน้า) — **แบ่งหน้าแล้วครบทั้ง 5 หน้า** (เดิมมีแค่ `articles.php`) ใช้ค่าเดียวกันจาก `settings.php` (`articles_per_page`, ค่าเริ่มต้น 10) — `sitemap.php`/`admin.php` ยังเรียกผ่าน wrapper เดิม (`getArticles()`/`getPages()`/`getDraftArticles()`) ที่ตอนนี้ห่อ `getArticleList()` ไว้ชั้นเดียว ไม่ต้องแก้โค้ดฝั่งนั้น
-    - `articles.php` — รายการบทความ (`type='post'` เฉพาะที่เผยแพร่แล้ว) แยกออกมาจาก `index.php` โดยเจตนา กันบทความหายไปด้วยถ้าวันหน้า `index.php` ถูกเปลี่ยนไปทำอย่างอื่น — badge หมวดหมู่คลิกไปหน้า `category.php` ได้
-    - `category.php` — หน้ารวมบทความตามหมวดหมู่ (`?slug=`) อัตโนมัติ ไม่ต้องมาเพิ่มเมนู/หน้าเองทุกครั้งที่มีบทความใหม่เข้าหมวด — 404 ถ้าหมวดไม่มีจริง — ตอนนี้โชว์ badge หมวดหมู่บนการ์ดเหมือน `articles.php` แล้ว (เดิมไม่มี)
-    - `tag.php` — หน้ารวมบทความตามแท็ก (`?slug=`) — โชว์ badge หมวดหมู่ด้วยเหมือนกัน (มีประโยชน์กว่ากับ `category.php` เพราะบทความในแท็กเดียวกันมาจากคนละหมวดได้)
-    - `pages.php` — หน้ารวม Page ทั้งหมดที่เผยแพร่แล้ว (คู่ขนานกับ `articles.php` แต่สำหรับ `type='page'`)
-    - `drafts.php` — รายการร่าง (ชั่วคราว ยังไม่ผูกสิทธิ์เจ้าของ เพราะยังไม่มีระบบล็อกอิน — ดู "ประเด็นที่วนกลับมาซ้ำๆ")
-  - `editor.php` — หน้าเขียน/แก้ไข (ใช้ [Quill.js](https://quilljs.com)) แยกปุ่ม "บันทึกร่าง"/"เผยแพร่" + **แก้ slug เองได้** (ไม่กรอกจะสลักจากชื่อบทความให้อัตโนมัติ, เตือนถ้าแก้ slug ของบทความที่เผยแพร่แล้ว)
-  - `article.php` — หน้าอ่านบทความ (`type='post'` เฉพาะที่เผยแพร่แล้ว) + **301 redirect อัตโนมัติ** ถ้ามีคนเข้าด้วย slug เก่าที่เคยเปลี่ยนไปแล้ว
-  - `page.php` — หน้าอ่าน "Page" (`type='page'` เช่น เกี่ยวกับเรา/ติดต่อเรา/นโยบายความเป็นส่วนตัว — เผยแพร่จริงแล้วทั้ง 3 หน้า พร้อมเนื้อหา mockup) คู่ขนานกับ `article.php` แต่ไม่มี badge หมวดหมู่/OG type เป็น `website` — ดูหัวข้อ 1 "Post vs Page"
-  - `api/save.php` — บันทึกบทความ/หน้าลง MySQL (คอลัมน์ `type` แยก post/page, หน้าไม่มีหมวดหมู่), sync รูปที่ใช้จริงเข้าตาราง `mblog_images`, บันทึก redirect อัตโนมัติถ้า slug เปลี่ยน — ระบุ "กำลังแก้บทความไหน" ด้วย `id` (ไม่ใช่ `slug` เพราะแก้ slug เองได้แล้ว)
-  - `api/upload.php` — อัปโหลดรูป เก็บชื่อไฟล์เดิม (sanitize แบบ WP รองรับทุกภาษา ไม่สุ่มชื่อทิ้งเหมือนเดิม) แยกโฟลเดอร์ตามเดือน `uploads/YYYY/MM/`
-  - `includes/articles.php` — ฟังก์ชันกลางอ่าน/เขียนบทความ+หน้าทั้งหมด — แกนกลางคือ `getArticleList($filters, $page, $perPage)` (query เดียวรองรับ `type`/`status`/`category_slug`/`tag_slug` + pagination, ใช้จริงโดย 5 หน้ารายการ) ส่วน `getArticles()`, `getPages()`, `getDraftArticles()` เป็น wrapper บางๆ เรียกมันซ้ำ (ให้ `sitemap.php`/`admin.php` เรียกแบบเดิมไม่แบ่งหน้าได้) นอกนั้นมี `getArticle()`, `getPage()`, `articleViewUrl()` (คืน URL `article.php`/`page.php` ตาม `type`), `getCategoryBySlug()`, `articleCategory()`/`articleCategorySlug()`/`articleCategoryColor()` (คืน `null` เมื่อไม่มีหมวด — ดูหัวข้อ 3), `getArticleForEdit()`, `getArticleById()`, `getCategories()`, `syncArticleImages()`, `sanitizeSlug()`/`uniqueSlug()`, `recordSlugRedirect()`/`findRedirectSlug()`, `articleContentPreview()` (พารากราฟแรกของเนื้อหาจริง ตัด HTML ทิ้ง จำกัด 500 ตัวอักษรที่ขอบคำ — ใช้แสดงในการ์ดของ `partials/article-list.php`, คนละตัวกับ `articleExcerpt()` ที่มีไว้ทำ meta description)
-  - `includes/menu.php` — `getMenuItems()` อ่านเมนูจากตาราง `mblog_menu_items` (คืนเป็น tree รองรับเมนูย่อย) + ฟังก์ชันสำหรับหน้าแอดมิน (`getAllMenuItems()`, `getTopLevelMenuItems()`, `getMenuItemById()`, `countMenuItemChildren()`, `nextMenuSortOrder()`, `createMenuItem()`/`updateMenuItem()`/`deleteMenuItem()`)
-  - `menu.php` — หน้าแอดมินจัดการเมนู (ยังไม่ล็อกอินก่อนเข้าได้ — รอ Phase 3) มีลิงก์ในเมนูหลักแล้ว
-  - `includes/settings.php` — `siteSetting($key)`/`updateSiteSettings()` อ่าน/เขียนค่าตั้งค่าเว็บจากตาราง `mblog_settings`
-  - `settings.php` — หน้าแอดมินตั้งค่าเว็บ (ยังไม่ล็อกอินก่อนเข้าได้ — รอ Phase 3) — `require config.php` ตรงๆ ไม่ผ่าน `includes/articles.php` เหมือนหน้าอื่น เพราะไม่ใช้ฟังก์ชันบทความเลยสักตัว — ตอนนี้มีเพิ่ม: **โลโก้เว็บ + favicon** (อัปโหลด+พรีวิว+ลบ, เก็บที่ `uploads/site/logo.<ext>`/`favicon.<ext>` ไฟล์เดียวต่อช่อง อัปโหลดใหม่ลบของเก่าอัตโนมัติแม้เปลี่ยนนามสกุล — โลโก้โชว์ก่อนชื่อเว็บใน header จำกัดสูง 55px กว้าง 80px เสมอด้วย CSS, favicon ออก `<link rel="icon">` จริงพร้อมเดา mime จากนามสกุล), **สโลแกนเว็บ** (ช่องข้อความ + toggle เปิด/ปิด แยกจากกัน — ปิดไว้ก็ยังพิมพ์เก็บไว้ได้ไม่ต้องพิมพ์ใหม่), **ตำแหน่ง sidebar** (ซ้าย/ขวา — ดูหัวข้อ "ระบบ Sidebar item" ท้ายเอกสาร)
-  - `categories.php` — หน้าแอดมินจัดการหมวดหมู่ (เพิ่ม/แก้/ลบ, เลือกสีป้ายจาก 7 โทนเดียวกับ `.category-tag-*`) ลบหมวดหมู่ไม่ทำลายบทความ (FK `category_id` เป็น `ON DELETE SET NULL` — บทความแค่กลายเป็น "ไม่มีหมวดหมู่" จริงๆ ไม่ใช่ตกไปหมวดแรกแบบเงียบๆ เหมือนที่เคยเป็น — ดูหัวข้อ 3) แต่หน้านี้ก็เตือนจำนวนบทความที่ใช้อยู่ก่อนลบเผื่อกดผิด
-  - `admin.php` — dashboard รวมลิงก์ไปหน้าแอดมินทั้งหมด แบ่ง 2 โซน "เนื้อหา" (เขียนบทความ/จัดการบทความ/ร่าง/บทความทั้งหมด/หน้า) กับ "ตั้งค่าเว็บ" (ตั้งค่าเว็บ/จัดการเมนู/จัดการหมวดหมู่/จัดการ Sidebar) แต่ละการ์ดโชว์จำนวนคร่าวๆ ดึงจากฟังก์ชันที่มีอยู่แล้ว ไม่ query เพิ่ม — เมนูหลักตอนนี้ยุบ "ตั้งค่า"/"จัดการเมนู" (ที่เคยแยกกัน) เหลือลิงก์เดียวคือ "จัดการเว็บ" ชี้มาที่นี่ กันเมนูบนบวมทุกครั้งที่เพิ่มหน้าแอดมินใหม่ในอนาคต (หน้าแอดมินใหม่ๆ ไม่ต้องมีลิงก์เมนูของตัวเองอีกแล้ว เข้าผ่าน dashboard แทน)
-  - **ระบบ Sidebar item (ทำแล้ว)** — แบนเนอร์/ประกาศ/ป้ายโฆษณา/ป้ายลิงก์ที่โชว์ข้าง `articles.php`/`article.php`/`pages.php`/`page.php`/`category.php`/`tag.php` (หน้าแอดมินไม่มี) ตารางแยกต่างหาก `mblog_sidebar_items` โดยตั้งใจ ไม่ยุบรวมกับ `mblog_articles` แบบ Page เพราะ sidebar item ไม่ใช่หน้าที่มี URL ของตัวเอง (ไม่ต้องมี slug/SEO/tag/category/redirect) — สคีมาเบากว่ามาก: title/content/image/link_url/is_active/sort_order — ลบเป็น hard delete ตรงๆ ไม่มีถังขยะแบบบทความ (ของชิ้นเล็ก ความเสียหายจากลบพลาดต่ำ พอมี popup ยืนยันก็เพียงพอ)
-    - `includes/sidebar.php` — data layer (`getActiveSidebarItems()`/`getAllSidebarItems()`/`getSidebarItemById()`/`createSidebarItem()`/`updateSidebarItem()`/`updateSidebarItemOrder()`/`deleteSidebarItem()`/`nextSidebarSortOrder()`)
-    - `sidebar-items.php` — หน้ารวม จัดลำดับ+เปิดปิดผ่านฟอร์มเดียว (ช่อง input นอกฟอร์มผูกกลับด้วย `form="reorder-form"` แบบเดียวกับที่แก้บั๊ก `<form>` ซ้อนใน `manage-articles.php`ไปแล้ว)
-    - `sidebar-item-editor.php` — หน้าสร้าง/แก้ไข ใช้ Quill editor เต็มรูปแบบ (ตามที่ตัดสินใจไว้ว่า "โค้ดมีอยู่แล้ว มีครบย่อมดีกว่า") ก็อปแนวทางจาก `editor.php` มาแต่ตัดหมวดหมู่/แท็ก/slug/SEO ออกหมด — **บั๊กที่เจอและแก้แล้ว**: ตอนแรกตั้งชื่อตัวแปรเป็น `$item` ชนกับ `foreach ($menuItems as $item)` ที่ `partials/header.php` ใช้อยู่แล้ว (`include` แชร์ scope กัน ทำให้ค่าถูกทับหลัง include header) แก้โดยเปลี่ยนชื่อเป็น `$sidebarItem` — บทเรียน: ตัวแปรที่ตั้งค่าก่อน include header.php แล้วอ่านค่ากลับหลัง include ต้องเลี่ยงชื่อ `$item`/`$menuItems` ที่ header.php ใช้เป็น loop variable อยู่แล้ว
-    - `api/save-sidebar-item.php` — endpoint บันทึก (คู่กับ `saveSidebarItem()` ใน `assets/editor.js` ที่ใช้ pipeline cleanup เนื้อหาเดียวกับ `saveArticle()`) — normalize เนื้อหาว่างของ Quill (`<p><br></p>`) เป็น `NULL` ก่อนเซฟเสมอ (เช็คว่าไม่มีทั้งตัวหนังสือและรูปฝังในเนื้อหาก่อน) กัน `partials/footer.php` เรนเดอร์กล่องเนื้อหาว่างเปล่าใต้รูป
-    - `partials/header.php`/`footer.php` — เปิด/ปิด layout 2 คอลัมน์ (`.main-content` + `<aside class="sidebar">`) เฉพาะหน้าที่ตั้ง `$showSidebar = true` **และ** มีรายการ active จริงอย่างน้อย 1 อัน ไม่งั้น fallback เป็นคอลัมน์เดียวเหมือนเดิมทุกอย่าง — ตำแหน่งซ้าย/ขวาคุมด้วย CSS `order` (ไม่ใช่สลับ DOM) กันเนื้อหาหลักไม่ได้มาก่อนเสมอสำหรับ screen reader, มือถือ stack เนื้อหาหลักไว้บนสุดเสมอไม่ว่าตั้งค่าซ้าย/ขวา
-    - **เปิด/ปิด sidebar แบบ 2 ชั้น (ทำแล้ว)** — ชั้นเว็บ: `sidebar_enabled` ใน `mblog_settings` (checkbox ใน `settings.php`) ชั้นบทความ/หน้า: คอลัมน์ `mblog_articles.show_sidebar` (`TINYINT(1) NULL`, `database/article_sidebar_toggle.sql`) เลือกได้ใน `editor.php` เป็น dropdown 3 ทาง "ตามค่าเว็บ/เปิด/ปิด" — `NULL` = ตามค่าเว็บ **แบบ live** (ไม่ snapshot ค่าตอนสร้าง เปลี่ยน setting เว็บทีหลังก็ขยับตามทันที), `1`/`0` = บังคับเปิด/ปิดสำหรับบทความ/หน้านั้นโดยเฉพาะ **ไม่สนใจค่าเว็บเลย** (priority สูงสุด) — สรุป logic อยู่ที่ `articleShowsSidebar()` ใน `includes/articles.php` เรียกจาก `article.php`/`page.php` เท่านั้น (หน้ารายการทั้ง 5 ไม่มีแนวคิด "รายการเดียว" ให้ผูกค่าต่อชิ้น เลยยึด `sidebar_enabled` ของเว็บตรงๆ ต่อไปผ่าน `partials/header.php`) — `partials/header.php` มีตัวแปร `$sidebarSiteGate` (default true) ให้ `article.php`/`page.php` ปิดการเช็ค `sidebar_enabled` ซ้ำ เพราะ resolve ค่าสุดท้ายมาให้แล้วจาก `articleShowsSidebar()`
-    - **ความกว้าง header/footer คงที่ทุกหน้า (ทำแล้ว)** — เดิม topbar/footer ใช้ class `container-wide` (1100px) เฉพาะหน้าที่ `$hasSidebar` จริง ไม่งั้นใช้ `.container` เฉยๆ (960px) ทำให้ความกว้างกระโดดเวลาคลิกสลับหน้าที่มี/ไม่มี sidebar — แก้เป็นให้ topbar/footer ใช้ `container-wide` แบบไม่มีเงื่อนไขเลย (1100px ทุกหน้ารวม admin) ส่วนเนื้อหา: มี sidebar ใช้ 800(เนื้อหา)+20(gap)+280(sidebar)=1100 ตรงกับ header เป๊ะ, ไม่มี sidebar ขยายจาก 860→960
-    - **ลิงก์ sidebar เปิด tab ใหม่ (ทำแล้ว)** — `target="_blank" rel="noopener noreferrer"` ใน `partials/footer.php`
-    - **รวม CSS ของเนื้อหาที่มาจาก Quill ไว้ที่เดียว (ทำแล้ว)** — เดิม `.article-content` (`assets/article.css`) กับ `.sidebar-item-content` (`assets/layout.css`) มี rule คนละชุดแยกกัน (จัดกึ่งกลาง/รูป float/caption/blockquote/code block/hr) ทำให้ฟีเจอร์พวกนี้ **ใช้ไม่ได้เลยใน sidebar** (เจอตอนพิมพ์ข้อความจัดกึ่งกลางใน sidebar item แล้วไม่กลาง) — แก้ด้วยการรวมทุก rule ที่เป็น "พฤติกรรมของ Quill" (ไม่ใช่ "ขนาดตามบริบท" เช่น font-size ของ heading) มาไว้ใต้ class กลาง `.rich-content` ใน `assets/layout.css` (โหลดทุกหน้าอยู่แล้ว) ส่วนขนาด/ระยะห่างที่ต่างกันจริงตามบริบท (คอลัมน์บทความ 800px vs การ์ด sidebar 280px) ยังแยกอยู่ที่เดิม — ผลพลอยได้ที่เจอระหว่างทำ: **bullet/numbered list ไม่เคยแสดงเครื่องหมายเลยนอก `article.php`/`page.php`/`editor.php`** เพราะ marker (`•`/`1.`/...) มาจาก `quill.snow.css` (vendor) ที่ผูกกับ class `.ql-editor` เท่านั้น และเดิมโหลดเฉพาะ 4 หน้านั้น — ย้าย `<link>` ของ `quill.snow.css` ไปโหลดที่เดียวใน `partials/header.php` (ทุกหน้า) แทน แล้วให้ wrapper ที่ render เนื้อหาจริงมี class `rich-content ql-editor` คู่กันเสมอ (ตัว `.ql-editor` เฉยๆ ไม่มี `rich-content` คือ editor ตัวจริงที่ Quill สร้างเองใน `editor.php`/`sidebar-item-editor.php` ยังได้ CSS แก้ไขปกติ) — **จุดต้องระวังที่เจอระหว่างแก้**: `quill.snow.css` ตั้ง `.ql-editor { padding: 12px 15px; height: 100% }` ไว้สำหรับกล่องแก้ไขจริง ต้อง cancel เฉพาะกรณี render อ่านอย่างเดียว (`.article-content.ql-editor { padding: 0 }`) แบบเจาะจงเป็นราย-context ไม่ใช่ cancel รวมทุกที่ ไม่งั้นจะไปทับ padding 14px ของการ์ด sidebar เองด้วย (บทเรียนเดิมซ้ำอีกรอบ: CSS override ที่ specificity สูงกว่าต้อง scope ให้แคบพอ ไม่งั้นกระทบ context อื่นที่ไม่ตั้งใจ)
-  - **`manage-articles.php`** — หน้าจัดการบทความแบบ WP (checkbox เลือกหลายแถว + bulk action, ค้นหา/กรองด้วยข้อความ/หมวดหมู่/แท็ก/ช่วงวันที่, แท็บสถานะทั้งหมด/เผยแพร่แล้ว/ร่าง/ถังขยะ พร้อม pagination) — แยกจาก `articles.php` เดิมโดยเจตนา (ตัวนั้นยังเป็นฟีดสาธารณะ เผยแพร่แล้วเท่านั้น) ขอบเขตแค่ `type=post` เท่านั้น ไม่รวม page
-    - **ระบบถังขยะ (ทำแล้ว)** — เพิ่มคอลัมน์ `deleted_at` แยกจาก `status` โดยตั้งใจ (ไม่ใช้ค่า `trash` ใน `status` ENUM) เพราะกู้คืนต้องรู้ว่าของเดิมเป็นร่างหรือเผยแพร่แล้วกันแน่ — ลบ = set `deleted_at`, กู้คืน = เคลียร์เป็น NULL, ลบถาวรถึงจะ `DELETE` จริง (DB cascade ลบ tag/image/redirect ให้เอง ไม่ลบไฟล์รูปจริงตามหลักการเดิมของ `syncArticleImages()`)
-    - `fetchArticles()`/`fetchOneArticle()` (จุดรวมที่ทุกฟังก์ชันอ่านบทความเรียกผ่าน) ผูก `deleted_at IS NULL` ไว้ในตัวเองแล้ว กันบทความที่อยู่ถังขยะหลุดออกไปทุกหน้าโดยอัตโนมัติ ไม่ต้องแก้ทีละฟังก์ชัน — `getArticlesForAdmin()` เป็นข้อยกเว้นเดียวที่ตั้งใจข้าม helper นี้เพราะต้องมองเห็นถังขยะได้
-    - ปุ่มลบทุกจุด (แถวเดี่ยว + bulk) มี popup ยืนยันก่อนเสมอ (`confirm()`) โดยเฉพาะ "ลบถาวร" ที่เตือนชัดว่ากู้คืนไม่ได้
-    - **บั๊กที่เจอระหว่างทำและแก้แล้ว**: ฟอร์ม bulk action ครอบทั้งตาราง แล้วแต่ละแถวก็มีฟอร์มลบของตัวเองซ้อนอยู่ข้างใน — `<form>` ซ้อน `<form>` เป็น HTML ที่ไม่ถูกต้อง เบราว์เซอร์จะรวมฟอร์มในเข้ากับฟอร์มนอกให้เงียบๆ (กดปุ่มลบแถวเดียวกลับไปเรียก handler ของ bulk form แทน) แก้ด้วยการย้าย checkbox ออกมานอกฟอร์ม แล้วผูกกลับด้วย attribute `form="bulk-form"` แทนการครอบด้วย `<form>` จริง
-  - `includes/db.php` — จุดเชื่อมต่อ MySQL (PDO) เดียวของทั้งแอป ทุกฟังก์ชันข้างบนเรียกผ่าน `db()`
-  - `config.php` (gitignored) / `config.example.php` — path, `APP_ENV`, DB credentials (ต้อง define ก่อน require `includes/settings.php` เพราะ `siteSetting()` ต้องใช้ `db()` แล้ว), บังคับ timezone ตายตัวจาก `mblog_settings` (กัน php.ini ของแต่ละเครื่อง/แต่ละ PHP ที่รันไม่ตรงกัน)
-  - `database/*.sql` — SQL migration แยกไฟล์ตาม Phase (`phase1_core.sql` ถึง `phase9_stats.sql`) ทุกตารางขึ้นต้นด้วย `mblog_` กันชนกับระบบอื่นถ้าต้องใช้ฐานข้อมูลร่วมกันบนโฮสที่มีได้แค่ DB เดียว
-  - `uploads/YYYY/MM/` — เก็บรูปภาพที่แทรก แยกโฟลเดอร์ตามเดือนกันไฟล์บวมในโฟลเดอร์เดียว
-  - `assets/base.css`, `layout.css`, `components.css`, `article.css`, `editor.css` — แยกจาก `style.css` ไฟล์เดียวเดิม (`editor.css` โหลดเฉพาะหน้าแก้ไข ไม่ส่งให้ผู้อ่านทั่วไป), `assets/editor.js`, `assets/copy-button.js`, `assets/menu.js` — เมนูย่อย desktop เปิดด้วย CSS `:hover`/`:focus-within` ล้วนๆ (ไม่ใช้ JS toggle อีกต่อไป เพราะตัวคำหลักกลายเป็นลิงก์จริงแล้ว), ส่วน mobile accordion ยังคลิกเปิด/ปิดผ่าน JS เหมือนเดิม (คนละ component กันกับ desktop โดยสิ้นเชิง)
-  - `assets/toast.js` — โหลดทุกหน้า (เหมือน `menu.js`/`theme.js`) ลบ query param แบบ one-time (`?saved=1`/`?deleted=1`/`?done=1` — ใช้แพทเทิร์นเดียวกับที่ `manage_price_alerts.php` ของโปรเจกต์ z/aset ทำ) ออกจาก address bar ด้วย `history.replaceState` หลังโชว์ toast ครั้งเดียว กันรีเฟรชแล้วโชว์ toast ซ้ำ/ค้าง query string
-  - **Toast notification (ทำแล้ว)** — เปลี่ยน `.settings-notice` (ใช้ร่วมกันใน `settings.php`/`menu.php`/`categories.php`/`manage-articles.php` อยู่แล้ว) จากกล่องแจ้งเตือนที่นั่งอยู่ในเนื้อหาหน้า เป็น toast ลอย (`position:fixed` กึ่งกลางบนจอ) พร้อม CSS keyframe เลื่อน+จางเข้า — **success จางหายเองใน 3.2 วิ, error ไม่หายเอง** (ต้องอ่าน/แก้ก่อน) — แก้จุดเดียวใน `components.css` มีผลครบ 4 หน้าที่ใช้ class นี้ทันที ไม่ต้องแก้ทีละหน้า
-  - **ธีมเว็บ (ทำแล้ว)** — restyle ตาม `claude-design.md` (เอกสารดีไซน์ของ claude.com — cream canvas + coral accent + dark-navy surface) พร้อมโหมด light/dark สลับได้ `assets/theme.js` — โครง 2 ชั้นใน `assets/base.css`: raw palette (`--color-*`) → role tokens (`--page-bg`, `--text-primary`, `--card-bg` ฯลฯ) ที่ component เรียกใช้จริง สลับธีมทั้งเว็บคือแก้ role tokens จุดเดียว ไม่ต้องไล่แก้ทุกไฟล์ CSS — พิสูจน์หลักการ "แยกข้อมูลออกจากโค้ดที่แสดงผล" แบบเดียวกับที่ใช้กับ backend มาตลอด แต่ใช้กับ CSS แทน — รายละเอียด:
-    - Footer เป็น dark navy ตายตัวทั้ง 2 ธีม ("footer never inverts" ตามเอกสารต้นฉบับ)
-    - Code block ในบทความเป็น dark "code window" ตายตัวเช่นกัน (ไม่ตามธีม) พร้อมสลับ highlight.js theme เป็น `github-dark.min.css` คู่กันไปด้วย กันสีอ่านไม่ออก
-    - Quill editor canvas (`#editor-container`) จงใจไม่ตามธีม (พื้นขาว/ตัวหนังสือดำตายตัว) เพราะ Quill เองบังคับสีตัวหนังสือมาจาก snow.css ของมันเอง ถ้าเปลี่ยนแค่พื้นหลังตามธีมโดยไม่คุม CSS ของ Quill เองด้วย จะเกิดตัวหนังสือมืดอ่านไม่ออกบนพื้นมืด
-    - Badge สี category (7 โทน) ปรับจากโทน SaaS ทั่วไป (blue/green/purple ...) เป็นโทนอุ่น/หม่นให้เข้ากับชุดสี cream+coral แทน เก็บเป็น `--tag-*-bg`/`--tag-*-text` คู่กันในเลเยอร์ role tokens เหมือนกัน
-    - ฟอนต์: ลองสลับเป็น Cormorant Garamond (หัวข้อ) + Inter (เนื้อหา) + JetBrains Mono (โค้ด) ตามเอกสารต้นฉบับไปรอบหนึ่งแล้ว แต่**ตัดสินใจย้อนกลับไปใช้ฟอนต์เดิม** (`"Segoe UI", "Sarabun", Tahoma, sans-serif` ตัวเดียวทั้งเว็บ ไม่แยก display/body) เพราะอ่านง่ายทั้งไทย/อังกฤษอยู่แล้วโดยไม่ต้องพึ่ง web font โหลดจากภายนอก — สีปาเลตต์/โหมด light-dark ยังคงไว้ตามเดิม เปลี่ยนแค่ font-family
-    - Toggle ธีม: ปุ่มใน topbar ทุกหน้า, จำค่าไว้ที่ `localStorage` (ไม่ผูกกับ `mblog_settings` เพราะเป็น preference ต่อผู้ชม ไม่ใช่ค่าตั้งค่าเว็บส่วนกลาง), มี inline script ก่อน CSS ใน `partials/header.php` กัน flash ของธีมผิดตอนโหลดหน้า, เคารพ `prefers-color-scheme` เป็นค่าเริ่มต้นถ้ายังไม่เคยกด toggle เอง
-    - **Header แยกเป็น 2 แถว (ทำแล้ว)** — เดิมโลโก้/ชื่อเว็บ+เมนูอยู่แถวเดียวกัน แน่นเกินไปตอนมีโลโก้จริง เลยแยก `.topbar-brand-row` (โลโก้+ชื่อเว็บ ตัวใหญ่ขึ้น 27px + ปุ่ม action) กับ `.topbar-nav-row` (เมนู) — แถวเมนูให้พื้นหลังสีส้ม coral (`--color-primary`) ตรงๆ แทนสีที่กลืนกับพื้นเว็บแบบเดิม (เดิม `--topbar-bg` ถูกตั้งเท่ากับ `--page-bg` เป๊ะทั้ง 2 ธีม มีแค่เส้น `border-bottom` บางๆ กั้น) เพราะอยากให้แถบเมนูเด่นชัดแบบเว็บทั่วไป — **บั๊กที่เจอและแก้แล้ว**: selector `.topbar-nav-row .topbar-menu a` กว้างเกินไป ดันไปบังคับสีขาวให้ลิงก์ใน dropdown ย่อยด้วย (ซึ่งพื้นหลัง dropdown เป็นสีอ่อนในโทมสว่าง กลายเป็นตัวหนังสือขาวบนพื้นขาว) แก้เป็น `.topbar-nav-row .topbar-menu > a` (child selector เจาะจงแค่ลิงก์ชั้นบนสุด)
-
-- **ฐานข้อมูล MySQL (`mblog`)** — ตาราง `mblog_*` ทั้งหมด 12 ตัว (คอลัมน์เต็มดู `database/*.sql`)
-  - ใช้งานจริงแล้ว (Phase 1): `mblog_articles` (มีคอลัมน์ `type` แยก post/page), `mblog_images`, `mblog_categories` (มีคอลัมน์ `color` เก็บโทนสี badge), `mblog_menu_items`, `mblog_slug_redirects`
-  - ใช้งานจริงแล้ว (Phase 4): `mblog_tags`, `mblog_article_tag`
-  - ใช้งานจริงแล้ว (นอกแผน Phase เดิม — ย้ายจากไฟล์ตอนทำหน้าแอดมิน settings.php): `mblog_settings`
-  - ใช้งานจริงแล้ว (นอกแผน Phase เดิม — ระบบ sidebar item, `database/sidebar.sql`): `mblog_sidebar_items`
-  - สร้างตารางไว้รอล่วงหน้าแล้ว แต่ยังไม่มีโค้ดใช้งาน (Phase 3/7/9): `mblog_users`, `mblog_comments`, `mblog_article_stats`
-
-- **ฟีเจอร์ตัวเขียน (เทียบเท่า WP editor พื้นฐาน)**
-  - หัวข้อ H1–H3, ตัวหนา/เอียง/ขีดเส้นใต้, สีตัวอักษร, จัดกึ่งกลาง/ซ้าย/ขวา/เต็มบรรทัด
-  - Bullet list และ numbered list
-  - แทรกรูปภาพ + ลากปรับขนาด (มุมขวาล่าง) + จัดตำแหน่งรูปซ้าย/กลาง/ขวา (ซ้าย/ขวาแบบ float ให้ข้อความไหลรอบ)
-  - คำบรรยายใต้ภาพ (caption)
-  - ลิงก์บนข้อความ และลิงก์บนรูปภาพ (ผ่าน mini-toolbar ลอยเวลาเลือกรูป)
-  - **Auto-link** — พิมพ์/วาง URL (http, https, www.) แล้วกลายเป็นลิงก์ให้อัตโนมัติ (มี safety-net ตอนบันทึกด้วย เผื่อ paste URL ท้ายสุดไม่มีช่องว่างตาม)
-  - Blockquote, Code block พร้อม **syntax highlighting สไตล์ GitHub (ธีมสว่าง)** ผ่าน highlight.js + ปุ่ม "คัดลอก" มุมขวาบนแบบ GitHub
-  - เส้นคั่นบทความ (divider/hr)
-  - **Mobile responsive** — ปรับ viewport, ยุบ float ของรูปซ้าย/ขวาเป็นเต็มความกว้างบนจอเล็ก, รองรับลากปรับขนาดรูปด้วยนิ้ว (touch), ปรับขนาดตัวอักษร/ปุ่มให้เหมาะจอมือถือ
-
-- **บั๊ก/ปัญหาที่เจอและแก้ไปแล้ว** (ไว้เป็น reference ถ้าเจอซ้ำ)
-  - สิทธิ์เขียนไฟล์ `uploads/`, `articles/` (Apache รันเป็น user `daemon` ต่างจากเจ้าของโฟลเดอร์)
-  - **Bullet/numbered list ต้องมีทั้ง `quill.snow.css` โหลดอยู่ และ class `.ql-editor` บน wrapper ด้วย ไม่งั้น marker ไม่ขึ้นเลย** (ไม่ใช่แค่ "ไม่งั้นแสดงเป็นเลขหมด" อย่างที่เข้าใจตอนแรก) — ตอนแรกแก้ปัญหาด้วยการโหลด `quill.snow.css` เฉพาะหน้า `article.php` ก็พอ แต่พอทำ sidebar item ที่ render เนื้อหาแบบเดียวกันในหน้าอื่นๆ (ไม่มีทั้ง `quill.snow.css` และ class `.ql-editor`) ถึงเจอว่า marker หายไปเงียบๆ ทุกที่ที่ไม่ใช่ 4 หน้านั้น — แก้ถาวรด้วยการย้าย `quill.snow.css` ไปโหลดทุกหน้าใน `partials/header.php` แทน (ดู "เปิด/ปิด sidebar แบบ 2 ชั้น"/"รวม CSS ของเนื้อหาที่มาจาก Quill" ด้านบน)
-  - Auto-link คำนวณตำแหน่ง cursor ผิดถ้าใช้ `getSelection()` (ไทม์มิ่งไม่นิ่ง) → แก้เป็นคำนวณจาก delta ของ Quill โดยตรง
-  - **Quill จะลบ DOM element ที่มันไม่รู้จักทิ้งอัตโนมัติ** (เช่น `<span class="mblog-caption">` ที่แทรกตรงๆ) → แก้โดยเก็บ caption เป็น `data-caption` attribute บน `<img>` ระหว่างแก้ไข แล้วค่อยแปลงเป็น `<span>` จริงตอนบันทึก/โหลดกลับมาแก้ไข (หลักการนี้ใช้ได้กับ custom UI อื่นๆ ที่จะเพิ่มในอนาคตด้วย)
-  - CSS ของ Quill เองมี specificity สูงกว่า custom CSS ธรรมดา (เช่น code block พื้นหลังเข้ม) ต้องใช้ `!important` ทับ
-  - highlight.js จาก jsDelivr path `lib/common.min.js` เป็นไฟล์สำหรับ bundler (`require()`) ใช้ตรงกับ `<script>` ไม่ได้ ต้องใช้ cdnjs build ที่ browser-ready
-  - Quill แอบใส่ `<select>` เลือกภาษาโปรแกรม (UI ตอนแก้ไข) ติดไปกับเนื้อหาที่บันทึก ต้องซ่อน/ล้างออกตอนแสดงผลจริง
-  - ไม่มี `<meta name="viewport">` เลยทั้ง 3 หน้า (บั๊กร้ายแรงสุดสำหรับ mobile — ถ้าไม่มี CSS responsive จะไม่มีผลอะไรเลย)
-  - **timezone ไม่ตรงกันระหว่าง PHP ที่รัน migration script (Homebrew CLI, default `UTC`) กับ PHP ของ XAMPP/Apache (`php.ini` ตั้ง `Europe/Berlin`)** — เวลาที่เขียนลง MySQL ถูกอ่านกลับมาคลาดเคลื่อนหลายชั่วโมงเพราะแต่ละฝั่งตีความ string เวลาเดียวกันเป็นคนละ timezone → แก้ด้วยการบังคับ `date_default_timezone_set()` ตายตัวใน `config.php` (อ่านค่าจาก `config/settings.php`) ไม่พึ่ง `php.ini` ของเครื่อง/โปรเซสที่รันเลย — ถ้าเปลี่ยน timezone ของเว็บ (เช่น UTC → Asia/Bangkok) ต้องแปลงข้อมูลเก่าที่เก็บไว้ด้วย (shift ชั่วโมงให้ตรง) ไม่งั้นข้อมูลเก่าจะตีความผิดทันที
-  - **Unicode combining marks (สระ/วรรณยุกต์) อยู่ในหมวด Mark (`\p{M}`) ไม่ใช่ Letter (`\p{L}`)** — regex sanitize ชื่อไฟล์/slug ที่อนุญาตแค่ `\p{L}\p{N}` จะตัดสระ/วรรณยุกต์ไทยทิ้งกลางคำ (เช่น "รูปภาพ" → "ร-ปภาพ") ต้องอนุญาต `\p{M}` เพิ่มด้วยเสมอเวลาทำ sanitize ที่ต้องรองรับภาษาไทย/สคริปต์ที่มี combining marks (จีน/ญี่ปุ่น/อาหรับ/ฮินดี/เวียดนามก็มีเช่นกัน)
-  - **จำกัดความยาวชื่อไฟล์ด้วย "จำนวนตัวอักษร" ไม่ปลอดภัยสำหรับภาษาที่ใช้หลายไบต์ต่อตัวอักษร** (ไทย/จีน/ญี่ปุ่น/ฮินดี ใช้ 3 ไบต์/ตัวอักษรใน UTF-8) — จำกัดที่ 100 ตัวอักษรทำให้ได้ชื่อไฟล์ยาวถึง 300 ไบต์ ซึ่งเกินขีดจำกัดทั่วไปของระบบไฟล์ (~255 ไบต์) บน macOS/APFS ไม่มีปัญหา (นับความยาวแบบ UTF-16 code unit) แต่ **Linux (ext4/XFS ซึ่งเป็น production hosting ส่วนใหญ่) จะเซฟไฟล์ไม่ได้เงียบๆ** — ต้องจำกัดด้วย "จำนวนไบต์" (`strlen()`) ไม่ใช่ "จำนวนตัวอักษร" (`mb_strlen()`) เวลา cap ความยาว path/filename
-  - **regex ตรวจสอบ `featured_image` ค้างจาก schema เก่า พอเปลี่ยนโครงสร้างโฟลเดอร์อัปโหลดแล้วลืมอัปเดตตาม** — เดิมรองรับแค่ `uploads/FILENAME.ext` (flat, อักษรละตินเท่านั้น) พอเปลี่ยนเป็น `uploads/YYYY/MM/` + ชื่อไฟล์ภาษาไทย/จีน (WP-style) ทำให้ featured image ที่เลือกไว้ถูกตัด/ปฏิเสธเงียบๆ ทุกครั้งโดยไม่มี error ใดๆ — บทเรียน: ทุกจุดที่ validate "รูปร่างข้อมูล" (path, format) ต้องอัปเดตตามทุกครั้งที่โครงสร้างข้อมูลนั้นเปลี่ยน ไม่งั้นจะเงียบและตรวจไม่เจอจนกว่าจะมีคนสังเกตผลลัพธ์ผิดปกติ
-  - **เบราว์เซอร์ cache ไฟล์ CSS/JS เก่าค้างหลังแก้ไข** — แก้ `assets/*.css`/`*.js` แล้วเบราว์เซอร์ยังโหลดไฟล์เก่าอยู่ (สังเกตผ่าน `document.styleSheets[].cssRules.length` เทียบกับไฟล์จริง) → แก้ด้วยการเติม cache-busting query string ต่อท้ายทุก asset ใน `partials/header.php` (`?v=` + `filemtime()` ของไฟล์นั้นๆ) เปลี่ยนไฟล์เมื่อไหร่ query string เปลี่ยนตาม บังคับโหลดใหม่ทันที — ปัญหานี้จะเกิดกับผู้ใช้จริงตอน deploy ด้วย ไม่ใช่แค่ตอน dev
-  - **ข้อความไทยยาวๆ ไม่มีช่องว่างเลย ล้นกรอบที่ความกว้างตายตัวแทนที่จะขึ้นบรรทัดใหม่** — เจอตอนทำ dropdown เมนู: "นโยบายความเป็นส่วนตัว" ไม่มีจุดให้ browser ตัดบรรทัดตามปกติ (wrap ที่ space) เพราะภาษาไทยไม่มี space คั่นคำ ต้องใส่ `overflow-wrap: break-word` ในทุก container ที่ความกว้างตายตัวและอาจรับข้อความไทย/CJK ยาวๆ ไม่งั้นข้อความจะทะลุกรอบแทนการ wrap
-  - **Dropdown เมนูวางตำแหน่งแบบ `left:0` เสี่ยงล้นขอบจอมือถือถ้าปุ่มอยู่ใกล้ขอบขวา** — แก้ไปมาหลายรอบระหว่างทำ desktop dropdown + mobile accordion คู่กัน สุดท้ายได้ข้อสรุป: ถ้า component เดียวกันต้องรองรับทั้ง 2 breakpoint ให้คิดเรื่อง anchor position ตามบริบทจริงของแต่ละจอ ไม่ใช้ค่าเดียวข้ามทั้งสองจอ — ทางแก้จริงที่ใช้คือแยก UI มือถือ/เดสก์ท็อปออกจากกันไปเลย (ดู "เมนู" หัวข้อ 1) ทำให้ desktop กลับไปใช้ `left:0` (สวยกว่า ไม่ล้นเพราะพื้นที่กว้างพอเสมอ) ได้อย่างอิสระโดยไม่ต้องกังวลเรื่องมือถือเลย เพราะมือถือไม่ใช้ component นี้อีกต่อไป
-  - **`margin` ระหว่าง toggle กับ dropdown ทำให้ CSS `:hover` หลุดกลางทาง** — ตอนเปลี่ยน dropdown เมนูจาก "คลิกเปิด" เป็น "hover เปิด" (แบบ WP) เจอบั๊ก: มี gap 10px ระหว่างปุ่มเมนูกับกล่องเมนูย่อย (ทำด้วย `margin-top`) พอเลื่อนเมาส์จากปุ่มลงไปยังเมนูย่อย เคอร์เซอร์ผ่านช่องว่างที่ไม่ได้อยู่ใน DOM ของทั้งปุ่มหรือกล่อง ทำให้ `:hover` หลุดและเมนูปิดก่อนจะเลื่อนไปถึง — แก้โดยเปลี่ยนจาก `margin-top` (ช่องว่างจริง นอกกล่อง ไม่นับเป็นพื้นที่ hover) เป็น `padding-top` (ช่องว่างภายในกล่อง นับเป็นพื้นที่ hover ต่อเนื่อง) หลักการทั่วไป: dropdown แบบ hover ต้องไม่มี "ช่องว่างที่ไม่มีใครเป็นเจ้าของ" คั่นระหว่าง trigger กับเนื้อหา
+สรุปสั้นสุด: ระบบเขียนบทความ WYSIWYG (Quill) เต็มรูปแบบ พร้อม MySQL เต็มระบบ (12 ตาราง) — Post/Page, หมวดหมู่, แท็ก, เมนู (มีเมนูย่อย), Sidebar item, ถังขยะ, ค่าตั้งค่าเว็บ (โลโก้/favicon/สโลแกน/ธีม light-dark), Toast notification, ค้นหา, และระบบนำเข้า Markdown (ดูหัวข้อ 6/7 ด้านล่าง) ครบทุกอย่าง
 
 ---
 
-## สรุปการปรึกษาสถาปัตยกรรม (ยังไม่ได้ลงมือทำ — คุยแนวทางไว้ก่อน)
+## สรุปการปรึกษาสถาปัตยกรรม (แนวทาง/หลักการต่อหัวข้อ — ผสมของที่ทำแล้วกับของที่ยังไม่ตัดสินใจ)
 
-### 1. โครงสร้างเว็บสำหรับ "ทำจริง" (แยกส่วนให้แก้ง่าย)
-- **Layout** — header/footer/topbar ตอนนี้ซ้ำกันอยู่ใน 3 ไฟล์ (`index.php`, `article.php`, `editor.php`) ควรแยกเป็น `partials/header.php`, `partials/footer.php`
-- **CSS** — ควรแยกจากไฟล์เดียวยาวๆ เป็น: `base.css` (reset/สี/font), `layout.css` (header/footer), `components.css` (ปุ่ม/card ใช้ซ้ำได้), `article.css`, `editor.css` (เฉพาะตอนแก้ไข ไม่ควรโหลดในหน้า public)
-- **JS** — คงแนวทางปัจจุบัน (แยกไฟล์ตามหน้า ไม่โหลดเกินจำเป็น) ดีอยู่แล้ว
-- **PHP Backend** — ต้องมี `config.php` รวม credentials/path ไว้ที่เดียว (ก่อนต่อ MySQL), มี data/model layer ครอบ SQL query ไม่ปนกับหน้าเว็บ, ต้องตัดสินใจเรื่อง routing (multi-file เดิม ง่ายกว่า vs router กลาง จัดการ URL ได้ดีกว่าแต่ซับซ้อนขึ้น — **ยังไม่ตัดสินใจ**)
-- **แยกตามโมดูลธุรกิจ** — แนะนำแยกโฟลเดอร์ระดับบนสุด `/blog`, `/course`, `/stock` เพราะ 3 อย่างนี้ธรรมชาติต่างกันมาก (อ่านเนื้อหา vs ขายของ vs ข้อมูล/กราฟ)
-- **Auth/Admin** — เมื่อมีระบบล็อกอิน ควรแยกโซน admin เป็นโฟลเดอร์ของตัวเอง เช็คสิทธิ์จุดเดียว
-- **Git** — ยังไม่ได้ตั้ง git repo เลย แนะนำ `git init` ตั้งแต่ตอนนี้ที่โค้ดยังเล็ก พร้อม `.gitignore` (`articles/`, `uploads/`, `config.php`)
-- **Post vs Page (ทำแล้ว)** — WP แยกเนื้อหาเป็น Post (บทความบล็อก) กับ Page (หน้าเดี่ยว เช่น เกี่ยวกับเรา/ติดต่อเรา/นโยบายความเป็นส่วนตัว) — ทำจริงแล้วด้วยแนวทาง **ตารางเดียวกัน** (`mblog_articles`) เติมคอลัมน์ `type ENUM('post','page')` แทนการแยกตาราง `mblog_pages` ใหม่ (field ที่ใช้ร่วมกันเยอะเกินไป — slug/status/excerpt/featured_image/images sync/redirect ใช้กลไกเดียวกันหมด ตรงกับที่ WP เองก็ใช้ `wp_posts` ตารางเดียว แยกด้วย `post_type` เหมือนกัน) **ยังใช้ editor เดียวกัน (Quill) สำหรับทั้งคู่ตามแผนเดิม** มี dropdown "ประเภท" ใน `editor.php` สลับ ซ่อนช่องหมวดหมู่อัตโนมัติเมื่อเลือก "หน้า" (หมวดหมู่เป็นแนวคิดของบทความ ไม่เกี่ยวกับหน้าเดี่ยว) — หน้าแสดงผลสาธารณะแยกเป็น `page.php` ต่างหากจาก `article.php` (ไม่มี badge หมวดหมู่/OG type เป็น `website` ไม่ใช่ `article`) — landing page ที่ต้องการดีไซน์เฉพาะ/ซับซ้อนมากๆ ยังคง**เขียนเป็นไฟล์ PHP แยกเอง** ตามแผนเดิม ไม่ผ่านระบบ Page นี้ (ยัง include `partials/header.php`/`footer.php` เพื่อความสม่ำเสมอของเว็บ)
-- **Menu management (ทำแล้ว)** — ยึดหลักการ "แยกข้อมูล-โค้ด" ข้างบน: `includes/menu.php` (`getMenuItems()`) เก็บข้อมูลเมนู ส่วน `partials/header.php` แค่วน loop render จาก array นี้ ไม่ฝังชื่อเมนูไว้ในโค้ด header เอง — ~~วันนี้เป็น array ธรรมดา วันหน้ามีแอดมิน+DB~~ ย้ายเข้าตาราง `mblog_menu_items` แล้วจริง (รองรับเมนูย่อยผ่าน `parent_id` ด้วย) โดยที่ `header.php` ไม่ต้องแก้เลยตามที่ตั้งใจไว้
+หัวข้อที่ทำเสร็จแล้วสรุปย่อไว้ (รายละเอียดเต็มอยู่ที่ [BUILT.md](BUILT.md) หรือ Roadmap) หัวข้อที่ยังไม่ทำ/ยังไม่ตัดสินใจคงรายละเอียดเต็มไว้เป็นแนวทางสำหรับตอนลงมือทำจริง
 
-### 2. ระบบค้นหา
-- ตอนนี้ (ไฟล์): วนอ่านทุกไฟล์ใช้ `stripos()` พอสำหรับบทความไม่เยอะ
-- พอมี MySQL: `LIKE` (ง่าย/ช้า) vs `FULLTEXT` (เร็ว จัดอันดับได้)
-- **ข้อควรระวังเฉพาะภาษาไทย**: FULLTEXT ปกติแบ่งคำด้วยช่องว่าง แต่ไทยเขียนติดกัน ต้องเปิดใช้ **n-gram parser** (มีในตัว MySQL 5.7.6+/MariaDB) ตั้งแต่สร้างตาราง ไม่งั้นค้นหาแม่นยำต่ำ
-- ค้นหาบทความ (full-text) ≠ ค้นหาหุ้น (structured lookup แบบ `WHERE symbol = 'AOT'`) เป็นคนละกลไกกัน
-- ถ้าต้องการค้นฉลาดกว่านี้มาก (พิมพ์ผิดยังเจอ ฯลฯ) มี Meilisearch/Typesense/Algolia แต่เพิ่ม infra ไม่จำเป็นสำหรับตอนนี้
+### 1. โครงสร้างเว็บสำหรับ "ทำจริง" — ✅ ทำแล้วเกือบหมด
+- **Layout/CSS/Git** — แยกเสร็จหมดแล้ว: `partials/header.php`/`footer.php`, CSS แยกเป็น `base`/`layout`/`components`/`article`/`editor.css` (`editor.css` โหลดเฉพาะหน้าแก้ไข), git repo มีประวัติเต็มแล้ว
+- **PHP Backend** — `config.php` รวม credentials/path จุดเดียว + data layer (`includes/articles.php` ฯลฯ) ครอบ SQL ไม่ปนหน้าเว็บ ตามหลักการหลักของเอกสารนี้ — **routing ยังไม่ตัดสินใจ** (ดูหัวข้อ "สิ่งที่ยังไม่ตัดสินใจ")
+- **แยกตามโมดูลธุรกิจ** (`/blog` `/course` `/stock`) — ยังไม่ทำ อยู่นอกขอบเขต Roadmap นี้ (ดู "นอกขอบเขต")
+- **Auth/Admin zone** — ยังไม่ทำ รอ Phase 3
+- **Post vs Page — ทำแล้ว**: ตารางเดียวกัน (`mblog_articles.type ENUM('post','page')`) ไม่แยกตาราง `mblog_pages` ใหม่ (field ใช้ร่วมกันเยอะเกินไป เหมือน WP ที่ใช้ `wp_posts` ตารางเดียวแยกด้วย `post_type`) — editor เดียวกัน (Quill) ทั้งคู่ หน้าแสดงผลแยก `page.php`/`article.php`
+- **Menu management — ทำแล้ว**: ย้ายเข้าตาราง `mblog_menu_items` รองรับเมนูย่อยผ่าน `parent_id`, `header.php` วน loop render อย่างเดียวไม่รู้จักชื่อเมนูเอง (พิสูจน์หลักการแยกข้อมูล-โค้ดสำเร็จ)
 
-### 3. ระบบแท็ก/หมวดหมู่
-- **หมวดหมู่ (Category) — ทำแล้ว** — 1 บทความอยู่ได้สูงสุด 1 หมวด แต่**ไม่บังคับต้องมี** ตาราง `mblog_categories` + คอลัมน์ `mblog_articles.category_id` (FK, `ON DELETE SET NULL`) — Editor UI เป็น dropdown พร้อมตัวเลือก "ไม่ระบุหมวดหมู่" เป็นค่าเริ่มต้น ไม่มีหมวดก็ไม่แสดง badge — **เปลี่ยนใจจากที่เคยตัดสินใจไว้**: เดิม fallback ไปหมวดแรกอัตโนมัติเมื่อลบหมวด/ไม่ได้เลือก (กันไม่ต้องเขียนโค้ดกันลบเพิ่ม) แต่พบว่าทำให้บทความ "เปลี่ยนหมวด" แบบเงียบๆ โดยไม่มีใครสั่ง จึงเปลี่ยนเป็นปล่อยเป็น `NULL` ตรงๆ แทน (`articleCategory()` คืน `null`, ไม่ fallback แล้ว)
-- **แท็ก (Tag) — ทำแล้ว (Phase 4)** — many-to-many คำเฉพาะเจาะจงกว่า ตาราง `mblog_tags` + junction table `mblog_article_tag`, freeform (ไม่มีแอดมินคอยสร้างไว้ล่วงหน้าแบบหมวดหมู่) ระบุตัวตนแท็กด้วย slug (`sanitizeSlug()` เดียวกับบทความ) กันสร้างซ้ำเวลาสะกด/ตัวพิมพ์ต่างกัน
-- Editor UI ของแท็ก — ช่อง chip input + autocomplete (`setupTagInput()` ใน `assets/editor.js`) พิมพ์แล้ว Enter เพื่อสร้าง/เพิ่ม หรือกดเลือกจากรายการที่มีอยู่
+### 2. ระบบค้นหา — ✅ ทำแล้ว
+`search.php` + `searchArticles()` (`includes/articles.php`) — เฉพาะบทความเผยแพร่แล้ว, จัดอันดับ title match เหนือกว่า content-only match — **ตัดสินใจใช้ `LIKE` ไม่ใช้ `FULLTEXT`**: MySQL parser เริ่มต้นแบ่งคำด้วยช่องว่าง แต่ไทยเขียนติดกันไม่มีช่องว่างคั่นคำ ทำให้ FULLTEXT แทบไม่ match อะไรถ้าไม่เปิด n-gram parser เพิ่ม (ยังไม่จำเป็นเพราะบทความยังน้อยพอที่ `LIKE` ไหว) — จุดเข้าใช้งาน: ไอคอนแว่นขยายในแถบบนสุด ขยายเป็นช่องพิมพ์เมื่อคลิก (`assets/search.js`)
+- ค้นหาหุ้น (structured lookup แบบ `WHERE symbol = 'AOT'`) เป็นคนละกลไกกัน ยังไม่เกี่ยวข้องกับ Roadmap นี้
 
-### 4. ระบบคอมเมนต์/รีวิว
+### 3. ระบบแท็ก/หมวดหมู่ — ✅ ทำแล้วทั้งคู่
+- **หมวดหมู่** — 1 บทความ ≤ 1 หมวด ไม่บังคับต้องมี (`category_id` FK, `ON DELETE SET NULL`) — ลบหมวด/ไม่เลือกจะเป็น "ไม่มีหมวดหมู่" (`NULL`) ตรงๆ **ไม่ fallback ไปหมวดแรกแบบเงียบๆ** เหมือนที่เคยตัดสินใจไว้ก่อนหน้า (กันบทความ "เปลี่ยนหมวด" เองโดยไม่มีใครสั่ง)
+- **แท็ก** — many-to-many (`mblog_tags` + `mblog_article_tag`), freeform พิมพ์สร้างเองได้ผ่าน chip input + autocomplete ไม่ต้องมีแอดมินสร้างไว้ก่อน, ระบุตัวตนด้วย slug กันสร้างซ้ำเวลาสะกด/ตัวพิมพ์ต่างกัน
+
+### 4. ระบบคอมเมนต์/รีวิว — 🔜 ยังไม่ทำ (รอ Phase 3 auth)
 - สร้างเอง (คุมได้เต็มที่) vs ฝังสำเร็จรูป (giscus/Disqus/Cusdis — เร็วกว่ามาก)
 - **จุดที่คนมองข้าม: spam** — ต้องมี honeypot field + moderation queue (**ต้องพึ่งระบบล็อกอิน/สิทธิ์ที่ยังไม่มี**) + rate limit
-- คอมเมนต์ **ไม่เหมาะเก็บเป็นไฟล์** (เขียนพร้อมกันชนกันได้) ต้องรอ MySQL
 - ต้อง sanitize เข้มกว่าเนื้อหาบทความมาก เพราะเป็น input จากคนนอกคนแรกของเว็บ
 - **Comment** (บล็อก) ≠ **Review+rating** (หน้าขายคอร์ส — social proof ช่วยขาย) เป็นคนละฟีเจอร์แม้โครงสร้างคล้ายกัน
 
-### 5. ระบบเก็บสถิติ
+### 5. ระบบเก็บสถิติ — 🔜 ยังไม่ทำ
 - 3 ประเภท: traffic (คนเข้าเว็บ/มาจากไหน), content (บทความไหนนิยม), business (conversion หน้าขายคอร์ส)
 - ทำเอง: bot filtering เป็นปัญหายากที่คนมักประเมินต่ำไป
 - บริการนอก: GA (ครบแต่หนัก/privacy concern) vs Umami/Plausible/Fathom (privacy-friendly กว่า แต่ self-host ต้องรัน service แยก ไม่ใช่ PHP)
@@ -192,12 +101,9 @@
 
 **`published_at` ดึงจากเวลาโพสต์จริง (นอกแผนเดิม)** — ลำดับความสำคัญ: (1) front matter's `published` (ISO 8601 พร้อม offset, เช่น `2026-07-24T10:03:10+07:00` — ค่าจริงจาก YouTube RSS ที่ pipeline ต้นทางเพิ่มเข้ามาเพื่อรองรับฟีเจอร์นี้โดยเฉพาะ, `strtotime()` อ่าน offset ในสตริงเองไม่สนใจ timezone default ของ PHP) → (2) วันที่ prefix ของชื่อไฟล์ (`YYYY-MM-DD`, ได้แค่วันไม่ได้เวลา) → (3) เวลาที่กด import จริง — ทำให้ import ไฟล์ backlog ย้อนหลังหลายไฟล์พร้อมกันยังเรียงลำดับบนหน้าเว็บ (`ORDER BY published_at`) ตามวันที่เนื้อหาจริง ไม่ใช่ตามวันที่ import
 
-### 8. ระบบร่าง/เผยแพร่ (Draft/Published)
-- เพิ่มฟิลด์ `status: draft/published` — **ทำได้เลยตอนนี้บนไฟล์ json** ไม่ต้องรอ MySQL
-- ต้องกรองทั้ง `index.php` (รายการ) **และ** `article.php` (เข้าตรงด้วย URL) — ไม่ใช่ซ่อนแค่จากรายการ
-- เพิ่ม `published_at` แยกจาก `created_at` (บทความอาจเป็นร่างค้างหลายวันก่อนเผยแพร่จริง)
-- Scheduled publish (ไว้ทำทีหลัง): ไม่ต้องมี cron job แยก แค่เทียบ `published_at <= เวลาปัจจุบัน` ตอน query
-- editor.php ควรแยกปุ่ม "บันทึกร่าง" กับ "เผยแพร่" ชัดเจน (แบบ WP)
+### 8. ระบบร่าง/เผยแพร่ (Draft/Published) — ✅ ทำแล้ว (เว้น scheduled publish)
+`status` (draft/published) + `published_at` แยกจาก `created_at`, กรองทั้งหน้ารายการและเข้าตรงด้วย URL แล้ว, `editor.php` แยกปุ่ม "บันทึกร่าง"/"เผยแพร่" ชัดเจนแบบ WP
+- **ยังไม่ทำ**: Scheduled publish (ตั้งเวลาเผยแพร่ล่วงหน้า) — ไม่ต้องมี cron แยก แค่เทียบ `published_at <= เวลาปัจจุบัน` ตอน query
 
 ### 9. โครงสร้างเก็บรูปภาพ/ไฟล์ + แผน backup/migrate — ✅ ทำแล้วเกือบหมด (เหลือ backup script)
 - ~~ตอนนี้ (ไฟล์): `articles/*.json` + `uploads/` แบบ flat ทั้งคู่~~ — เลิกใช้แล้ว บทความย้ายเข้า MySQL หมด, `uploads/` เปลี่ยนโครงสร้างแล้ว (ดูข้อถัดไป)
@@ -207,27 +113,9 @@
 - **ยังไม่ทำ** — `scripts/backup.php` ยัง backup แค่โฟลเดอร์ `articles/`+`uploads/` (คอมเมนต์เก่าบอก "mysqldump ยังไม่เกี่ยวข้องเพราะยังไม่มี DB" ซึ่งไม่จริงแล้ว) **ตอนนี้เนื้อหาจริงย้ายไป MySQL หมดแล้ว แปลว่า backup ปัจจุบันไม่ครอบคลุมเนื้อหาบทความเลย** ต้องเพิ่ม `mysqldump` เข้าไปคู่กับการ backup ไฟล์ก่อน ไม่งั้นเสี่ยงข้อมูลหายถ้าเครื่องพัง (มี task ที่ flag ไว้ให้แล้วรอทำ)
 - ใช้ `id` (auto-increment) เป็น primary key ภายในตาราง `mblog_articles`/`mblog_images` จริงตามที่วางแผนไว้, `slug` เป็นแค่ unique column สำหรับ URL — ผลคือแก้ slug บทความที่เผยแพร่แล้วได้อย่างปลอดภัยระดับ DB จริงๆ (ไม่กระทบ FK ใดๆ) ตามที่ตั้งใจไว้ตั้งแต่ต้น — ต่อยอดทำระบบ **301 redirect** (`mblog_slug_redirects`) เพิ่มด้วย กัน SEO/ลิงก์เก่าเสียตอนเปลี่ยน slug
 
-### 10. SEO และการแชร์เนื้อหา (ยังไม่ได้ทำเลย)
-- **Meta tags พื้นฐาน** — ตอนนี้ `article.php` มีแค่ `<title>` ยังไม่มี meta description เลย ต้องเพิ่ม:
-  - `<meta name="description">` — ควรมี field excerpt (สรุปสั้น) แยกต่างหากต่อบทความ ถ้าไม่กรอกให้ fallback ตัดจาก content อัตโนมัติ (strip HTML แล้วตัด ~160 ตัวอักษร)
-  - Open Graph tags (`og:title`, `og:description`, `og:image`, `og:url`, `og:type=article`) — สำคัญมากเพราะคนไทยแชร์ผ่าน LINE/Facebook เป็นหลัก ถ้าไม่มีจะแชร์ไปแล้วไม่มีรูป/คำอธิบายสวยๆ โชว์
-  - Twitter Card tags (`twitter:card`, `twitter:title` ฯลฯ) — เพิ่มพร้อมกันได้เลย ต้นทุนต่ำ
-- **ต้องมี "featured image" ต่อบทความ** — ตอนนี้ระบบยังไม่มีแนวคิดนี้ (รูปแค่แทรกอยู่ในเนื้อหา) ต้องเพิ่ม field ใหม่ (เลือกรูปหลักตอนเขียนบทความ หรือ fallback ใช้รูปแรกที่เจอในเนื้อหาอัตโนมัติ) เพื่อใช้เป็น `og:image`
-- **`sitemap.php`** — generate XML แบบไดนามิกจากรายการบทความ (เฉพาะ `status=published`) ให้ Google เจอ URL ทั้งหมดง่ายขึ้น
-- **`robots.txt`** — ไฟล์ static ง่ายๆ อนุญาตทุกอย่างยกเว้นโซน `/admin/` (พอมีในอนาคต)
-- **Canonical URL** — `<link rel="canonical" href="...">` กัน Google มองว่าเนื้อหาซ้ำถ้าเข้าถึงได้จากหลาย URL
-- **Structured data (JSON-LD)** — ใส่ schema `Article` ในหน้าบทความ (headline, datePublished, image, author) ช่วยให้ Google โชว์ rich snippet ทีหลังพอมีหน้าคอร์สค่อยเพิ่ม schema `Course`
-- **URL สวย** (`/article/slug` แทน `article.php?slug=`) — ผูกกับเรื่อง routing ที่ยังไม่ตัดสินใจ (ดูหัวข้อ "สิ่งที่ยังไม่ตัดสินใจ") แต่เป็นอีกเหตุผลที่หนุนให้ทำ เพราะ Google ให้น้ำหนัก URL ที่อ่านง่ายกว่าเล็กน้อย
-
-**สิ่งที่ต้องทำ:**
-- [x] เพิ่ม field excerpt/สรุปสั้นในบทความ (ใช้ทำ meta description + og:description) — ไม่กรอกจะตัดจาก content อัตโนมัติ (`articleExcerpt()` ใน `includes/articles.php`)
-- [x] เพิ่ม field featured image ต่อบทความ — มี UI อัปโหลด/พรีวิว/ลบใน `editor.php` แบบ WP (field `featured_image`) ถ้าไม่เลือกเอง fallback ใช้รูปแรกที่เจอในเนื้อหาอัตโนมัติ (`articleFeaturedImage()`) — หน้า `article.php` โชว์เป็น banner เหนือหัวข้อด้วย เฉพาะตอนเลือกเองเท่านั้น (fallback ไม่โชว์ซ้ำ เพราะเป็นรูปแรกในเนื้อหาอยู่แล้ว)
-- [x] เพิ่ม meta description + OG tags + Twitter Card ใน `article.php`
-- [x] สร้าง `sitemap.php`
-- [x] เพิ่ม `robots.txt`
-- [x] เพิ่ม canonical tag
-- [x] เพิ่ม JSON-LD Article schema
-- [ ] (รอ routing ตัดสินใจ) ทำ URL สวยผ่าน `.htaccess` + `mod_rewrite`
+### 10. SEO และการแชร์เนื้อหา — ✅ ทำแล้วเกือบหมด (เว้น URL สวย)
+Meta description + OG tags (`og:title`/`description`/`image`/`url`/`type=article`) + Twitter Card + excerpt field (fallback ตัดจาก content อัตโนมัติ) + featured image ต่อบทความ (fallback ใช้รูปแรกในเนื้อหา/YouTube cover) + `sitemap.php` + `robots.txt` + canonical tag + JSON-LD `Article` schema — ทำครบตามแผนเดิมแล้วทั้งหมด (รายละเอียดฟังก์ชัน/คอลัมน์ดู [BUILT.md](BUILT.md))
+- **เหลือรอ**: URL สวย (`/article/slug` แทน `article.php?slug=`) — ผูกกับการตัดสินใจเรื่อง routing ที่ยังไม่ได้ตัดสินใจ (ดูหัวข้อ "สิ่งที่ยังไม่ตัดสินใจ") Google ให้น้ำหนัก URL อ่านง่ายกว่าเล็กน้อยด้วย
 
 ### 11. Backup ระบบ (ครอบคลุมทั้งเว็บ ไม่ใช่แค่รูป)
 หัวข้อ 9 ข้างบนคุยเรื่องโครงสร้างไฟล์รูป/backup ไว้แล้วบางส่วน หัวข้อนี้ขยายให้ครอบคลุมทั้งระบบ (บทความ + database + credentials)
@@ -249,21 +137,9 @@
 - [x] ทดสอบ restore จริงอย่างน้อย 1 ครั้ง — รันจริง, extract แล้ว `diff -rq` เทียบกับต้นฉบับ ไม่มีความต่างเลย
 - [ ] เก็บสำเนา `config.php`/credentials ไว้ที่ปลอดภัยแยกจาก backup ทั่วไป — ยังไม่มี credentials จริงให้เก็บ (รอ MySQL) `scripts/backup.php` ตั้งใจไม่รวม `config.php` เข้าไปในไฟล์ backup ไว้แล้ว
 
-### 12. Error handling และความพร้อมสำหรับ Production
-- **แยกพฤติกรรม dev vs production** — ตอนนี้โค้ดรันบน XAMPP local ทั้งหมด ยังไม่มีการแยกโหมด ต้องมี flag ใน `config.php` (เช่น `APP_ENV = local` หรือ `production`) ควบคุมว่า error จะโชว์ตรงๆ (dev เพื่อ debug ง่าย) หรือซ่อนไว้ (production ป้องกันข้อมูลระบบหลุด)
-- **`display_errors` / `log_errors`** — production ต้องปิด `display_errors` (ไม่ให้ผู้ใช้เห็น error message ดิบของ PHP ซึ่งทั้งไม่มืออาชีพและอาจหลุดรายละเอียด path/โครงสร้างระบบ) แต่เปิด `log_errors` เขียนลงไฟล์ log แทน เพื่อให้ยังตรวจสอบย้อนหลังได้
-- **หน้า error กลาง** — ทำหน้า 404 (ไม่พบหน้า) และ 500 (เซิร์ฟเวอร์ผิดพลาด) ที่หน้าตาเป็นมิตร สอดคล้องกับดีไซน์เว็บ แทนหน้า error เปล่าๆ ของ Apache/PHP (ตอนนี้ `article.php` เริ่มมีแนวคิดนี้บ้างแล้วสำหรับกรณีไม่พบบทความ แต่ยังไม่ใช่ระบบกลางที่ใช้ร่วมกันทุกหน้า)
-- **`set_error_handler()` / `set_exception_handler()`** — ตั้ง handler กลางไว้จุดเดียว จับ error/exception ที่ไม่คาดคิดทั้งหมด แล้ว log ลงไฟล์ + โชว์หน้า error ที่เป็นมิตรแทนการปล่อยให้ PHP แสดงเองตรงๆ
-- **เช็ค return value ของการเขียนไฟล์/DB ให้ครบทุกจุด** — `api/save.php` มีการเช็ค `file_put_contents` คืนค่า `false` อยู่แล้ว (ดี) แต่จุดอื่นที่เพิ่มเข้ามาทีหลังต้องรักษาวินัยนี้ไว้เหมือนกันเสมอ
-- **เช็ค `json_decode` คืนค่า `null`** — ถ้าไฟล์ `.json` เสียหายหรือถูกแก้ทับผิดจากภายนอก การเรียก `$article['title']` โดยไม่เช็คก่อนจะทำให้ PHP error/warning หลุดออกมาได้ ควรเช็คก่อนใช้งานทุกจุดที่โหลดไฟล์บทความ
-
-**สิ่งที่ต้องทำ:**
-- [x] เพิ่ม environment flag ใน `config.php` (local/production) — ทำไปแล้วตั้งแต่ Phase 1
-- [x] ตั้งค่า `display_errors=Off`, `log_errors=On` สำหรับ production — `includes/error-handling.php` อ่าน `APP_ENV` แล้วตั้งให้อัตโนมัติ, log ไปที่ `logs/php-error.log`
-- [x] ทำหน้า error กลาง (404, 500) ใช้ร่วมกันทุกหน้า — `error.php` (ไม่พึ่ง config/menu อื่นเลย กันพังซ้ำ) เรียกผ่าน `renderErrorPage()`, `article.php` ใช้แล้วสำหรับ 404 — **หมายเหตุ**: ยังไม่ได้ผูกกับ Apache `ErrorDocument` สำหรับ URL ที่ไม่มีอยู่จริงเลย (เช่น `.php` ที่ไม่มีไฟล์) เพราะ path ของ `ErrorDocument` ขึ้นกับว่า document root ชี้ตรงไหน ซึ่งตอนนี้เครื่อง dev (`htdocs/z/mblog/`) กับที่ตั้งใจ deploy จริง (docroot = โฟลเดอร์นี้เลย ตาม README) ไม่ตรงกัน ต้องรอตอน deploy จริงค่อยตั้ง
-- [x] ตั้ง `set_error_handler()`/`set_exception_handler()` log ลงไฟล์ — exception ที่ไม่มีใครดักไว้จะ log + โชว์หน้า 500 ที่เป็นมิตร (ทดสอบจริงด้วยการโยน exception จำลองแล้ว), warning/notice แค่ log ไม่เปลี่ยนพฤติกรรมเดิม
-- [x] ตรวจสอบทุกจุดที่เขียนไฟล์/DB ว่าเช็ค return value ครบ — `api/save.php`, `api/upload.php` เช็คอยู่แล้วตั้งแต่ก่อนหน้านี้
-- [x] เพิ่มการเช็ค `json_decode() === null` ก่อนใช้งานทุกจุดที่โหลดบทความ — `includes/articles.php` เช็คอยู่แล้วตั้งแต่ Phase 1 (`readArticleFile()`, `getAllArticles()`)
+### 12. Error handling และความพร้อมสำหรับ Production — ✅ ทำแล้วทั้งหมด
+Environment flag (`APP_ENV` ใน `config.php`) คุม `display_errors`/`log_errors` ตามโหมด (`includes/error-handling.php`, log ไปที่ `logs/php-error.log`), หน้า error กลาง 404/500 (`error.php` + `renderErrorPage()`, ไม่พึ่ง config/menu อื่นกันพังซ้ำ), `set_error_handler()`/`set_exception_handler()` จับ error/exception ที่ไม่คาดคิดทั้งหมด, เช็ค return value การเขียนไฟล์/DB และ `json_decode() === null` ครบทุกจุดที่โหลดบทความ
+- **หมายเหตุค้าง**: ยังไม่ได้ผูก Apache `ErrorDocument` กับ 404/500 กลาง เพราะ path ขึ้นกับ document root จริงตอน deploy ซึ่งเครื่อง dev กับที่ตั้งใจ deploy จริงยังไม่ตรงกัน ต้องรอตอนนั้น
 
 ---
 
@@ -294,77 +170,39 @@
 
 ขอบเขต: เฉพาะ**บล็อก + landing page พื้นฐาน** ตามที่ตกลงกันไว้ ยังไม่รวมระบบขาย/หุ้น (ดูหัวข้อ "นอกขอบเขต" ท้ายสุด)
 
-### Phase 0 — เสร็จแล้ว (ไม่ต้องทำอะไรเพิ่ม)
-- [x] ระบบเขียนบทความ WYSIWYG (Quill) ครบฟีเจอร์ตามหัวข้อ "สิ่งที่สร้างไปแล้ว"
-- [x] Mobile responsive
-- [x] Git + GitHub (public repo สำหรับโครงโค้ด, จะแยก repo private ตอนมีเนื้อหาจริง)
-- [x] README.md
+### Phase 0-2 — โครงสร้างพื้นฐาน + MySQL — ✅ เสร็จสมบูรณ์ทั้งหมด
+ระบบเขียนบทความ WYSIWYG (Quill) เต็มรูปแบบ + mobile responsive + git/GitHub + README ครบตั้งแต่ Phase 0 — Phase 1 ย้ายข้อมูลบทความ/รูปภาพ/หมวดหมู่/เมนูจากไฟล์ JSON เข้า MySQL ทั้งหมด (ออกแบบตารางของทุก Phase ล่วงหน้าทีเดียว, `config.php` รวม credentials จุดเดียว) พิสูจน์หลักการ "แยกข้อมูล-โค้ด" สำเร็จ (สลับ storage แล้วหน้าเว็บไม่ต้องแก้โค้ด render เลย) — Phase 2 ตามมาด้วย partials, CSS แยกไฟล์, SEO พื้นฐาน (หัวข้อ 10), error handling (หัวข้อ 12), และ backup script เบื้องต้น (หัวข้อ 11 — **ยังไม่ dump MySQL ดู "งานค้างที่สำคัญที่สุด" ท้ายเอกสาร**) — ของแถมนอกแผนเดิมทั้งหมด (แก้ slug เอง + 301 redirect, ระบบรูปภาพเต็มรูปแบบ, ค่าตั้งค่าเว็บ) ดูรายละเอียดที่ [BUILT.md](BUILT.md)
 
-### Phase 1 — โครงสร้างข้อมูลบทความ + เตรียม MySQL (ส่วน 1, 8, 9) ✅ เสร็จแล้ว
-เป้าหมาย: พิสูจน์หลักการ "แยกข้อมูล-โค้ด" ให้แน่นบนของเดิมก่อน แล้วค่อยย้าย MySQL จริง กันทำงานซ้ำสองรอบ — **สำเร็จตามเป้า**: ตอนสลับ storage จริง หน้าเว็บ (`index.php`/`article.php`/`editor.php`/`drafts.php`/`sitemap.php`) ไม่ต้องแก้โค้ด render แม้แต่บรรทัดเดียว
-- [x] เขียน `getArticles()` / `getArticle($slug)` ห่อการอ่านไฟล์ `articles/*.json` ปัจจุบัน แก้ `index.php`, `article.php`, `editor.php` ให้เรียกผ่านฟังก์ชันแทนอ่านไฟล์ตรงๆ (พฤติกรรมเว็บต้องเหมือนเดิมทุกอย่าง)
-- [x] ระหว่างเขียนฟังก์ชันข้อบน ใส่ตรรกะกรอง `status` (draft/published) เข้าไปด้วยเลย — จังหวะดีที่สุดที่จะทำ (ส่วน 8 บอกว่าทำได้บนไฟล์ json ไม่ต้องรอ MySQL อยู่แล้ว) เพิ่ม field `status`, `published_at` ในไฟล์ json + แยกปุ่ม "บันทึกร่าง"/"เผยแพร่" ใน `editor.php`
-- [x] สร้าง `config.php` (path/credentials รวมจุดเดียว + environment flag `local`/`production` ไว้ใช้ต่อใน Phase 2)
-- [x] ออกแบบตาราง MySQL — ขยายขอบเขตกว่าที่วางแผนไว้เดิม: ออกแบบ**ทุกตารางของทุก Phase ล่วงหน้าทีเดียว** (`articles`, `images`, `categories`, `menu_items`, `slug_redirects` ใช้จริงใน Phase 1; `users`, `tags`, `article_tag`, `comments`, `article_stats` สร้างรอไว้สำหรับ Phase หลัง) ทุกตารางขึ้นต้น `mblog_` กันชนกับระบบอื่นบนโฮสที่มี DB เดียว — ไฟล์ SQL แยกตาม Phase ใน `database/*.sql`
-- [x] สลับข้างในฟังก์ชันจากข้อแรกให้อ่าน MySQL แทนไฟล์ — ย้ายข้อมูลบทความเดิมเข้า DB จริงก่อน (ไม่ทำให้ข้อมูลหาย) แล้วค่อยลบไฟล์ json/`config/categories.php`/`config/menu.php` ที่ไม่ใช้แล้วทิ้ง
-- [x] **(เพิ่มเติมนอกแผนเดิม)** แก้ slug บทความเองได้ผ่าน editor + auto-suggest จากชื่อบทความ + กันชนกัน (`-2`, `-3`) + ระบบ 301 redirect อัตโนมัติเมื่อ slug เปลี่ยน (`mblog_slug_redirects`) — ทำได้ปลอดภัยเพราะใช้ `id` เป็น PK ตามที่ออกแบบไว้แต่ต้น ไม่ใช่ `slug`
-- [x] **(เพิ่มเติมนอกแผนเดิม)** ระบบรูปภาพเต็มรูปแบบ: โฟลเดอร์ `uploads/YYYY/MM/`, ชื่อไฟล์อัปโหลดแบบ WP (คงชื่อเดิม+กันชน แทนสุ่ม), sync ตาราง `mblog_images` อัตโนมัติทุกครั้งที่บันทึกบทความ
-- [x] **(เพิ่มเติมนอกแผนเดิม)** ระบบค่าตั้งค่าเว็บ (`config/settings.php`/`includes/settings.php`) — `site_name`, `timezone` (Asia/Bangkok), `owner_email`, `footer_tagline`
-
-### Phase 2 — งานคู่ขนาน (ทำระหว่าง/หลัง Phase 1 ก็ได้ ไม่บล็อกกัน)
-- [x] `partials/header.php` + `partials/footer.php` ดึงส่วนซ้ำออกจาก 3 ไฟล์ปัจจุบัน (ส่วน 1)
-- [x] ข้อมูลเมนูแยกจาก header (ส่วน 1) — เริ่มจาก `config/menu.php` (ไฟล์) ตอนนี้ย้ายเป็นตาราง `mblog_menu_items` (MySQL) แล้วผ่าน `includes/menu.php`
-- [x] CSS custom properties (ตัวแปรสี) ใน `:root` — เริ่มจากสีหลักตัวเดียว ต่อมาขยายเป็นระบบ role tokens เต็มรูปแบบ + โหมด light/dark ตอน restyle ตาม `claude-design.md` (ดูหัวข้อ 1 "ธีมเว็บ")
-- [x] **(เพิ่มเติม)** แยกไฟล์ CSS เดี่ยวยาวๆ (`style.css`) เป็น `base.css`/`layout.css`/`components.css`/`article.css`/`editor.css` ตามที่ระบุไว้ในหัวข้อ 1 ("ควรแยก...") — `editor.css` โหลดเฉพาะหน้าแก้ไขจริงตามที่ตั้งใจไว้
-- [x] SEO พื้นฐาน (ส่วน 10): field excerpt + featured image ต่อบทความ, meta description, OG/Twitter tags, `robots.txt`, `sitemap.php` (ใช้ `getArticles()` จาก Phase 1 ได้เลย), canonical tag, JSON-LD Article schema
-- [x] Error handling พื้นฐาน (ส่วน 12): ใช้ environment flag จาก Phase 1 คุม `display_errors`/`log_errors`, หน้า error กลาง (404/500), `set_error_handler()`/`set_exception_handler()`, เช็ค `json_decode() === null` ทุกจุดที่โหลดบทความ
-- [x] Backup script เบื้องต้น (ส่วน 11): บีบอัด `articles/`+`uploads/` (ยังไม่มี DB ก็ backup ได้เลยตอนนั้น), ตั้ง retention, ทดสอบ restore จริง 1 ครั้ง — **⚠️ ตอนนี้ล้าสมัยแล้ว**: เนื้อหาย้ายเข้า MySQL หมดแล้ว แต่สคริปต์ยังไม่ dump DB เลย ต้องเพิ่ม `mysqldump` ก่อนถือว่า backup ใช้ได้จริง (ดูรายละเอียดหัวข้อ 9) + ยังไม่ได้ติดตั้ง cron job จริง (ตั้งใจไม่ทำเอง ต้องให้เจ้าของเครื่องสั่ง) และยังไม่ส่ง backup ออกนอกเซิร์ฟเวอร์ (ยังไม่รู้ปลายทาง)
-- [x] หมวดหมู่ (category) — เริ่มจาก field เดียวบนไฟล์ตามแผนเดิม แต่ท้ายที่สุดย้ายเป็นตาราง `mblog_categories` เต็มรูปแบบพร้อมกับตอนย้าย MySQL (เกินแผนเดิมที่ตั้งใจแค่ "เวอร์ชันเริ่มต้น")
-
-### Phase 3 — ระบบล็อกอิน/สิทธิ์ (ประเด็นที่วนกลับมาซ้ำๆ) — MySQL พร้อมแล้วจาก Phase 1
-- [x] ตาราง `mblog_users` (email, password_hash ผ่าน `password_hash()`, role) — สร้างรอไว้ล่วงหน้าแล้ว (`database/phase3_users.sql`, มี `ALTER` เพิ่ม `author_id` บน `mblog_articles` รวมอยู่ด้วย) ยังไม่มีโค้ดใช้งาน
+### Phase 3 — ระบบล็อกอิน/สิทธิ์ (ประเด็นที่วนกลับมาซ้ำๆ) — 🔜 ยังไม่ทำ (MySQL พร้อมแล้ว)
+- [x] ตาราง `mblog_users` (email, password_hash, role, + `author_id` บน `mblog_articles`) — สร้างรอไว้แล้ว (`database/phase3_users.sql`) ยังไม่มีโค้ดใช้งาน
 - [ ] 2 roles เริ่มต้น: Admin, Editor — เช็คแบบ capability-based (`userCan('publish_articles')` ฯลฯ) ไม่เช็คชื่อ role ตรงๆ
 - [ ] `includes/auth.php` bootstrap (session, `requireLogin()`, `requireCapability()`) + ย้ายหน้าที่ต้องล็อกอินเข้าโฟลเดอร์ `/admin/`
 - [ ] CSRF token บนฟอร์มที่ทำงานหลังล็อกอิน
-- [ ] อัปเกรดความปลอดภัยของ draft จาก Phase 1 — ให้เจ้าของพรีวิวร่างได้จริงแบบปลอดภัย (ไม่ใช่แค่อาศัย slug เดายาก)
+- [ ] อัปเกรดความปลอดภัยของ draft — ให้เจ้าของพรีวิวร่างได้จริงแบบปลอดภัย (ไม่ใช่แค่อาศัย slug เดายาก)
 
-### Phase 4 — แท็ก (tag) เต็มรูปแบบ (ส่วน 3) — ต้องมี MySQL
-- [x] ตาราง `mblog_tags` + junction table `mblog_article_tag` (many-to-many) — สร้างรอไว้ล่วงหน้าแล้วตั้งแต่ Phase 1 (`database/phase4_tags.sql`)
-- [x] Data layer ใน `includes/articles.php`: `getAllTags()`, `getPublicTags()`, `getArticleTags()`, `getTagBySlug()`, ~~`getArticlesByTagSlug()`~~ (ยุบรวมเข้า `getArticleList()` ตอนรวม 5 หน้ารายการ — ดู "สถานะล่าสุด"), `findOrCreateTagIds()`/`syncArticleTags()` (upsert แบบ `INSERT ... ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)` กันแท็กซ้ำ, เหมือน `syncArticleImages()` แต่ไม่ลบแถว `mblog_tags` เอง ปล่อยให้ใช้ซ้ำได้)
-- [x] Editor UI: chip input + autocomplete (`editor.php` + `assets/editor.js` `setupTagInput()`) — freeform พิมพ์แล้วสร้างใหม่ได้เลย ไม่ต้องมีแอดมินสร้างไว้ก่อน ซ่อนพร้อมกับช่องหมวดหมู่เมื่อเลือกประเภท "หน้า"
-- [x] **(ทำก่อนกำหนด)** หน้าแสดงบทความตามหมวดหมู่ (`category.php?slug=`) — เขียนไปแล้วตอนทำเมนู "การลงทุน" เพราะอยากได้หน้ารวมบทความต่อหมวดที่อัปเดตอัตโนมัติ ไม่ต้องมาแก้เมนูเองทุกครั้งที่มีบทความใหม่
-- [x] หน้าแสดงบทความตามแท็ก (`tag.php?slug=`) — เขียนแล้ว โครงเหมือน `category.php`, ลิงก์จาก tag chip ใต้เนื้อหาใน `article.php` เท่านั้น (ไม่โชว์บนการ์ดหน้า list ตามที่ตัดสินใจไว้ กันรกเพราะแท็กมีได้หลายอัน), รวมเข้า `sitemap.php` ด้วย `getPublicTags()` (เฉพาะแท็กที่มีบทความเผยแพร่แล้วอย่างน้อย 1 ชิ้น กันหน้าว่างเปล่าเข้า sitemap) — ไม่มี noindex พิเศษ (index ทั้งหมดตามที่ตัดสินใจไว้ เหมือน `category.php` ที่ก็ไม่มี robots meta อยู่แล้ว)
+### Phase 4 — แท็ก (tag) เต็มรูปแบบ (ส่วน 3) — ✅ เสร็จแล้ว
+`mblog_tags` + `mblog_article_tag` (many-to-many), data layer ครบ (`findOrCreateTagIds()`/`syncArticleTags()` แบบ upsert กันแท็กซ้ำ), chip input + autocomplete ใน editor, `category.php`/`tag.php` ครบพร้อม sitemap — รายละเอียดดูหัวข้อ 3
 
-### Phase 5 — เนื้อหาจาก AI: นำเข้า Markdown (ส่วน 6) ✅ เสร็จแล้ว
-- [x] ติดตั้ง Parsedown (แปลง Markdown → HTML ฝั่ง PHP) — vendored ที่ `includes/lib/parsedown.php`
-- [x] **(เปลี่ยนจากแผนเดิม)** แทนที่จะเป็นปุ่มในหน้า editor ทำเป็นหน้าแยก `import-markdown.php` (อัปโหลดได้หลายไฟล์พร้อมกัน เผยแพร่ทันทีทีละไฟล์ — ดูรายละเอียดหัวข้อ 6)
-- [x] ใช้แท็ก "สรุปโดย AI" จาก Phase 4 ติดป้ายความโปร่งใส + เพิ่มแท็กชื่อสำนัก/ช่องอัตโนมัติด้วย (นอกแผนเดิม)
+### Phase 5/6 — นำเข้า Markdown + ระบบออโต้นำเข้า (ส่วน 6/7) — ✅ เสร็จแล้ว (2026-07-27, เบี่ยงจากแผนเดิมหลายจุด)
+รายละเอียดเต็มดูหัวข้อ 6/7 ด้านบน — สรุปสั้น: `import-markdown.php` (อัปโหลดมือ) + `api/import-markdown.php` (รับอัตโนมัติจาก stock-live-pipeline ด้วย token) ใช้แกนร่วม `importMarkdownArticle()`, **เผยแพร่ทันทีแทนการรอร่าง** (เปลี่ยนใจจากแผนเดิม), แท็ก "สรุปโดย AI" + ชื่อสำนักอัตโนมัติ, เก็บ+โชว์เครดิต YouTube ต้นฉบับ + ตั้ง featured image จาก YouTube thumbnail อัตโนมัติ, `published_at` ใช้เวลาโพสต์จริงจาก front matter
 
-### Phase 6 — ระบบออโต้นำเข้าบทความ เช่น สรุป YouTube รายวัน (ส่วน 7) ✅ เสร็จแล้ว (เบี่ยงจากแผนเดิมหลายจุด — ดูรายละเอียดเต็มหัวข้อ 7)
-- [x] endpoint รับ POST จากระบบภายนอก — `api/import-markdown.php` (ชื่อต่างจากแผนเดิม `api/import.php`) ใช้แกนร่วมกับ `import-markdown.php` (อัปโหลดมือ) ผ่าน `importMarkdownArticle()`
-- [x] API key ยืนยันเครื่อง-ต่อ-เครื่อง — เก็บเป็นค่าตั้งค่าเว็บ `markdown_import_token` ใน `mblog_settings`/`settings.php` แทนไฟล์ `config.php` ตามแผนเดิม (แก้ได้โดยไม่ต้องแตะโค้ด/deploy ใหม่), ส่งผ่าน header `X-Import-Token`, ว่าง = ปิด endpoint
-- [x] ~~นำเข้าเป็นสถานะร่างเสมอ~~ — **เปลี่ยนใจ**: เผยแพร่ทันทีแทน (เหตุผลเต็มดูหัวข้อ 7)
-- [x] เก็บ URL ต้นฉบับเป็น metadata ไว้อ้างอิง/ให้เครดิต — ทำเกินแผนเดิม: โชว์เป็นลิงก์จริงท้ายบทความ + ใช้ทำ featured image อัตโนมัติจาก YouTube thumbnail + ใช้กันซ้ำ (dedup) ด้วย
-- [x] **(เพิ่มเติมนอกแผนเดิม)** `published_at` ดึงจากเวลาโพสต์จริงบน YouTube (front matter's `published`) แทนเวลาที่กด import ให้ backlog เรียงลำดับถูกต้องบนหน้าเว็บ
-
-### Phase 7 — คอมเมนต์/รีวิว (ส่วน 4) — MySQL พร้อมแล้ว, ยังต้องรอ Auth (Phase 3)
-- [x] ตาราง `mblog_comments` (article_id, parent_id เผื่ออนาคต, สถานะรอตรวจ/อนุมัติ/สแปม) — สร้างรอไว้ล่วงหน้าแล้ว (`database/phase7_comments.sql`) ยังไม่มีโค้ดใช้งาน
+### Phase 7 — คอมเมนต์/รีวิว (ส่วน 4) — 🔜 ยังไม่ทำ (ตารางพร้อมแล้ว, รอ Phase 3)
+- [x] ตาราง `mblog_comments` (article_id, parent_id เผื่ออนาคต, สถานะรอตรวจ/อนุมัติ/สแปม) — สร้างรอไว้แล้ว (`database/phase7_comments.sql`) ยังไม่มีโค้ดใช้งาน
 - [ ] Honeypot field + rate limit ต่อ IP
 - [ ] หน้า moderation ในโซน `/admin/`
 - [ ] Sanitize เข้มงวด (`htmlspecialchars` ทุกจุด ห้าม HTML ดิบ)
 - [ ] (แยกทีหลังเมื่อมีหน้าคอร์สจริง) Review + rating — คนละระบบกับ comment แม้โครงสร้างคล้ายกัน
 
-### Phase 8 — ระบบค้นหา (ส่วน 2)
-- [ ] เวอร์ชันง่าย: `LIKE` query (ทำได้ทันทีหลัง Phase 1)
-- [ ] อัปเกรดเป็น `FULLTEXT` + **n-gram parser** (จำเป็นเพราะเนื้อหาไทย) เมื่อบทความเยอะขึ้น
+### Phase 8 — ระบบค้นหา (ส่วน 2) — ✅ เสร็จแล้ว
+`search.php` + `searchArticles()` แบบ `LIKE` (ตัดสินใจไม่ใช้ FULLTEXT เพราะภาษาไทยไม่มีช่องว่างคั่นคำ — เหตุผลเต็มดูหัวข้อ 2) — ยังไม่จำเป็นต้องอัปเกรดเป็น FULLTEXT+n-gram เพราะจำนวนบทความยังน้อยพอ
 
-### Phase 9 — สถิติ (ส่วน 5)
-- [x] ตาราง `mblog_article_stats` (`article_id` PK/FK, `view_count`) — สร้างรอไว้ล่วงหน้าแล้ว (`database/phase9_stats.sql`) แยกจาก `mblog_articles` ตั้งใจ เพราะยอดอ่านเป็นข้อมูลที่ระบบนับเองถี่มาก คนละธรรมชาติกับข้อมูลที่คนเขียนกรอก
-- [ ] นับยอดอ่านต่อบทความ (โค้ดจริงที่ increment `view_count` ตอนมีคนเปิดอ่าน — ยังไม่ทำ)
+### Phase 9 — สถิติ (ส่วน 5) — 🔜 ยังไม่ทำ (ตารางพร้อมแล้ว)
+- [x] ตาราง `mblog_article_stats` (`article_id` PK/FK, `view_count`) — สร้างรอไว้แล้ว (`database/phase9_stats.sql`) แยกจาก `mblog_articles` ตั้งใจเพราะยอดอ่านเป็นข้อมูลที่ระบบนับเองถี่มาก
+- [ ] นับยอดอ่านต่อบทความจริง (increment `view_count` ตอนมีคนเปิดอ่าน)
 - [ ] พิจารณาเครื่องมือ traffic analytics ภายนอก (privacy-friendly เช่น Umami) + PDPA consent ถ้าจำเป็น
 - [ ] Custom event tracking (เตรียมไว้เผื่อ Phase ขายของในอนาคต)
 
-### Phase 10 — Production readiness เต็มรูปแบบ (ส่วน 11, 12 + หัวข้ออื่นที่เคยคุย)
+### Phase 10 — Production readiness เต็มรูปแบบ (ส่วน 11, 12 + หัวข้ออื่นที่เคยคุย) — 🔜 ยังไม่ทำ
 - [ ] HTTPS (Let's Encrypt) บนโฮสจริง
 - [ ] Backup อัตโนมัติเต็มระบบ: ไฟล์ + `mysqldump`, retention policy, ทดสอบ restore
 - [ ] เก็บสำเนา `config.php`/credentials แยกที่ปลอดภัย (นอก git, นอก backup ทั่วไป)
@@ -385,7 +223,7 @@
 
 ## สถานะล่าสุด — Phase 1 เสร็จสมบูรณ์ ✅ + ระบบ Page/หมวดหมู่/เมนูขยายเพิ่มเติมมาก + Phase 5/6 นำเข้า Markdown เสร็จแล้ว
 
-บทความ/รูปภาพ/หมวดหมู่/เมนู ย้ายเข้า MySQL ครบทั้งหมดแล้ว (ดูหัวข้อ "สิ่งที่สร้างไปแล้ว") พร้อมของแถมนอกแผนเดิม (แก้ slug เองได้ + 301 redirect, ระบบค่าตั้งค่าเว็บ, ชื่อไฟล์อัปโหลดแบบ SEO-friendly) ตารางของทุก Phase ถัดไปก็สร้างรอไว้ล่วงหน้าหมดแล้วด้วย (`database/phase3_users.sql` ถึง `phase9_stats.sql`)
+บทความ/รูปภาพ/หมวดหมู่/เมนู ย้ายเข้า MySQL ครบทั้งหมดแล้ว (ดูรายละเอียดใน [BUILT.md](BUILT.md)) พร้อมของแถมนอกแผนเดิม (แก้ slug เองได้ + 301 redirect, ระบบค่าตั้งค่าเว็บ, ชื่อไฟล์อัปโหลดแบบ SEO-friendly) ตารางของทุก Phase ถัดไปก็สร้างรอไว้ล่วงหน้าหมดแล้วด้วย (`database/phase3_users.sql` ถึง `phase9_stats.sql`)
 
 **เพิ่มเติมหลังจากนั้น (นอกแผนเดิมทั้งหมด):**
 - **ระบบ Page** — `mblog_articles.type` (`post`/`page`) แยกบทความบล็อกกับหน้าเดี่ยว หน้าแสดงผลแยกเป็น `page.php` — **เกี่ยวกับเรา/ติดต่อเรา/นโยบายความเป็นส่วนตัว เผยแพร่จริงแล้วทั้ง 3 หน้า พร้อมเนื้อหา mockup เต็ม** (ไม่ใช่ placeholder แล้ว — นโยบายความเป็นส่วนตัวมีคำเตือนในตัวว่าเป็น mockup ยังไม่ผ่านตรวจสอบกฎหมาย)
@@ -400,8 +238,8 @@
 - **ตัวกรอง "ไม่มีหมวดหมู่" ใน `manage-articles.php`** — ผลพลอยได้จากข้อบน หลังบทความไม่มีหมวดได้แล้ว ก็ต้องหาบทความกลุ่มนี้ผ่านตัวกรองได้ด้วย ใช้ `'none'` เป็นค่าพิเศษระดับ UI (ไม่ใช่แถวจริงใน DB — คุยกันแล้วว่าเสี่ยงกว่า เพราะจะต้องกันการลบแถวพิเศษนี้เพิ่ม และขัดกับความหมายของ `category_id IS NULL` ที่ใช้อยู่)
 - **แบรนด์เว็บ: โลโก้/favicon/สโลแกน** — ตั้งค่าได้ที่ `settings.php` ทั้งหมด แสดงผลจริงใน header (ดูรายละเอียดที่ bullet `settings.php` และ "ธีมเว็บ" ด้านบน)
 - **พรีวิวเนื้อหาในการ์ด** — หน้ารายการทั้ง 5 (`articles.php`/`pages.php`/`category.php`/`tag.php`/`drafts.php`) โชว์พารากราฟแรกของเนื้อหาต่อจากวันที่แล้ว (สูงสุด 500 ตัวอักษร) กันการ์ดโล่งเกินไป — แก้ที่ `partials/article-list.php` จุดเดียวมีผลครบทั้ง 5 หน้าอัตโนมัติ (ทดสอบแล้วว่าแก้ `articles.php` ไม่ต้องแตะไฟล์อื่นเลยสักบรรทัด พิสูจน์หลักการ query กลาง+partial กลางที่ทำไว้ก่อนหน้านี้)
-- **ระบบ Sidebar item** — ดูรายละเอียดเต็มที่ bullet "ระบบ Sidebar item" ในหัวข้อ "สิ่งที่สร้างไปแล้ว" ด้านบน (ตารางแยก `mblog_sidebar_items`, หน้าแอดมิน 2 หน้า, layout 2 คอลัมน์ที่ปิด/เปิดอัตโนมัติตามว่ามีรายการ active ไหม)
-- **เปิด/ปิด sidebar ได้ 2 ชั้น (เว็บ + ต่อบทความ/หน้า) + ความกว้าง header คงที่ + รวม CSS เนื้อหา Quill เป็นที่เดียว** — งานต่อยอดระบบ Sidebar item ข้างบน ดูรายละเอียดเต็มที่ bullet ย่อยใต้ "ระบบ Sidebar item" ในหัวข้อ "สิ่งที่สร้างไปแล้ว" สรุปสั้นๆ: (1) `settings.php` คุมเปิด/ปิดทั้งเว็บ, `editor.php` คุมเปิด/ปิดต่อบทความ/หน้าแยกได้ (priority สูงกว่าเว็บ) (2) header/footer กว้าง 1100px คงที่ทุกหน้าแล้ว ไม่กระโดดเวลาสลับหน้าที่มี/ไม่มี sidebar (3) เจอบั๊กเดิม (Quill CSS ไม่ครบทุกหน้า) แล้วแก้ถาวรด้วยการรวม CSS ของเนื้อหา Quill ทุกจุดเป็น class กลาง `.rich-content` เดียว โหลด `quill.snow.css` ทุกหน้า — sidebar item ตอนนี้จัดกึ่งกลาง/รูป float/caption/blockquote/code block/list marker ได้ครบเหมือนบทความจริงแล้ว (ก่อนหน้านี้ใช้ไม่ได้เลยสักอย่าง)
+- **ระบบ Sidebar item** — ดูรายละเอียดเต็มที่ bullet "ระบบ Sidebar item" ใน [BUILT.md](BUILT.md) (ตารางแยก `mblog_sidebar_items`, หน้าแอดมิน 2 หน้า, layout 2 คอลัมน์ที่ปิด/เปิดอัตโนมัติตามว่ามีรายการ active ไหม)
+- **เปิด/ปิด sidebar ได้ 2 ชั้น (เว็บ + ต่อบทความ/หน้า) + ความกว้าง header คงที่ + รวม CSS เนื้อหา Quill เป็นที่เดียว** — งานต่อยอดระบบ Sidebar item ข้างบน ดูรายละเอียดเต็มที่ bullet ย่อยใต้ "ระบบ Sidebar item" ใน [BUILT.md](BUILT.md) สรุปสั้นๆ: (1) `settings.php` คุมเปิด/ปิดทั้งเว็บ, `editor.php` คุมเปิด/ปิดต่อบทความ/หน้าแยกได้ (priority สูงกว่าเว็บ) (2) header/footer กว้าง 1100px คงที่ทุกหน้าแล้ว ไม่กระโดดเวลาสลับหน้าที่มี/ไม่มี sidebar (3) เจอบั๊กเดิม (Quill CSS ไม่ครบทุกหน้า) แล้วแก้ถาวรด้วยการรวม CSS ของเนื้อหา Quill ทุกจุดเป็น class กลาง `.rich-content` เดียว โหลด `quill.snow.css` ทุกหน้า — sidebar item ตอนนี้จัดกึ่งกลาง/รูป float/caption/blockquote/code block/list marker ได้ครบเหมือนบทความจริงแล้ว (ก่อนหน้านี้ใช้ไม่ได้เลยสักอย่าง)
 
 - **ระบบนำเข้า Markdown (Phase 5/6, ทำเสร็จ 2026-07-27)** — รับไฟล์ `.md` สรุปหุ้นรายวันจากโปรเจกต์แยก `stock-live-pipeline` ผ่าน 2 ทาง (`import-markdown.php` อัปโหลดมือ, `api/import-markdown.php` รับอัตโนมัติด้วย token) ทั้งคู่ใช้แกนเดียวกัน `importMarkdownArticle()` ใน `includes/markdown-import.php` — ดูรายละเอียดเต็มที่หัวข้อ 6/7 และ Phase 5/6 ด้านบน สรุปสั้นๆ: เผยแพร่ทันที (ไม่ผ่านร่าง, เบี่ยงจากแผนเดิม), แท็ก "สรุปโดย AI" + ชื่อสำนักอัตโนมัติ, เก็บ+โชว์ลิงก์ YouTube ต้นฉบับ, ตั้ง featured image จาก YouTube thumbnail อัตโนมัติ (maxres ก่อน ตกไป hqdefault), `published_at` ใช้เวลาโพสต์จริงจาก front matter แทนเวลา import, กันซ้ำด้วยทั้งชื่อไฟล์และ URL
 - **`editor.php`: เลือก featured image ได้ 2 แบบ** — อัปโหลดไฟล์ (เดิม) หรือใส่ URL ภาพตรงๆ (ใหม่ — ลิงก์เล็กๆ "หรือใส่ URL แทน" ใต้ปุ่มอัปโหลด, validate ด้วยการโหลดรูปทดสอบก่อน commit) เกิดจากงานนำเข้า Markdown ข้างบน (อยากแก้ featured image ที่ auto-pick มาให้เป็น URL อื่นเองได้ เช่น `maxresdefault.jpg` ตอนที่มี) แต่ backend ไม่ต้องแก้อะไรเลยเพราะ `featured_image` เป็นแค่ string URL เฉยๆ ไม่สนว่ามาจากไหนอยู่แล้ว
@@ -411,6 +249,5 @@
 
 **ตัวเลือกขั้นต่อไป:**
 - แก้ backup script ให้ครอบคลุม MySQL (ด่วน — ความเสี่ยงข้อมูลหาย)
-- Phase 3 (ระบบล็อกอิน/สิทธิ์) — ตัวบล็อกฟีเจอร์อื่นอีกหลายตัว ตารางพร้อมแล้ว
-- Phase 8 (ค้นหา) — ทำได้ทันทีด้วย `LIKE` query บน MySQL ที่มีอยู่แล้ว ไม่ต้องรอ Phase ไหน
-- Phase 4 ส่วนที่เหลือ (แท็กเต็มรูปแบบ) — category.php ทำไปก่อนแล้ว เหลือแค่ตัวแท็กจริงๆ
+- Phase 3 (ระบบล็อกอิน/สิทธิ์) — ตัวบล็อก Phase 7 (คอมเมนต์) และความปลอดภัยของระบบร่างต่อ ตารางพร้อมแล้ว
+- Phase 9 ส่วนที่เหลือ (นับยอดอ่านจริง) — ทำได้ทันทีไม่ต้องรอ Phase ไหน ตารางพร้อมแล้ว
