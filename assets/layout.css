@@ -12,6 +12,13 @@
   margin: 0 auto;
   padding: 24px 20px 80px;
 }
+/* 860 (same reading width as the plain .container) + 32 gap + 280 sidebar —
+   the sidebar sits alongside the normal content column instead of shrinking
+   it, so paragraph width doesn't change just because a sidebar is present. */
+.container-with-sidebar,
+.container-wide {
+  max-width: 1172px;
+}
 /* Wider + two-column only when a page opts in (partials/header.php sets this
    modifier class) AND there's at least one active sidebar item — see
    $hasSidebar in partials/header.php/footer.php. main-content/aside are DOM
@@ -19,11 +26,15 @@
    order (and screen readers) always hit the real content before the
    sidebar; .sidebar-left only flips where it's *drawn* via `order`. */
 .container-with-sidebar {
-  max-width: 1100px;
   display: flex;
   gap: 32px;
   align-items: flex-start;
 }
+/* .container-wide (above, shares the max-width) is the same width without
+   the flex layout — lets the topbar rows (partials/header.php) widen to
+   match the content below them on pages with a sidebar, so both edges line
+   up instead of the topbar staying pinned at the plain .container width
+   while content bulges out. */
 .main-content {
   flex: 1;
   min-width: 0;

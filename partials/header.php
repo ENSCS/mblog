@@ -56,7 +56,7 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
        just another item crowded next to the menu (a two-tier header is the
        common pattern most sites with a real logo use). -->
   <div class="topbar-brand-row">
-    <div class="container">
+    <div class="container<?= $hasSidebar ? ' container-wide' : '' ?>">
       <a href="index.php" class="brand">
         <?php if ($logoPath = siteSetting('site_logo')): ?>
           <img src="<?= htmlspecialchars($logoPath) ?><?= $assetVer($logoPath) ?>" alt="" class="brand-logo">
@@ -78,7 +78,7 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
     </div>
   </div>
   <div class="topbar-nav-row">
-    <div class="container">
+    <div class="container<?= $hasSidebar ? ' container-wide' : '' ?>">
       <!-- Desktop: click-to-open dropdown, submenu anchored right of the toggle -->
       <nav class="topbar-menu topbar-menu-desktop">
         <?php foreach ($menuItems as $item): ?>

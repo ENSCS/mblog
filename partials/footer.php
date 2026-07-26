@@ -17,7 +17,7 @@
 <?php endif; ?>
 </div>
 <footer class="site-footer">
-  <div class="container">&copy; <?= date('Y') ?> <?= htmlspecialchars(siteSetting('site_name')) ?> — <?= htmlspecialchars(siteSetting('footer_tagline')) ?></div>
+  <div class="container<?= $hasSidebar ? ' container-wide' : '' ?>">&copy; <?= date('Y') ?> <?= htmlspecialchars(siteSetting('site_name')) ?> — <?= htmlspecialchars(siteSetting('footer_tagline')) ?></div>
 </footer>
 <?= $footerScripts ?? '' ?>
 </body>
