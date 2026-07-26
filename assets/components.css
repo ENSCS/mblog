@@ -46,6 +46,29 @@
   color: var(--text-secondary);
   font-weight: 500;
 }
+/* Thumbnail sits to the left of the text when the article has a featured
+   image (partials/article-list.php's $showFeaturedImage) — a plain flex
+   row, so a card with no image just renders .article-list-body alone at
+   full width, identical to before this existed. */
+.article-list-item.has-thumb {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.article-list-thumb-link {
+  flex: 0 0 auto;
+}
+.article-list-thumb {
+  display: block;
+  width: 270px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+.article-list-item.has-thumb .article-list-body {
+  flex: 1;
+  min-width: 0;
+}
 .article-list-item h2 {
   margin: 0 0 6px;
   font-size: 20px;
@@ -456,5 +479,13 @@ a.tag-badge:hover {
 @media (max-width: 600px) {
   .card {
     padding: 16px;
+  }
+  .article-list-item.has-thumb {
+    flex-direction: column;
+  }
+  .article-list-thumb {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 270 / 180;
   }
 }

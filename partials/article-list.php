@@ -7,11 +7,15 @@
 //   $emptyMessage      (required) raw HTML shown when $articles is empty
 //   $showCategoryBadge show the category/"หน้า" badge next to the title
 //   $showStatusBadge   show the "ร่าง" badge next to the title
+//   $showFeaturedImage show a cropped 270x180 thumbnail (articleFeaturedImage())
+//                       to the left of the text, when the article has one —
+//                       default on; pass false to opt a caller back out
 //   $linkToView        true: title/"อ่าน" link to article.php/page.php;
 //                       false: title links to editor.php, no "อ่าน" (drafts)
 //   $page, $totalPages, $pageUrl  pagination — $pageUrl is fn(int $p): string
 $showCategoryBadge = $showCategoryBadge ?? false;
 $showStatusBadge = $showStatusBadge ?? false;
+$showFeaturedImage = $showFeaturedImage ?? true;
 $linkToView = $linkToView ?? true;
 $page = $page ?? null;
 $totalPages = $totalPages ?? null;
@@ -21,8 +25,17 @@ $pageUrl = $pageUrl ?? null;
   <div class="empty-state"><?= $emptyMessage ?></div>
 <?php else: ?>
   <?php foreach ($articles as $a): ?>
-    <div class="card article-list-item">
-      <?php $titleHref = $linkToView ? articleViewUrl($a) : 'editor.php?slug=' . urlencode($a['slug']); ?>
+    <?php
+    $thumb = $showFeaturedImage ? articleFeaturedImage($a) : null;
+    $titleHref = $linkToView ? articleViewUrl($a) : 'editor.php?slug=' . urlencode($a['slug']);
+    ?>
+    <div class="card article-list-item<?= $thumb ? ' has-thumb' : '' ?>">
+      <?php if ($thumb): ?>
+        <a href="<?= htmlspecialchars($titleHref) ?>" class="article-list-thumb-link">
+          <img class="article-list-thumb" src="<?= htmlspecialchars($thumb) ?>" alt="">
+        </a>
+      <?php endif; ?>
+      <div class="article-list-body">
       <h2><a href="<?= htmlspecialchars($titleHref) ?>"><?= htmlspecialchars($a['title']) ?></a>
         <?php if ($showStatusBadge): ?>
           <span class="status-badge status-draft">ร่าง</span>
@@ -52,6 +65,7 @@ $pageUrl = $pageUrl ?? null;
           <a href="<?= htmlspecialchars(articleViewUrl($a)) ?>">อ่าน</a>
         <?php endif; ?>
         <a href="editor.php?slug=<?= urlencode($a['slug']) ?>">แก้ไข</a>
+      </div>
       </div>
     </div>
   <?php endforeach; ?>
