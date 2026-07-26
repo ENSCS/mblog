@@ -24,7 +24,7 @@ function initArticleEditor(existingContent) {
           [{ align: [] }],
           [{ list: 'ordered' }, { list: 'bullet' }],
           ['blockquote', 'code-block', 'divider'],
-          ['link', 'image'],
+          ['link', 'image', 'video'],
           ['clean']
         ]
       }
@@ -65,6 +65,21 @@ function initArticleEditor(existingContent) {
   quill.getModule('toolbar').addHandler('divider', function () {
     const range = quill.getSelection(true);
     quill.insertEmbed(range.index, 'divider', true, 'user');
+    quill.insertText(range.index + 1, '\n', 'user');
+    quill.setSelection(range.index + 2, 'user');
+  });
+
+  // --- custom video-embed handler (YouTube only, see youtubeEmbedUrl()) ---
+  quill.getModule('toolbar').addHandler('video', function () {
+    const input = window.prompt('วางลิงก์ YouTube ที่นี่:');
+    if (!input) return;
+    const embedUrl = youtubeEmbedUrl(input.trim());
+    if (!embedUrl) {
+      alert('ลิงก์นี้ไม่ใช่ YouTube ที่รองรับ (youtube.com/watch, youtu.be, youtube.com/shorts)');
+      return;
+    }
+    const range = quill.getSelection(true);
+    quill.insertEmbed(range.index, 'video', embedUrl, 'user');
     quill.insertText(range.index + 1, '\n', 'user');
     quill.setSelection(range.index + 2, 'user');
   });
@@ -196,6 +211,71 @@ function linkifyPlainTextInDom(root) {
   }
 
   Array.from(root.childNodes).forEach(walk);
+}
+
+// --- YouTube URL -> embeddable URL ---
+// A youtube.com/watch or youtu.be link isn't embeddable as-is (YouTube
+// blocks framing the watch page itself) — this pulls the video ID out of
+// every URL shape YouTube hands out (watch/shorts/youtu.be/already-embed)
+// and rebuilds the one URL shape that actually plays in an <iframe>.
+// Hostname is checked exactly (after stripping www./m.) rather than just
+// pattern-matching the string, so a lookalike domain can't sneak an
+// arbitrary iframe src in under a "youtube" label.
+function youtubeEmbedUrl(rawUrl) {
+  let url;
+  try {
+    url = new URL(rawUrl.trim());
+  } catch {
+    return null;
+  }
+
+  const host = url.hostname.replace(/^www\.|^m\./, '');
+  let videoId = null;
+
+  if (host === 'youtu.be') {
+    videoId = url.pathname.split('/').filter(Boolean)[0];
+  } else if (host === 'youtube.com') {
+    if (url.pathname === '/watch') {
+      videoId = url.searchParams.get('v');
+    } else {
+      const parts = url.pathname.split('/').filter(Boolean);
+      if (parts[0] === 'embed' || parts[0] === 'shorts') {
+        videoId = parts[1];
+      }
+    }
+  } else {
+    return null;
+  }
+
+  if (!videoId || !/^[\w-]{11}$/.test(videoId)) return null;
+  return `https://www.youtube.com/embed/${videoId}`;
+}
+
+// --- auto-embed a bare YouTube link pasted on its own line ---
+// Runs on the same detached save-time clone as linkifyPlainTextInDom (which
+// runs first and turns a plain-text URL into an <a> — this then picks that
+// up too). Only swaps a link that is the *entire* content of its block, so
+// a YouTube link mentioned inline mid-sentence is left as a plain link —
+// only a link sitting alone on its own line is treated as "embed this".
+function embedYoutubeLinks(root) {
+  Array.from(root.children).forEach((block) => {
+    if (typeof block.querySelectorAll !== 'function') return;
+    const links = block.querySelectorAll('a');
+    if (links.length !== 1) return;
+    const a = links[0];
+    if (a.querySelector('img')) return; // a linked image, not a bare text link
+
+    const embedUrl = youtubeEmbedUrl(a.getAttribute('href') || '');
+    if (!embedUrl) return;
+    if (block.textContent.trim() !== a.textContent.trim()) return;
+
+    const iframe = document.createElement('iframe');
+    iframe.className = 'ql-video';
+    iframe.setAttribute('src', embedUrl);
+    iframe.setAttribute('frameborder', '0');
+    iframe.setAttribute('allowfullscreen', 'true');
+    block.replaceWith(iframe);
+  });
 }
 
 // --- image captions ---
@@ -576,6 +656,7 @@ function saveArticle(quill, articleId, slug, status) {
   clone.querySelectorAll('img.img-selected').forEach((img) => img.classList.remove('img-selected'));
   clone.querySelectorAll('select.ql-ui').forEach((el) => el.remove());
   linkifyPlainTextInDom(clone);
+  embedYoutubeLinks(clone);
   expandImageCaptions(clone);
 
   statusEl.textContent = status === 'published' ? 'กำลังเผยแพร่...' : 'กำลังบันทึกร่าง...';
@@ -641,6 +722,7 @@ function saveSidebarItem(quill, itemId) {
   clone.querySelectorAll('img.img-selected').forEach((img) => img.classList.remove('img-selected'));
   clone.querySelectorAll('select.ql-ui').forEach((el) => el.remove());
   linkifyPlainTextInDom(clone);
+  embedYoutubeLinks(clone);
   expandImageCaptions(clone);
 
   statusEl.textContent = 'กำลังบันทึก...';

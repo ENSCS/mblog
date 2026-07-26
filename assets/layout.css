@@ -216,6 +216,20 @@
   border-top: 2px solid var(--card-border);
   margin: 28px 0;
 }
+/* Quill's video embed (YouTube, inserted via the toolbar's video button or
+   auto-embedded from a bare link — see youtubeEmbedUrl()/embedYoutubeLinks()
+   in assets/editor.js) is a naked <iframe class="ql-video">, no wrapper div.
+   aspect-ratio keeps it 16:9 at any width without the old padding-bottom
+   trick, and needs no fallback — every browser this site targets supports it. */
+.rich-content .ql-video, .ql-editor .ql-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border: 0;
+  margin: 16px 0;
+  border-radius: var(--radius-lg);
+}
 /* Deliberately not reusing .article-content's typography (assets/article.css)
    — that's sized for a full-width reading column (30px h1, 1.8 line-height),
    which would overrun a 280px sidebar card. Kept minimal/self-contained here
