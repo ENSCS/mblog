@@ -47,7 +47,13 @@ $sidebarPosition = $showAdminSidebar ? 'left' : siteSetting('sidebar_position', 
     }
   })();
 </script>
-<title><?= $pageTitle ?></title>
+<?php
+// " — site name" is presentation, the same on every page — one place to
+// append it instead of every page's own $pageTitle repeating
+// `. siteSetting('site_name')` itself (20 pages did before this). Pages
+// just set $pageTitle to their own real title, nothing else.
+?>
+<title><?= $pageTitle ?> — <?= siteSetting('site_name') ?></title>
 <?= $extraHead ?? '' ?>
 <?php
 // Cache-bust with each file's mtime so a CSS/JS edit shows up immediately

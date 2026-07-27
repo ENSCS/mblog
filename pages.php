@@ -8,7 +8,7 @@ $result = getArticleList(['type' => 'page', 'status' => 'published'], $page, $pe
 $articles = $result['items'];
 $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
-$pageTitle = 'หน้าทั้งหมด — ' . siteSetting('site_name');
+$pageTitle = 'หน้าทั้งหมด';
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 $showSidebar = true;
 include __DIR__ . '/partials/header.php';

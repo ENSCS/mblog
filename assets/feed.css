@@ -1,0 +1,44 @@
+/* --- ฟีดข่าวสั้น (feed.php) — บอลลูนกว้างพอดีกับข้อความ (shrink-to-fit ไม่ยืด
+   เท่ากับแถวอื่น) แล้วตามด้วยเวลาติดกันทันที ไม่ผลักไปสุดขอบขวา — เหมือนฟองแชท
+   จริงๆ ไม่ใช่แถวตารางที่ทุก column กว้างเท่ากันหมด --- */
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.feed-item {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+.feed-item-content {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 5px 16px;
+  font-size: 18px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  white-space: pre-line;
+  max-width: 85%;
+}
+.feed-item-time {
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* New items inserted by assets/feed.js get a brief highlight on the balloon
+   itself, then settle back to its normal background — plays once on
+   insert, no JS timer needed to remove the class after. */
+@keyframes feed-item-new-fade {
+  from {
+    background: var(--tag-blue-bg, rgba(93, 184, 166, 0.35));
+  }
+  to {
+    background: var(--card-bg);
+  }
+}
+.feed-item-new .feed-item-content {
+  animation: feed-item-new-fade 2s ease-out;
+}

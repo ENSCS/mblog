@@ -9,7 +9,7 @@ $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
 // back, since include() shares the including script's variable scope.
 $sidebarItem = $id ? getSidebarItemById($id) : null;
 
-$pageTitle = ($sidebarItem ? 'แก้ไข Sidebar: ' . htmlspecialchars($sidebarItem['title']) : 'เพิ่มรายการ Sidebar ใหม่') . ' — ' . siteSetting('site_name');
+$pageTitle = $sidebarItem ? 'แก้ไข Sidebar: ' . htmlspecialchars($sidebarItem['title']) : 'เพิ่มรายการ Sidebar ใหม่';
 $extraHead = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
     . '<link rel="stylesheet" href="assets/article.css?v=' . @filemtime(__DIR__ . '/assets/article.css') . '">' . "\n"
     . '<link rel="stylesheet" href="assets/editor.css?v=' . @filemtime(__DIR__ . '/assets/editor.css') . '">';

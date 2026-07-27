@@ -20,7 +20,7 @@ $description = articleExcerpt($page);
 $imageUrl = articleFeaturedImageUrl($page);
 $manualFeaturedImage = $page['featured_image'] ?? '';
 
-$pageTitle = htmlspecialchars($page['title']) . ' — ' . siteSetting('site_name');
+$pageTitle = htmlspecialchars($page['title']);
 // Pages aren't blog posts — og:type "website" (not "article") and no JSON-LD
 // Article schema, unlike article.php, since that structured data doesn't fit
 // a static page like "About"/"Contact".

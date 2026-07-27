@@ -17,7 +17,7 @@ $result = getArticleList(['type' => 'post', 'status' => 'published', 'tag_slug' 
 $articles = $result['items'];
 $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
-$pageTitle = 'แท็ก: ' . htmlspecialchars($tag['name']) . ' — ' . siteSetting('site_name');
+$pageTitle = 'แท็ก: ' . htmlspecialchars($tag['name']);
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 $showSidebar = true;
 include __DIR__ . '/partials/header.php';

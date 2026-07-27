@@ -13,7 +13,7 @@ $result = $q !== '' ? searchArticles($q, $page, $perPage) : ['items' => [], 'tot
 $articles = $result['items'];
 $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
-$pageTitle = ($q !== '' ? 'ค้นหา: ' . $qSafe : 'ค้นหาบทความ') . ' — ' . siteSetting('site_name');
+$pageTitle = $q !== '' ? 'ค้นหา: ' . $qSafe : 'ค้นหาบทความ';
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 $showSidebar = true;
 include __DIR__ . '/partials/header.php';

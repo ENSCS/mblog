@@ -2,6 +2,7 @@
 require_once __DIR__ . '/articles.php';
 require_once __DIR__ . '/menu.php';
 require_once __DIR__ . '/sidebar.php';
+require_once __DIR__ . '/feed.php';
 
 // Shared "back to admin" link for every admin/management page's
 // $topbarActions — one place to change the label/destination (see
@@ -28,6 +29,7 @@ function adminNavGroups(): array
             ['label' => 'ร่าง', 'href' => 'drafts.php', 'badge' => count(getDraftArticles())],
             ['label' => 'จัดการหน้า', 'href' => 'manage-pages.php'],
             ['label' => 'นำเข้าจาก Markdown', 'href' => 'import-markdown.php'],
+            ['label' => 'จัดการฟีดข่าว', 'href' => 'manage-feed.php', 'badge' => countFeedItems()],
         ],
         'สถิติ' => [
             ['label' => 'ดูสถิติเว็บ', 'href' => 'stats.php'],

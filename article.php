@@ -24,7 +24,7 @@ $imageUrl = articleFeaturedImageUrl($article);
 $manualFeaturedImage = $article['featured_image'] ?? '';
 $tags = getArticleTags($article['id']);
 
-$pageTitle = htmlspecialchars($article['title']) . ' — ' . siteSetting('site_name');
+$pageTitle = htmlspecialchars($article['title']);
 $extraHead = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
     . '<link rel="stylesheet" href="assets/article.css?v=' . @filemtime(__DIR__ . '/assets/article.css') . '">'
     . "\n" . '<meta name="description" content="' . htmlspecialchars($description) . '">'

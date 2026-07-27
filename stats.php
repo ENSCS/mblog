@@ -68,7 +68,7 @@ $osLabels = [
 ];
 $rangeLabels = ['today' => 'วันนี้', '7d' => '7 วัน', '30d' => '30 วัน', 'all' => 'ทั้งหมด'];
 
-$pageTitle = 'สถิติเว็บ — ' . siteSetting('site_name');
+$pageTitle = 'สถิติเว็บ';
 $topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
 $extraHead = '<link rel="stylesheet" href="assets/stats.css?v=' . @filemtime(__DIR__ . '/assets/stats.css') . '">';

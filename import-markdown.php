@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_FILES['md_files'])) {
     }
 }
 
-$pageTitle = 'นำเข้าบทความจาก Markdown — ' . siteSetting('site_name');
+$pageTitle = 'นำเข้าบทความจาก Markdown';
 $topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
 include __DIR__ . '/partials/header.php';

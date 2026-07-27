@@ -75,7 +75,7 @@ foreach ($allItems as $item) {
     }
 }
 
-$pageTitle = 'จัดการเมนู — ' . siteSetting('site_name');
+$pageTitle = 'จัดการเมนู';
 $topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
 include __DIR__ . '/partials/header.php';

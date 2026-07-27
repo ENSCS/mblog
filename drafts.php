@@ -9,7 +9,7 @@ $result = getArticleList(['status' => 'draft'], $page, $perPage);
 $articles = $result['items'];
 $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
-$pageTitle = 'ร่างบทความ — ' . siteSetting('site_name');
+$pageTitle = 'ร่างบทความ';
 $topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
 include __DIR__ . '/partials/header.php';

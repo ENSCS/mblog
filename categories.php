@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save'
 
 $categories = getAllCategories();
 
-$pageTitle = 'จัดการหมวดหมู่ — ' . siteSetting('site_name');
+$pageTitle = 'จัดการหมวดหมู่';
 $topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
 include __DIR__ . '/partials/header.php';

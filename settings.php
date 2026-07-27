@@ -65,7 +65,9 @@ $values = [
     'footer_tagline' => siteSetting('footer_tagline'),
     'articles_per_page' => siteSetting('articles_per_page', 10),
     'preview_max_length' => siteSetting('preview_max_length', 500),
+    'feed_item_limit' => siteSetting('feed_item_limit', 50),
     'markdown_import_token' => siteSetting('markdown_import_token', ''),
+    'feed_import_token' => siteSetting('feed_import_token', ''),
     'site_logo' => siteSetting('site_logo', ''),
     'site_favicon' => siteSetting('site_favicon', ''),
     'site_tagline' => siteSetting('site_tagline', ''),
@@ -85,7 +87,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $values['footer_tagline'] = trim($_POST['footer_tagline'] ?? '');
     $values['articles_per_page'] = trim($_POST['articles_per_page'] ?? '');
     $values['preview_max_length'] = trim($_POST['preview_max_length'] ?? '');
+    $values['feed_item_limit'] = trim($_POST['feed_item_limit'] ?? '');
     $values['markdown_import_token'] = trim($_POST['markdown_import_token'] ?? '');
+    $values['feed_import_token'] = trim($_POST['feed_import_token'] ?? '');
     $values['site_tagline'] = trim($_POST['site_tagline'] ?? '');
     $values['site_tagline_enabled'] = !empty($_POST['site_tagline_enabled']) ? '1' : '0';
     $values['sidebar_position'] = ($_POST['sidebar_position'] ?? '') === 'left' ? 'left' : 'right';
@@ -107,6 +111,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (!ctype_digit((string) $values['preview_max_length']) || (int) $values['preview_max_length'] < 1) {
         $errors[] = 'ความยาวตัวอย่างเนื้อหาต้องเป็นตัวเลขมากกว่า 0';
+    }
+    if (!ctype_digit((string) $values['feed_item_limit']) || (int) $values['feed_item_limit'] < 1) {
+        $errors[] = 'จำนวนข้อความในฟีดข่าวต้องเป็นตัวเลขมากกว่า 0';
     }
 
     // File uploads are only handled once the fields above are already valid —
@@ -147,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$pageTitle = 'ตั้งค่าเว็บ — ' . siteSetting('site_name');
+$pageTitle = 'ตั้งค่าเว็บ';
 $topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
 include __DIR__ . '/partials/header.php';
@@ -226,6 +233,10 @@ include __DIR__ . '/partials/header.php';
         <input type="number" id="preview_max_length" name="preview_max_length" value="<?= htmlspecialchars((string) $values['preview_max_length']) ?>" min="1" style="max-width:100px;">
       </div>
       <div class="field">
+        <label for="feed_item_limit">จำนวนข้อความในฟีดข่าว (หน้า feed.php และหน้าจัดการฟีดข่าว)</label>
+        <input type="number" id="feed_item_limit" name="feed_item_limit" value="<?= htmlspecialchars((string) $values['feed_item_limit']) ?>" min="1" style="max-width:100px;">
+      </div>
+      <div class="field">
         <label for="markdown_import_token">Token สำหรับนำเข้าบทความจาก Markdown (api/import-markdown.php — เว้นว่างเพื่อปิดการใช้งาน API นี้)</label>
         <div style="display:flex; gap:8px; align-items:center;">
           <input type="text" id="markdown_import_token" name="markdown_import_token" value="<?= htmlspecialchars($values['markdown_import_token']) ?>" style="max-width:340px; font-family:var(--font-mono);" autocomplete="off">
@@ -233,6 +244,15 @@ include __DIR__ . '/partials/header.php';
           <button type="button" class="btn btn-secondary" id="copy-import-token-btn">คัดลอก</button>
         </div>
         <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">ระบบภายนอกต้องส่ง header <code>X-Import-Token</code> ตรงกับค่านี้ ถึงจะนำเข้าบทความได้</div>
+      </div>
+      <div class="field">
+        <label for="feed_import_token">Token สำหรับส่งข้อความเข้าฟีดข่าว (api/import-feed.php — เว้นว่างเพื่อปิดการใช้งาน API นี้)</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="text" id="feed_import_token" name="feed_import_token" value="<?= htmlspecialchars($values['feed_import_token']) ?>" style="max-width:340px; font-family:var(--font-mono);" autocomplete="off">
+          <button type="button" class="btn btn-secondary" id="generate-feed-token-btn">สุ่ม Token ใหม่</button>
+          <button type="button" class="btn btn-secondary" id="copy-feed-token-btn">คัดลอก</button>
+        </div>
+        <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">คนละ token กับด้านบน (แยกความเสี่ยง — token รั่วจุดหนึ่งไม่กระทบอีกจุด) ระบบภายนอกส่ง POST เนื้อความดิบเป็น body พร้อม header <code>X-Import-Token</code> ตรงกับค่านี้</div>
       </div>
       <div class="field">
         <label style="font-weight:normal; display:flex; align-items:center; gap:6px;">
@@ -265,32 +285,40 @@ include __DIR__ . '/partials/header.php';
 <?php
 $footerScripts = <<<'HTML'
 <script>
-  document.getElementById('generate-import-token-btn').addEventListener('click', () => {
-    const bytes = new Uint8Array(24);
-    crypto.getRandomValues(bytes);
-    const token = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-    document.getElementById('markdown_import_token').value = token;
-  });
+  // Shared by both token fields below (markdown import, feed import) — one
+  // place to fix/extend the generate+copy behavior instead of two copies
+  // drifting apart.
+  function setupTokenField(inputId, generateBtnId, copyBtnId) {
+    document.getElementById(generateBtnId).addEventListener('click', () => {
+      const bytes = new Uint8Array(24);
+      crypto.getRandomValues(bytes);
+      const token = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+      document.getElementById(inputId).value = token;
+    });
 
-  document.getElementById('copy-import-token-btn').addEventListener('click', async (e) => {
-    const btn = e.currentTarget;
-    const input = document.getElementById('markdown_import_token');
-    if (!input.value) return;
-    let copied = true;
-    try {
-      await navigator.clipboard.writeText(input.value);
-    } catch (err) {
+    document.getElementById(copyBtnId).addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const input = document.getElementById(inputId);
+      if (!input.value) return;
+      let copied = true;
       try {
-        input.select();
-        document.execCommand('copy');
-      } catch (fallbackErr) {
-        copied = false;
+        await navigator.clipboard.writeText(input.value);
+      } catch (err) {
+        try {
+          input.select();
+          document.execCommand('copy');
+        } catch (fallbackErr) {
+          copied = false;
+        }
       }
-    }
-    const original = btn.textContent;
-    btn.textContent = copied ? 'คัดลอกแล้ว' : 'คัดลอกไม่สำเร็จ';
-    setTimeout(() => { btn.textContent = original; }, 1500);
-  });
+      const original = btn.textContent;
+      btn.textContent = copied ? 'คัดลอกแล้ว' : 'คัดลอกไม่สำเร็จ';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    });
+  }
+
+  setupTokenField('markdown_import_token', 'generate-import-token-btn', 'copy-import-token-btn');
+  setupTokenField('feed_import_token', 'generate-feed-token-btn', 'copy-feed-token-btn');
 </script>
 HTML;
 include __DIR__ . '/partials/footer.php';

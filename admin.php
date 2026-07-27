@@ -2,6 +2,7 @@
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/menu.php';
 require __DIR__ . '/includes/sidebar.php';
+require __DIR__ . '/includes/feed.php';
 require __DIR__ . '/includes/admin-nav.php';
 
 $draftCount = count(getDraftArticles());
@@ -10,8 +11,9 @@ $pageCount = count(getPages());
 $categoryCount = count(getAllCategories());
 $menuCount = count(getAllMenuItems());
 $sidebarItemCount = count(getAllSidebarItems());
+$feedItemCount = countFeedItems();
 
-$pageTitle = 'จัดการเว็บ — ' . siteSetting('site_name');
+$pageTitle = 'จัดการเว็บ';
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 $showAdminSidebar = true;
 include __DIR__ . '/partials/header.php';
@@ -43,6 +45,10 @@ include __DIR__ . '/partials/header.php';
     </a>
     <a class="dashboard-card" href="import-markdown.php">
       <div class="dashboard-card-label">นำเข้าจาก Markdown</div>
+    </a>
+    <a class="dashboard-card" href="manage-feed.php">
+      <div class="dashboard-card-count"><?= $feedItemCount ?></div>
+      <div class="dashboard-card-label">จัดการฟีดข่าว</div>
     </a>
   </div>
 

@@ -2,6 +2,11 @@
 // คัดลอกไฟล์นี้เป็น config.php แล้วปรับค่าตามเครื่อง/เซิร์ฟเวอร์จริง
 // config.php ไม่ถูก commit เข้า git (ดู .gitignore) เพราะจะเก็บ credentials จริงในอนาคต (เช่น DB)
 
+// ชื่อเว็บสำรอง ใช้เฉพาะตอน siteSetting('site_name') เรียกไม่ได้จริงๆ (DB ล่ม) — ดู
+// error.php ไม่มีทางดึงชื่อเว็บจริงจาก DB ได้ตอนนั้น เลยต้องมีค่า literal สำรองไว้เสมอ
+// จุดเดียว (ไม่ใช่เขียนซ้ำในไฟล์ที่ใช้ทุกที่) ไม่มี dependency ใดๆ เลยแม้แต่ DB
+define('SITE_NAME_FALLBACK', 'mBlog');
+
 // สร้างฐานข้อมูล + รันไฟล์ใน database/*.sql ก่อน (เริ่มจาก phase1_core.sql)
 // DB credentials ต้อง define ก่อน require settings.php ด้านล่าง เพราะค่าตั้งค่าเว็บอยู่ใน
 // ตาราง mblog_settings แล้ว — siteSetting() ต้องใช้ db() ซึ่งต้องมีค่าพวกนี้อยู่แล้วตอนถูกเรียก
