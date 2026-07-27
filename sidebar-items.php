@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/includes/sidebar.php';
+require __DIR__ . '/includes/admin-nav.php';
 
 $saved = isset($_GET['saved']);
 $deleted = isset($_GET['deleted']);
@@ -35,7 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $items = getAllSidebarItems();
 
 $pageTitle = 'จัดการ Sidebar — ' . siteSetting('site_name');
-$topbarActions = '<a href="sidebar-item-editor.php">+ เพิ่มรายการใหม่</a>';
+$topbarActions = adminTopbarActions(['<a href="sidebar-item-editor.php">+ เพิ่มรายการใหม่</a>']);
+$showAdminSidebar = true;
 include __DIR__ . '/partials/header.php';
 ?>
   <h1 class="article-title">จัดการ Sidebar</h1>

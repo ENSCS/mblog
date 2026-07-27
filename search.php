@@ -1,5 +1,8 @@
 <?php
 require __DIR__ . '/includes/articles.php';
+require __DIR__ . '/includes/stats.php';
+
+recordPageview('search');
 
 $perPage = max(1, (int) siteSetting('articles_per_page', 10));
 $page = max(1, (int) ($_GET['page'] ?? 1));

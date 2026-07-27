@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/includes/markdown-import.php';
+require __DIR__ . '/includes/admin-nav.php';
 
 $results = [];
 
@@ -24,7 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_FILES['md_files'])) {
 }
 
 $pageTitle = 'นำเข้าบทความจาก Markdown — ' . siteSetting('site_name');
-$topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
+$topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
+$showAdminSidebar = true;
 include __DIR__ . '/partials/header.php';
 ?>
   <h1 class="article-title">นำเข้าบทความจาก Markdown</h1>

@@ -2,6 +2,7 @@
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/menu.php';
 require __DIR__ . '/includes/sidebar.php';
+require __DIR__ . '/includes/admin-nav.php';
 
 $draftCount = count(getDraftArticles());
 $articleCount = count(getArticles());
@@ -12,6 +13,7 @@ $sidebarItemCount = count(getAllSidebarItems());
 
 $pageTitle = 'จัดการเว็บ — ' . siteSetting('site_name');
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
+$showAdminSidebar = true;
 include __DIR__ . '/partials/header.php';
 ?>
   <h1 class="article-title">จัดการเว็บ</h1>
@@ -41,6 +43,13 @@ include __DIR__ . '/partials/header.php';
     </a>
     <a class="dashboard-card" href="import-markdown.php">
       <div class="dashboard-card-label">นำเข้าจาก Markdown</div>
+    </a>
+  </div>
+
+  <h2 class="admin-section-title">สถิติ</h2>
+  <div class="dashboard-grid">
+    <a class="dashboard-card" href="stats.php">
+      <div class="dashboard-card-label">ดูสถิติเว็บ</div>
     </a>
   </div>
 

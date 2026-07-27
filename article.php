@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/includes/articles.php';
+require __DIR__ . '/includes/stats.php';
 
 $slug = $_GET['slug'] ?? '';
 $article = getArticle($slug);
@@ -11,6 +12,8 @@ if (!$article) {
     }
     renderErrorPage(404, 'ไม่พบบทความนี้');
 }
+
+recordPageview('article', $article['id']);
 
 $canonicalUrl = siteBaseUrl() . '/article.php?slug=' . urlencode($slug);
 $description = articleExcerpt($article);
@@ -71,6 +74,7 @@ include __DIR__ . '/partials/header.php';
           <span class="category-tag category-tag-<?= htmlspecialchars(articleCategoryColor($article)) ?>"><?= htmlspecialchars($categoryName) ?></span>
         <?php endif; ?>
         <?= relativeTimeTag($article['published_at']) ?>
+        <span class="view-count">👁 <?= number_format(articleViewCount($article['id'])) ?> ครั้ง</span>
       </div>
       <div class="article-content rich-content ql-editor"><?= $article['content'] ?></div>
       <?php if (!empty($article['source_url'])): ?>

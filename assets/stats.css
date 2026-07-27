@@ -1,0 +1,92 @@
+/* --- Stats dashboard (stats.php) — plain CSS charts, no JS library --- */
+.stats-range-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.stats-range-tabs a {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+}
+.stats-range-tabs a.active {
+  background: var(--color-primary);
+  color: var(--text-on-primary);
+}
+
+.stats-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 700px) {
+  .stats-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Vertical daily bar chart — each bar's height is a % of the fixed-height
+   track, the classic CSS-only bar chart trick (no canvas/SVG/JS needed). */
+.stats-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 160px;
+  overflow-x: auto;
+}
+.stats-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1 0 20px;
+  height: 100%;
+  min-width: 20px;
+}
+.stats-bar {
+  width: 100%;
+  max-width: 28px;
+  background: var(--color-primary);
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+}
+.stats-bar-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  white-space: nowrap;
+}
+
+/* Horizontal bar rows — device/os/page-type/referrer breakdowns */
+.stats-hbar-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 50px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+.stats-hbar-label {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stats-hbar-track {
+  background: var(--btn-secondary-bg);
+  border-radius: var(--radius-xs);
+  height: 10px;
+  overflow: hidden;
+}
+.stats-hbar-fill {
+  height: 100%;
+  background: var(--color-accent-teal);
+  border-radius: var(--radius-xs);
+}
+.stats-hbar-count {
+  text-align: right;
+  color: var(--text-muted);
+  font-size: 13px;
+}

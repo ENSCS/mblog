@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/includes/sidebar.php';
+require __DIR__ . '/includes/admin-nav.php';
 
 $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
 // Named $sidebarItem, not $item — partials/header.php's own `foreach
@@ -12,7 +13,8 @@ $pageTitle = ($sidebarItem ? 'แก้ไข Sidebar: ' . htmlspecialchars($sid
 $extraHead = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
     . '<link rel="stylesheet" href="assets/article.css?v=' . @filemtime(__DIR__ . '/assets/article.css') . '">' . "\n"
     . '<link rel="stylesheet" href="assets/editor.css?v=' . @filemtime(__DIR__ . '/assets/editor.css') . '">';
-$topbarActions = '<a href="sidebar-items.php">รายการ Sidebar</a>';
+$topbarActions = adminTopbarActions(['<a href="sidebar-items.php">รายการ Sidebar</a>']);
+$showAdminSidebar = true;
 
 ob_start();
 ?>

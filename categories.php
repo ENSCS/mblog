@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/includes/articles.php';
+require __DIR__ . '/includes/admin-nav.php';
 
 // Matches the .category-tag-* classes in assets/components.css — a color
 // picker limited to this fixed set (instead of a free hex input) guarantees
@@ -69,7 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save'
 $categories = getAllCategories();
 
 $pageTitle = 'จัดการหมวดหมู่ — ' . siteSetting('site_name');
-$topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
+$topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
+$showAdminSidebar = true;
 include __DIR__ . '/partials/header.php';
 ?>
   <h1 class="article-title">จัดการหมวดหมู่</h1>

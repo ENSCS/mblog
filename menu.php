@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/includes/menu.php';
+require __DIR__ . '/includes/admin-nav.php';
 
 $errors = [];
 $saved = isset($_GET['saved']);
@@ -75,7 +76,8 @@ foreach ($allItems as $item) {
 }
 
 $pageTitle = 'จัดการเมนู — ' . siteSetting('site_name');
-$topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
+$topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
+$showAdminSidebar = true;
 include __DIR__ . '/partials/header.php';
 ?>
   <h1 class="article-title">จัดการเมนู</h1>

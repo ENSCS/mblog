@@ -21,4 +21,8 @@ define('UPLOADS_DIR', __DIR__ . '/uploads/');
 define('LOG_DIR', __DIR__ . '/logs/');
 define('BACKUP_DIR', __DIR__ . '/backups/');
 
+// สุ่มค่าใหม่ตอน copy ไปเป็น config.php จริง (เช่น php -r "echo bin2hex(random_bytes(32));")
+// ห้ามเปลี่ยนอีกทีหลังตั้งแล้ว — ใช้ผสมกับ IP + วันที่คำนวณ visitor_hash (includes/stats.php)
+define('STATS_HASH_SECRET', 'change-me-to-a-random-64-char-hex-string');
+
 require_once __DIR__ . '/includes/error-handling.php';

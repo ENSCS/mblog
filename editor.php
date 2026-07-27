@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/includes/articles.php';
+require __DIR__ . '/includes/admin-nav.php';
 
 $slug = $_GET['slug'] ?? '';
 $article = getArticleForEdit($slug);
@@ -20,7 +21,8 @@ $pageTitle = ($article ? 'แก้ไข: ' . htmlspecialchars($article['title'
 $extraHead = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
     . '<link rel="stylesheet" href="assets/article.css?v=' . @filemtime(__DIR__ . '/assets/article.css') . '">' . "\n"
     . '<link rel="stylesheet" href="assets/editor.css?v=' . @filemtime(__DIR__ . '/assets/editor.css') . '">';
-$topbarActions = '<a href="articles.php">รายการบทความ</a>';
+$topbarActions = adminTopbarActions(['<a href="articles.php">รายการบทความ</a>']);
+$showAdminSidebar = true;
 
 ob_start();
 ?>

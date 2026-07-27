@@ -17,7 +17,7 @@
    with the topbar/footer exactly, on every page that has one. */
 .container-with-sidebar,
 .container-wide {
-  max-width: 1100px;
+  max-width: 1140px;
 }
 /* Two-column only when a page opts in (partials/header.php sets this
    modifier class) AND there's at least one active sidebar item — see
@@ -40,7 +40,12 @@
   min-width: 0;
 }
 .sidebar {
-  width: 280px;
+  /* var() with a default, not a bare value — lets a scope opt into a
+     different width (see .admin-sidebar-shell below) without duplicating
+     this whole rule. .main-content's flex:1 (above) absorbs whatever this
+     value takes/frees, so .container-with-sidebar's max-width is never at
+     risk of being exceeded no matter what --sidebar-width is set to. */
+  width: var(--sidebar-width, 280px);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -48,6 +53,71 @@
 }
 .sidebar-left .sidebar {
   order: -1;
+}
+
+/* --- Admin nav sidebar (partials/admin-sidebar.php) — the outer shape
+   (width/flex-shrink/gap/left position/responsive collapse) comes from
+   .sidebar/.sidebar-left/.container-with-sidebar above (same engine the
+   reader-facing content sidebar uses, root element is literally
+   class="sidebar admin-sidebar-shell" — see partials/admin-sidebar.php).
+   Only the markup *inside* it is admin-specific: nav groups/links/badges
+   below. .admin-sidebar-shell overrides just the one --sidebar-width
+   variable .sidebar reads above — every other admin page shares this same
+   class (not just admin.php), so the width applies to all of them at once. */
+.admin-sidebar-shell {
+  --sidebar-width: 240px;
+}
+.admin-sidebar-group-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+  margin: 0 0 8px 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--card-border);
+}
+.admin-sidebar-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+}
+.admin-sidebar-link:hover {
+  background: var(--btn-secondary-bg-hover);
+}
+.admin-sidebar-link-active {
+  background: var(--color-primary);
+  color: var(--text-on-primary);
+}
+/* .admin-sidebar-link:hover above and this both match at the same
+   specificity (one class + :hover) — without this, hovering the *active*
+   link let the plain :hover rule's pale background win over the active
+   rule's orange one (background is a single-value property, no cascading
+   between rules of equal specificity beyond source order) while its white
+   text stayed, so light theme showed white-on-pale — unreadable. This rule
+   comes after .admin-sidebar-link:hover in source order and re-asserts both
+   properties together so they can never separate again. */
+.admin-sidebar-link-active:hover {
+  background: var(--color-primary-hover);
+  color: var(--text-on-primary);
+}
+.admin-sidebar-badge {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--btn-secondary-bg);
+  border-radius: var(--radius-pill);
+  padding: 1px 8px;
+  flex-shrink: 0;
+}
+.admin-sidebar-link-active .admin-sidebar-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: var(--text-on-primary);
 }
 .sidebar-item {
   background: var(--card-bg);
@@ -276,7 +346,7 @@
   border-bottom: 1px solid var(--topbar-border);
 }
 .topbar-brand-row .container {
-  padding: 14px 20px;
+  padding: 8px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;

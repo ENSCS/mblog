@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/includes/articles.php';
+require __DIR__ . '/includes/stats.php';
 
 $slug = $_GET['slug'] ?? '';
 $page = getPage($slug);
@@ -11,6 +12,8 @@ if (!$page) {
     }
     renderErrorPage(404, 'ไม่พบหน้านี้');
 }
+
+recordPageview('page');
 
 $canonicalUrl = siteBaseUrl() . '/page.php?slug=' . urlencode($slug);
 $description = articleExcerpt($page);

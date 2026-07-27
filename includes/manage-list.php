@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/articles.php';
+require_once __DIR__ . '/admin-nav.php';
 
 // Shared admin-list engine behind manage-articles.php and manage-pages.php —
 // one query/action/render pipeline instead of two near-identical admin
@@ -105,7 +106,8 @@ function renderManageListPage(string $type, array $config): void
     ];
 
     $pageTitle = $config['pageTitle'] . ' — ' . siteSetting('site_name');
-    $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
+    $topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
+    $showAdminSidebar = true;
 
     ob_start();
     ?>

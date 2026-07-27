@@ -6,9 +6,9 @@
    class="rich-content" alongside .article-content on the wrapper to get it. */
 .article-content h1 { font-size: 30px; margin: 24px 0 12px; }
 .article-content h2 { font-size: 24px; margin: 20px 0 10px; }
-.article-content h3 { font-size: 19px; margin: 16px 0 8px; }
-.article-content p { line-height: 1.8; margin: 0 0 14px; }
-.article-content ul, .article-content ol { line-height: 1.8; margin: 0 0 14px 24px; padding: 0; }
+.article-content h3 { font-size: 20px; margin: 16px 0 8px; }
+.article-content p { font-size: 18px; line-height: 1.8; margin: 0 0 14px; }
+.article-content ul, .article-content ol { font-size: 18px; line-height: 1.8; margin: 0 0 14px 24px; padding: 0; }
 /* Cancels quill.snow.css's .ql-editor default (12px/15px) — the article
    card (.card in article.php/page.php) already provides its own padding, so
    this would otherwise double up. */

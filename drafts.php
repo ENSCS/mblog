@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/includes/articles.php';
+require __DIR__ . '/includes/admin-nav.php';
 
 $perPage = max(1, (int) siteSetting('articles_per_page', 10));
 $page = max(1, (int) ($_GET['page'] ?? 1));
@@ -9,7 +10,8 @@ $articles = $result['items'];
 $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
 $pageTitle = 'ร่างบทความ — ' . siteSetting('site_name');
-$topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
+$topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
+$showAdminSidebar = true;
 include __DIR__ . '/partials/header.php';
 ?>
   <?php

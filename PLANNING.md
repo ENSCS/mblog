@@ -37,6 +37,9 @@
 - **ค่าตั้งค่าเว็บ (ทำแล้ว)** — ย้ายจากไฟล์ `config/settings.php` เข้าตาราง `mblog_settings` (key/value) แล้ว พร้อมหน้าแอดมิน `settings.php` จริง (ฟอร์มแก้ `site_name`/`timezone`/`owner_email`/`footer_tagline`, validate, PRG pattern กันฟอร์ม resubmit) — ตรงตามเงื่อนไขเดิมที่บอกว่า "เป็นไฟล์จนกว่าจะมีหน้าแอดมินจริง" ตอนนี้มีแล้วเลยย้าย `includes/settings.php` (`siteSetting($key)`, `updateSiteSettings()`) ไปอ่าน/เขียน DB แทน — **ผลข้างเคียงที่ต้องแก้**: `config.php` ต้อง define ค่า `DB_*` ก่อน require `includes/settings.php` แล้ว (เดิม timezone ถูก set ก่อนมี DB credentials ด้วยซ้ำ เพราะตอนนั้นยังไม่ต้องพึ่ง DB) — ยังไม่ล็อกอินก่อนเข้าหน้านี้ได้ (รอ Phase 3)
 - **สิทธิ์ผู้ใช้** (แผนงาน) — `userCan()` แบบ capability-based ตามที่คุยไว้ในหัวข้อล็อกอิน (ดูหัวข้อ "ประเด็นที่วนกลับมาซ้ำๆ")
 
+**หลักการรอง (เกิดขึ้นจริงตอนสร้างระบบแอดมิน/สถิติ 2026-07-27) — ใช้ของเดิมต่อยอด อย่าสร้างคู่ขนาน:**
+ก่อนสร้างกลไก UI/layout ใหม่ ให้เช็คก่อนว่ามี "engine" เดิมที่ทำหน้าที่คล้ายกันอยู่แล้วไหม (เช่น layout สองคอลัมน์ที่ `partials/header.php`/`footer.php` มีอยู่แล้วสำหรับ sidebar เนื้อหาสาธารณะ) แล้ว**ยืมโครงสร้างเดิมมาต่อยอด** แทนสร้างชุด CSS/layout ใหม่คู่ขนาน — จุดที่ยอมให้ต่างออกไปได้ ใช้ **CSS custom property ที่มีค่า default** (เช่น `width: var(--sidebar-width, 280px)`) แล้ว override เฉพาะจุดที่ต้องการจริงๆ ผ่าน class เสริม (เช่น `.admin-sidebar-shell { --sidebar-width: 240px; }`) — ไม่ override ก็ได้พฤติกรรมเดิมเป๊ะ ตัวอย่างจริงดูที่ "ระบบแอดมิน sidebar" ใต้ Phase 9
+
 ---
 
 ## สิ่งที่สร้างไปแล้ว (ใช้งานได้จริงตอนนี้)
@@ -73,12 +76,8 @@
 - ต้อง sanitize เข้มกว่าเนื้อหาบทความมาก เพราะเป็น input จากคนนอกคนแรกของเว็บ
 - **Comment** (บล็อก) ≠ **Review+rating** (หน้าขายคอร์ส — social proof ช่วยขาย) เป็นคนละฟีเจอร์แม้โครงสร้างคล้ายกัน
 
-### 5. ระบบเก็บสถิติ — 🔜 ยังไม่ทำ
-- 3 ประเภท: traffic (คนเข้าเว็บ/มาจากไหน), content (บทความไหนนิยม), business (conversion หน้าขายคอร์ส)
-- ทำเอง: bot filtering เป็นปัญหายากที่คนมักประเมินต่ำไป
-- บริการนอก: GA (ครบแต่หนัก/privacy concern) vs Umami/Plausible/Fathom (privacy-friendly กว่า แต่ self-host ต้องรัน service แยก ไม่ใช่ PHP)
-- **แนะนำแบบผสม**: นับยอดอ่านต่อบทความทำเอง (ง่าย พอสำหรับ "บทความไหนนิยม") + ใช้เครื่องมือนอกสำหรับ traffic จริง + ส่ง custom event ไปเครื่องมือนอกสำหรับ conversion
-- ต้องคำนึงถึง **PDPA** (กฎหมายคุ้มครองข้อมูลส่วนบุคคลของไทย) ถ้าใช้ cookie/tracking
+### 5. ระบบเก็บสถิติ — ✅ ทำแล้ว (ดูรายละเอียดเต็มที่ Phase 9 และ [BUILT.md](BUILT.md))
+ตัดสินใจทำเองทั้งหมด (ไม่พึ่ง Umami/GA สำหรับส่วน traffic/content ตามที่เคยคิดไว้ตอนแรก) เพราะ device/OS/บอทเป็นแค่ regex ธรรมดา ไม่ต้องมีบริการแยก — ยกเว้น geo/ประเทศที่ตัดออกให้ Google Analytics ทำแทนจริงๆ (ซับซ้อนเกินคุ้ม) — ไม่เก็บ IP ดิบเลยตาม **PDPA**
 
 ### 6. เนื้อหาจาก AI (Markdown) ผสมกับเขียนเอง — ✅ ทำแล้ว
 - **หลักคิด (ยึดตามแผนเดิม)**: แปลง Markdown → HTML ตั้งแต่ตอนนำเข้า (ด้วย [Parsedown](https://parsedown.org/) เวอร์ชัน vendored ที่ `includes/lib/parsedown.php`) แล้วเก็บเป็น HTML แบบเดียวกับบทความที่เขียนเองทั้งหมด — **ท่อเดียว ไม่แยกระบบคู่ขนาน** — วิธีนี้ทำให้ `editor.php` เปิดแก้ไขบทความที่นำเข้ามาได้เหมือนบทความที่เขียนเองทุกอย่าง
@@ -115,7 +114,9 @@
 
 ### 10. SEO และการแชร์เนื้อหา — ✅ ทำแล้วเกือบหมด (เว้น URL สวย)
 Meta description + OG tags (`og:title`/`description`/`image`/`url`/`type=article`) + Twitter Card + excerpt field (fallback ตัดจาก content อัตโนมัติ) + featured image ต่อบทความ (fallback ใช้รูปแรกในเนื้อหา/YouTube cover) + `sitemap.php` + `robots.txt` + canonical tag + JSON-LD `Article` schema — ทำครบตามแผนเดิมแล้วทั้งหมด (รายละเอียดฟังก์ชัน/คอลัมน์ดู [BUILT.md](BUILT.md))
-- **เหลือรอ**: URL สวย (`/article/slug` แทน `article.php?slug=`) — ผูกกับการตัดสินใจเรื่อง routing ที่ยังไม่ได้ตัดสินใจ (ดูหัวข้อ "สิ่งที่ยังไม่ตัดสินใจ") Google ให้น้ำหนัก URL อ่านง่ายกว่าเล็กน้อยด้วย
+- **เหลือรอ**: URL สวย (`/article/slug` แทน `article.php?slug=`) — Google ให้น้ำหนัก URL อ่านง่ายกว่าเล็กน้อยด้วย **แนวทาง routing ตัดสินใจแล้ว** (คุยกัน 2026-07-27) เป็น "`.htaccess` rewrite เขียนเอง" (ไม่ใช่ router กลางไฟล์เดียวแบบ WordPress) เพราะ mBlog รู้จำนวน/ชนิดหน้าคงที่อยู่แล้ว (article/category/tag/page) ไม่ต้องมี engine generate rule อัตโนมัติแบบ WP ที่ต้องรองรับ post type ไม่จำกัดจากปลั๊กอิน — เขียน rewrite rule มือ 4-5 บรรทัดพอ ไฟล์ PHP เดิมแทบไม่ต้องแตะ logic เลย (ยังอ่าน `$_GET['slug']`/`$_GET['page']` เหมือนเดิม)
+  - แผนเมื่อจะทำจริง: (1) เพิ่ม `.htaccess` root ใหม่ rewrite path สวย → query string เดิม (2) แก้จุดสร้างลิงก์ในไฟล์ที่ประกอบ `?slug=` เอง — เจอแล้ว 9 จุด: `article.php`, `category.php`, `tag.php`, `page.php`, `includes/articles.php`, `menu.php`, `partials/article-list.php`, `sidebar-item-editor.php`, `sitemap.php` (3) 301 redirect URL เก่า → ใหม่ กันของที่เคย index ไว้เสีย SEO (ใช้ pattern เดียวกับตอนแก้ slug เอง)
+  - **พักไว้ก่อน ยังไม่ทำ**: ยังไม่มั่นใจว่าโฮสจริงตอน deploy จะเปิด `AllowOverride`/`mod_rewrite` ให้ได้หรือเปล่า (เครื่อง dev/XAMPP ตอนนี้เปิดให้อยู่แล้ว ไม่ใช่ปัญหาฝั่ง dev) และยังไม่จำเป็นเร่งด่วนตอนนี้ — รอจนกว่าจะรู้ spec โฮสจริงก่อนค่อยกลับมาทำ
 
 ### 11. Backup ระบบ (ครอบคลุมทั้งเว็บ ไม่ใช่แค่รูป)
 หัวข้อ 9 ข้างบนคุยเรื่องโครงสร้างไฟล์รูป/backup ไว้แล้วบางส่วน หัวข้อนี้ขยายให้ครอบคลุมทั้งระบบ (บทความ + database + credentials)
@@ -156,11 +157,10 @@ Environment flag (`APP_ENV` ใน `config.php`) คุม `display_errors`/`log
 
 ## สิ่งที่ยังไม่ตัดสินใจ (ต้องคุยต่อ)
 
-- Routing: multi-file เดิม vs router กลางไฟล์เดียว
 - โครงสร้างแยกโมดูล `/blog` `/course` `/stock` จะเริ่มทำเมื่อไหร่
 - รูปแบบระบบล็อกอิน (username/password เอง vs OAuth vs อื่นๆ)
 
-*(ตัดออกเพราะตัดสินใจ/ทำเสร็จแล้ว: จังหวะย้าย JSON→MySQL — ตัดสินใจย้ายทีเดียวทั้งหมด ไม่ทยอยทำทีละ feature; จังหวะแบ่ง `uploads/` รายเดือน — ทำแล้วพร้อมกับตอนย้าย MySQL)*
+*(ตัดออกเพราะตัดสินใจ/ทำเสร็จแล้ว: จังหวะย้าย JSON→MySQL — ตัดสินใจย้ายทีเดียวทั้งหมด ไม่ทยอยทำทีละ feature; จังหวะแบ่ง `uploads/` รายเดือน — ทำแล้วพร้อมกับตอนย้าย MySQL; Routing สำหรับ URL สวย — ตัดสินใจแนวทางแล้ว (`.htaccess` rewrite เขียนเอง ไม่ใช่ router กลางไฟล์เดียว) แค่ยังไม่ลงมือทำเพราะไม่มั่นใจ spec โฮสจริง ดูรายละเอียดที่หัวข้อ 10)*
 
 ---
 
@@ -196,10 +196,11 @@ Environment flag (`APP_ENV` ใน `config.php`) คุม `display_errors`/`log
 ### Phase 8 — ระบบค้นหา (ส่วน 2) — ✅ เสร็จแล้ว
 `search.php` + `searchArticles()` แบบ `LIKE` (ตัดสินใจไม่ใช้ FULLTEXT เพราะภาษาไทยไม่มีช่องว่างคั่นคำ — เหตุผลเต็มดูหัวข้อ 2) — ยังไม่จำเป็นต้องอัปเกรดเป็น FULLTEXT+n-gram เพราะจำนวนบทความยังน้อยพอ
 
-### Phase 9 — สถิติ (ส่วน 5) — 🔜 ยังไม่ทำ (ตารางพร้อมแล้ว)
-- [x] ตาราง `mblog_article_stats` (`article_id` PK/FK, `view_count`) — สร้างรอไว้แล้ว (`database/phase9_stats.sql`) แยกจาก `mblog_articles` ตั้งใจเพราะยอดอ่านเป็นข้อมูลที่ระบบนับเองถี่มาก
-- [ ] นับยอดอ่านต่อบทความจริง (increment `view_count` ตอนมีคนเปิดอ่าน)
-- [ ] พิจารณาเครื่องมือ traffic analytics ภายนอก (privacy-friendly เช่น Umami) + PDPA consent ถ้าจำเป็น
+### Phase 9 — สถิติ (ส่วน 5) — ✅ เสร็จแล้วเป็นส่วนใหญ่ (2026-07-27, รายละเอียดเต็มดู [BUILT.md](BUILT.md))
+`mblog_article_stats` (ยอดรวมตลอดกาลต่อบทความ) + `mblog_pageview_log` (log pageview **ทั้งเว็บ** ไม่ใช่แค่บทความ, ไม่เก็บ IP ดิบ, parse device/OS/บอทเอง) + หน้า dashboard `stats.php` (CSS chart เอง ไม่พึ่ง Chart.js) + ช่องใส่โค้ด `<head>`/`</body>` ใน `settings.php` (เผื่อต่อ Google Analytics/GTM ทีหลัง) + sidebar เมนูแอดมินถาวร 11 หน้า (`includes/admin-nav.php`, `partials/admin-sidebar.php` — ยืม engine `.sidebar`/`.container-with-sidebar` เดิมของ sidebar เนื้อหาสาธารณะ ไม่สร้างคู่ขนาน ดู "หลักการรอง" ด้านบน) — ตัด geo/ประเทศออกให้ Google Analytics ทำแทน, ตัดใจไม่ทำเวลาดูหน้า (time on page — ต้องมี JS beacon เอง วัดไม่แม่นยำโดยธรรมชาติ) — ปรับความกว้าง container เป็น 1140px ร่วมด้วย
+
+- [ ] **Retention/rollup ของ `mblog_pageview_log` — พักไว้ก่อน** (ข้อมูลยังน้อยเกินจะเห็นภาพจริง) แผนคร่าวๆ: cron รายคืนสรุปยอดเข้า rollup table ก่อนค่อยลบ raw log ที่เก่ากว่า 90 วัน — ต้องเลือกระดับความละเอียดของ rollup ก่อนทำจริง (ภาพรวมอย่างเดียว vs เจาะจงบทความด้วย vs เจาะจงทุกประเภทหน้า)
+- [ ] ทบทวน/อัปเดต pattern บอทใน `isBotUserAgent()` เป็นระยะ (บอทใหม่ๆ โผล่มาเรื่อยๆ)
 - [ ] Custom event tracking (เตรียมไว้เผื่อ Phase ขายของในอนาคต)
 
 ### Phase 10 — Production readiness เต็มรูปแบบ (ส่วน 11, 12 + หัวข้ออื่นที่เคยคุย) — 🔜 ยังไม่ทำ
@@ -239,15 +240,17 @@ Environment flag (`APP_ENV` ใน `config.php`) คุม `display_errors`/`log
 - **แบรนด์เว็บ: โลโก้/favicon/สโลแกน** — ตั้งค่าได้ที่ `settings.php` ทั้งหมด แสดงผลจริงใน header (ดูรายละเอียดที่ bullet `settings.php` และ "ธีมเว็บ" ด้านบน)
 - **พรีวิวเนื้อหาในการ์ด** — หน้ารายการทั้ง 5 (`articles.php`/`pages.php`/`category.php`/`tag.php`/`drafts.php`) โชว์พารากราฟแรกของเนื้อหาต่อจากวันที่แล้ว (สูงสุด 500 ตัวอักษร) กันการ์ดโล่งเกินไป — แก้ที่ `partials/article-list.php` จุดเดียวมีผลครบทั้ง 5 หน้าอัตโนมัติ (ทดสอบแล้วว่าแก้ `articles.php` ไม่ต้องแตะไฟล์อื่นเลยสักบรรทัด พิสูจน์หลักการ query กลาง+partial กลางที่ทำไว้ก่อนหน้านี้)
 - **ระบบ Sidebar item** — ดูรายละเอียดเต็มที่ bullet "ระบบ Sidebar item" ใน [BUILT.md](BUILT.md) (ตารางแยก `mblog_sidebar_items`, หน้าแอดมิน 2 หน้า, layout 2 คอลัมน์ที่ปิด/เปิดอัตโนมัติตามว่ามีรายการ active ไหม)
-- **เปิด/ปิด sidebar ได้ 2 ชั้น (เว็บ + ต่อบทความ/หน้า) + ความกว้าง header คงที่ + รวม CSS เนื้อหา Quill เป็นที่เดียว** — งานต่อยอดระบบ Sidebar item ข้างบน ดูรายละเอียดเต็มที่ bullet ย่อยใต้ "ระบบ Sidebar item" ใน [BUILT.md](BUILT.md) สรุปสั้นๆ: (1) `settings.php` คุมเปิด/ปิดทั้งเว็บ, `editor.php` คุมเปิด/ปิดต่อบทความ/หน้าแยกได้ (priority สูงกว่าเว็บ) (2) header/footer กว้าง 1100px คงที่ทุกหน้าแล้ว ไม่กระโดดเวลาสลับหน้าที่มี/ไม่มี sidebar (3) เจอบั๊กเดิม (Quill CSS ไม่ครบทุกหน้า) แล้วแก้ถาวรด้วยการรวม CSS ของเนื้อหา Quill ทุกจุดเป็น class กลาง `.rich-content` เดียว โหลด `quill.snow.css` ทุกหน้า — sidebar item ตอนนี้จัดกึ่งกลาง/รูป float/caption/blockquote/code block/list marker ได้ครบเหมือนบทความจริงแล้ว (ก่อนหน้านี้ใช้ไม่ได้เลยสักอย่าง)
+- **เปิด/ปิด sidebar ได้ 2 ชั้น (เว็บ + ต่อบทความ/หน้า) + ความกว้าง header คงที่ + รวม CSS เนื้อหา Quill เป็นที่เดียว** — งานต่อยอดระบบ Sidebar item ข้างบน ดูรายละเอียดเต็มที่ bullet ย่อยใต้ "ระบบ Sidebar item" ใน [BUILT.md](BUILT.md) สรุปสั้นๆ: (1) `settings.php` คุมเปิด/ปิดทั้งเว็บ, `editor.php` คุมเปิด/ปิดต่อบทความ/หน้าแยกได้ (priority สูงกว่าเว็บ) (2) header/footer กว้างคงที่ทุกหน้าแล้ว (ตอนนั้น 1100px — ปรับเป็น 1140px ภายหลัง ดู Phase 9) ไม่กระโดดเวลาสลับหน้าที่มี/ไม่มี sidebar (3) เจอบั๊กเดิม (Quill CSS ไม่ครบทุกหน้า) แล้วแก้ถาวรด้วยการรวม CSS ของเนื้อหา Quill ทุกจุดเป็น class กลาง `.rich-content` เดียว โหลด `quill.snow.css` ทุกหน้า — sidebar item ตอนนี้จัดกึ่งกลาง/รูป float/caption/blockquote/code block/list marker ได้ครบเหมือนบทความจริงแล้ว (ก่อนหน้านี้ใช้ไม่ได้เลยสักอย่าง)
 
 - **ระบบนำเข้า Markdown (Phase 5/6, ทำเสร็จ 2026-07-27)** — รับไฟล์ `.md` สรุปหุ้นรายวันจากโปรเจกต์แยก `stock-live-pipeline` ผ่าน 2 ทาง (`import-markdown.php` อัปโหลดมือ, `api/import-markdown.php` รับอัตโนมัติด้วย token) ทั้งคู่ใช้แกนเดียวกัน `importMarkdownArticle()` ใน `includes/markdown-import.php` — ดูรายละเอียดเต็มที่หัวข้อ 6/7 และ Phase 5/6 ด้านบน สรุปสั้นๆ: เผยแพร่ทันที (ไม่ผ่านร่าง, เบี่ยงจากแผนเดิม), แท็ก "สรุปโดย AI" + ชื่อสำนักอัตโนมัติ, เก็บ+โชว์ลิงก์ YouTube ต้นฉบับ, ตั้ง featured image จาก YouTube thumbnail อัตโนมัติ (maxres ก่อน ตกไป hqdefault), `published_at` ใช้เวลาโพสต์จริงจาก front matter แทนเวลา import, กันซ้ำด้วยทั้งชื่อไฟล์และ URL
 - **`editor.php`: เลือก featured image ได้ 2 แบบ** — อัปโหลดไฟล์ (เดิม) หรือใส่ URL ภาพตรงๆ (ใหม่ — ลิงก์เล็กๆ "หรือใส่ URL แทน" ใต้ปุ่มอัปโหลด, validate ด้วยการโหลดรูปทดสอบก่อน commit) เกิดจากงานนำเข้า Markdown ข้างบน (อยากแก้ featured image ที่ auto-pick มาให้เป็น URL อื่นเองได้ เช่น `maxresdefault.jpg` ตอนที่มี) แต่ backend ไม่ต้องแก้อะไรเลยเพราะ `featured_image` เป็นแค่ string URL เฉยๆ ไม่สนว่ามาจากไหนอยู่แล้ว
 - **Tooltip แบบกำหนดความหน่วงเองได้ (`[data-tooltip]`)** — `relativeTimeTag()` (ใน `includes/articles.php`, ใช้แสดง "2 ชั่วโมง" ฯลฯ พร้อมวันที่เต็มตอน hover) เปลี่ยนจาก `title=""` ของ browser (หน่วง ~1 วิ คงที่ แก้ไม่ได้) เป็น CSS component ล้วนใน `assets/components.css` แทน หน่วงแค่ 300ms ด้วยเทคนิค `transition-delay` ไว้ที่ `:hover` rule เท่านั้น (ไม่ใช่ base rule) ทำให้ตอนขึ้นหน่วง แต่ตอนซ่อนไม่หน่วง
 
+**ระบบสถิติ + แอดมิน sidebar (Phase 9, ทำเสร็จ 2026-07-27)** — ดูรายละเอียดที่ Phase 9/[BUILT.md](BUILT.md) สรุปสั้น: เก็บ pageview ทั้งเว็บเอง (ไม่พึ่ง Umami/GA, ไม่เก็บ IP ดิบ), หน้า dashboard `stats.php`, sidebar เมนูแอดมินถาวร (ยืม engine เดิม), container เป็น 1140px
+
 **งานค้างที่สำคัญที่สุดตอนนี้:** `scripts/backup.php` ยังไม่ dump MySQL (ดูหัวข้อ 9/Phase 2) — เนื้อหาจริงย้ายออกจากไฟล์หมดแล้ว แปลว่า backup ปัจจุบัน**ไม่ครอบคลุมเนื้อหาบทความเลย** ควรทำก่อนเรื่องอื่น
 
 **ตัวเลือกขั้นต่อไป:**
 - แก้ backup script ให้ครอบคลุม MySQL (ด่วน — ความเสี่ยงข้อมูลหาย)
-- Phase 3 (ระบบล็อกอิน/สิทธิ์) — ตัวบล็อก Phase 7 (คอมเมนต์) และความปลอดภัยของระบบร่างต่อ ตารางพร้อมแล้ว
-- Phase 9 ส่วนที่เหลือ (นับยอดอ่านจริง) — ทำได้ทันทีไม่ต้องรอ Phase ไหน ตารางพร้อมแล้ว
+- Phase 3 (ระบบล็อกอิน/สิทธิ์) — ตัวบล็อก Phase 7 (คอมเมนต์) และความปลอดภัยของระบบร่างต่อ ตารางพร้อมแล้ว — ยิ่งสำคัญขึ้นหลังเพิ่มช่องใส่ head/body code เองได้ (Phase 9) เพราะตอนนี้ยังไม่มีใครล็อกไม่ให้คนนอกเข้ามาแก้/แทรก script ได้
+- Phase 9 ที่ยังพักไว้: retention/rollup ของ `mblog_pageview_log` (รอข้อมูลเยอะขึ้นก่อนค่อยตัดสินใจระดับความละเอียด), ทบทวน/อัปเดต pattern บอทใน `isBotUserAgent()` เป็นระยะ

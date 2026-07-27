@@ -14,10 +14,22 @@ $menuItems = getMenuItems();
 // it isn't ANDed against sidebar_enabled a second time here. List pages
 // (articles.php, category.php, ...) leave it true — they have no single
 // article to hang a per-item override off of, so sidebar_enabled decides.
+// Admin pages set this before including header.php instead of $showSidebar
+// — a completely separate concern from the reader-facing content sidebar
+// below (banners/announcements), just reusing the exact same
+// .container-with-sidebar/.sidebar/.sidebar-left engine instead of a
+// parallel set of layout classes, per the site's own "one engine, don't
+// redefine" convention (same reasoning as includes/admin-nav.php). The only
+// admin-specific override is forcing the 'left' position, unconditionally —
+// that's a fixed admin-chrome convention, not tied to the site's
+// sidebar_position setting (which is about reader content, unrelated).
+// See partials/admin-sidebar.php for what actually renders inside it.
+$showAdminSidebar = $showAdminSidebar ?? false;
+
 $sidebarSiteGate = $sidebarSiteGate ?? true;
 $sidebarItems = (!empty($showSidebar) && (!$sidebarSiteGate || siteSetting('sidebar_enabled', '1') === '1')) ? getActiveSidebarItems() : [];
-$hasSidebar = !empty($sidebarItems);
-$sidebarPosition = siteSetting('sidebar_position', 'right');
+$hasSidebar = $showAdminSidebar || !empty($sidebarItems);
+$sidebarPosition = $showAdminSidebar ? 'left' : siteSetting('sidebar_position', 'right');
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -63,6 +75,7 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
 <script src="assets/toast.js<?= $assetVer('assets/toast.js') ?>" defer></script>
 <script src="assets/theme.js<?= $assetVer('assets/theme.js') ?>" defer></script>
 <script src="assets/search.js<?= $assetVer('assets/search.js') ?>" defer></script>
+<?= siteSetting('custom_head_code', '') ?>
 </head>
 <body>
 <div class="topbar">

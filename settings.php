@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/config.php';
+require __DIR__ . '/includes/admin-nav.php';
 
 // Curated to what this single-owner Thai blog actually needs — not a full
 // 400-entry IANA timezone picker nobody here would use.
@@ -71,6 +72,8 @@ $values = [
     'site_tagline_enabled' => siteSetting('site_tagline_enabled', '0'),
     'sidebar_position' => siteSetting('sidebar_position', 'right'),
     'sidebar_enabled' => siteSetting('sidebar_enabled', '1'),
+    'custom_head_code' => siteSetting('custom_head_code', ''),
+    'custom_body_code' => siteSetting('custom_body_code', ''),
 ];
 $errors = [];
 $saved = isset($_GET['saved']);
@@ -87,6 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $values['site_tagline_enabled'] = !empty($_POST['site_tagline_enabled']) ? '1' : '0';
     $values['sidebar_position'] = ($_POST['sidebar_position'] ?? '') === 'left' ? 'left' : 'right';
     $values['sidebar_enabled'] = !empty($_POST['sidebar_enabled']) ? '1' : '0';
+    $values['custom_head_code'] = trim($_POST['custom_head_code'] ?? '');
+    $values['custom_body_code'] = trim($_POST['custom_body_code'] ?? '');
 
     if ($values['site_name'] === '') {
         $errors[] = 'กรุณาใส่ชื่อเว็บ';
@@ -143,7 +148,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'ตั้งค่าเว็บ — ' . siteSetting('site_name');
-$topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
+$topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
+$showAdminSidebar = true;
 include __DIR__ . '/partials/header.php';
 ?>
   <h1 class="article-title">ตั้งค่าเว็บ</h1>
@@ -224,6 +230,7 @@ include __DIR__ . '/partials/header.php';
         <div style="display:flex; gap:8px; align-items:center;">
           <input type="text" id="markdown_import_token" name="markdown_import_token" value="<?= htmlspecialchars($values['markdown_import_token']) ?>" style="max-width:340px; font-family:var(--font-mono);" autocomplete="off">
           <button type="button" class="btn btn-secondary" id="generate-import-token-btn">สุ่ม Token ใหม่</button>
+          <button type="button" class="btn btn-secondary" id="copy-import-token-btn">คัดลอก</button>
         </div>
         <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">ระบบภายนอกต้องส่ง header <code>X-Import-Token</code> ตรงกับค่านี้ ถึงจะนำเข้าบทความได้</div>
       </div>
@@ -242,6 +249,16 @@ include __DIR__ . '/partials/header.php';
         </select>
         <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">จัดการรายการที่แสดงได้ที่ <a href="sidebar-items.php">จัดการ Sidebar</a> — ไม่มีรายการที่เปิดใช้งานก็จะไม่แสดง sidebar เลย</div>
       </div>
+      <div class="field">
+        <label for="custom_head_code">โค้ดใน &lt;head&gt; (ไม่บังคับ — สำหรับ tag ของระบบนอก เช่น Google Analytics/Tag Manager)</label>
+        <textarea id="custom_head_code" name="custom_head_code" rows="5" style="font-family:var(--font-mono); font-size:13px;" placeholder="<!-- วางโค้ด/tag ที่นี่ -->"><?= htmlspecialchars($values['custom_head_code']) ?></textarea>
+        <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">แทรกก่อนปิด <code>&lt;/head&gt;</code> ทุกหน้าของเว็บ — วางได้ทั้ง <code>&lt;script&gt;</code>/<code>&lt;meta&gt;</code>/<code>&lt;link&gt;</code></div>
+      </div>
+      <div class="field">
+        <label for="custom_body_code">โค้ดก่อนปิด &lt;/body&gt; (ไม่บังคับ)</label>
+        <textarea id="custom_body_code" name="custom_body_code" rows="5" style="font-family:var(--font-mono); font-size:13px;" placeholder="<!-- วางโค้ด/tag ที่นี่ -->"><?= htmlspecialchars($values['custom_body_code']) ?></textarea>
+        <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">สำหรับ script ที่ควรอยู่ท้ายหน้า เช่น GTM noscript fallback หรือ chat widget</div>
+      </div>
       <button type="submit" class="btn">บันทึก</button>
     </form>
   </div>
@@ -253,6 +270,26 @@ $footerScripts = <<<'HTML'
     crypto.getRandomValues(bytes);
     const token = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
     document.getElementById('markdown_import_token').value = token;
+  });
+
+  document.getElementById('copy-import-token-btn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const input = document.getElementById('markdown_import_token');
+    if (!input.value) return;
+    let copied = true;
+    try {
+      await navigator.clipboard.writeText(input.value);
+    } catch (err) {
+      try {
+        input.select();
+        document.execCommand('copy');
+      } catch (fallbackErr) {
+        copied = false;
+      }
+    }
+    const original = btn.textContent;
+    btn.textContent = copied ? 'คัดลอกแล้ว' : 'คัดลอกไม่สำเร็จ';
+    setTimeout(() => { btn.textContent = original; }, 1500);
   });
 </script>
 HTML;

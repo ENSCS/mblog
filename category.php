@@ -1,11 +1,14 @@
 <?php
 require __DIR__ . '/includes/articles.php';
+require __DIR__ . '/includes/stats.php';
 
 $slug = $_GET['slug'] ?? '';
 $category = getCategoryBySlug($slug);
 if (!$category) {
     renderErrorPage(404, 'ไม่พบหมวดหมู่นี้');
 }
+
+recordPageview('category');
 
 $perPage = max(1, (int) siteSetting('articles_per_page', 10));
 $page = max(1, (int) ($_GET['page'] ?? 1));
