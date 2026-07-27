@@ -117,6 +117,7 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
       </div>
     </div>
   </div>
+  <?php if (!isset($showMenu) || $showMenu): ?>
   <div class="topbar-nav-row">
     <div class="container container-wide">
       <!-- Desktop: click-to-open dropdown, submenu anchored right of the toggle -->
@@ -138,7 +139,9 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
       </nav>
     </div>
   </div>
+  <?php endif; ?>
 </div>
+<?php if (!isset($showMenu) || $showMenu): ?>
 <!-- Mobile: hamburger toggle + full-width accordion list (hidden on desktop) -->
 <button type="button" class="mobile-menu-toggle">&#9776; Menu</button>
 <nav class="mobile-menu">
@@ -160,5 +163,6 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
     <?php endif; ?>
   <?php endforeach; ?>
 </nav>
-<div class="container<?= $hasSidebar ? ' container-with-sidebar' . ($sidebarPosition === 'left' ? ' sidebar-left' : '') : '' ?>">
+<?php endif; ?>
+<div class="container<?= $hasSidebar ? ' container-with-sidebar' . ($sidebarPosition === 'left' ? ' sidebar-left' : '') : (!empty($containerWide) ? ' container-wide' : '') ?>">
 <?php if ($hasSidebar): ?><div class="main-content"><?php endif; ?>

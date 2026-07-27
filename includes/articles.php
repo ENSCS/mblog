@@ -495,18 +495,29 @@ function getArticleList(array $filters, int $page = 1, int $perPage = 0): array
 // parser splits words on whitespace, and Thai has none between words, so it
 // would barely match anything without the extra ngram parser config — LIKE's
 // substring match works regardless of that, and needs no schema change.
-// Title matches rank above content-only matches; published_at breaks ties.
+// Title/tag matches rank above content-only matches; published_at breaks ties.
+// Tags deliberately included, category deliberately not: a tag is a precise
+// signal an author chose on purpose, while a category is a broad bucket that
+// would pull in a lot of loosely-related noise for a common query word.
+// Matched via EXISTS rather than a JOIN to mblog_tags — an article can have
+// several matching tags, and a plain JOIN would return one row per match,
+// throwing off both COUNT(*) and pagination.
 // Returns ['items' => [...], 'total' => N] so the caller can paginate.
 function searchArticles(string $query, int $page, int $perPage): array
 {
     $like = '%' . $query . '%';
+    $tagMatchSql = "EXISTS (
+        SELECT 1 FROM mblog_article_tag mat
+        JOIN mblog_tags t ON t.id = mat.tag_id
+        WHERE mat.article_id = a.id AND t.name LIKE ?
+    )";
 
     $countStmt = db()->prepare(
         "SELECT COUNT(*) FROM mblog_articles a
          WHERE a.type = 'post' AND a.status = 'published' AND a.deleted_at IS NULL
-           AND (a.title LIKE ? OR a.content LIKE ?)"
+           AND (a.title LIKE ? OR a.content LIKE ? OR $tagMatchSql)"
     );
-    $countStmt->execute([$like, $like]);
+    $countStmt->execute([$like, $like, $like]);
     $total = (int) $countStmt->fetchColumn();
 
     // $perPage/$offset inlined, not bound — same reasoning as
@@ -516,15 +527,16 @@ function searchArticles(string $query, int $page, int $perPage): array
     $stmt = db()->prepare(
         "SELECT a.*, c.name AS category, c.slug AS category_slug, c.color AS category_color,
                 (CASE WHEN a.title LIKE ? THEN 2 ELSE 0 END
-                 + CASE WHEN a.content LIKE ? THEN 1 ELSE 0 END) AS relevance
+                 + CASE WHEN a.content LIKE ? THEN 1 ELSE 0 END
+                 + CASE WHEN $tagMatchSql THEN 2 ELSE 0 END) AS relevance
          FROM mblog_articles a
          LEFT JOIN mblog_categories c ON a.category_id = c.id
          WHERE a.type = 'post' AND a.status = 'published' AND a.deleted_at IS NULL
-           AND (a.title LIKE ? OR a.content LIKE ?)
+           AND (a.title LIKE ? OR a.content LIKE ? OR $tagMatchSql)
          ORDER BY relevance DESC, a.published_at DESC
          LIMIT $perPage OFFSET $offset"
     );
-    $stmt->execute([$like, $like, $like, $like]);
+    $stmt->execute([$like, $like, $like, $like, $like, $like]);
     $items = array_map('normalizeArticleRow', $stmt->fetchAll());
 
     return ['items' => $items, 'total' => $total];

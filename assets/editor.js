@@ -635,21 +635,45 @@ function setupTagInput(existingTags, allTagNames) {
     render();
   }
 
+  // currentMatches/activeIndex track what's currently on screen so keydown
+  // (below) can move a highlight through it and know what Enter should pick
+  // — -1 means nothing highlighted, i.e. Enter falls back to the typed text.
+  let currentMatches = [];
+  let activeIndex = -1;
+
+  function setActiveIndex(i) {
+    activeIndex = i;
+    [...suggestionsEl.children].forEach((el, idx) => {
+      el.classList.toggle('active', idx === activeIndex);
+    });
+    const activeEl = suggestionsEl.children[activeIndex];
+    if (activeEl) {
+      activeEl.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function hideSuggestions() {
+    suggestionsEl.style.display = 'none';
+    currentMatches = [];
+    activeIndex = -1;
+  }
+
   function showSuggestions() {
     const q = input.value.trim().toLowerCase();
     suggestionsEl.innerHTML = '';
     if (!q) {
-      suggestionsEl.style.display = 'none';
+      hideSuggestions();
       return;
     }
-    const matches = allTagNames
+    currentMatches = allTagNames
       .filter(name => name.toLowerCase().includes(q) && !tags.some(t => t.toLowerCase() === name.toLowerCase()))
       .slice(0, 8);
-    if (!matches.length) {
+    activeIndex = -1;
+    if (!currentMatches.length) {
       suggestionsEl.style.display = 'none';
       return;
     }
-    matches.forEach((name) => {
+    currentMatches.forEach((name) => {
       const item = document.createElement('div');
       item.className = 'tag-suggestion-item';
       item.textContent = name;
@@ -658,7 +682,7 @@ function setupTagInput(existingTags, allTagNames) {
         e.preventDefault();
         addTag(name);
         input.value = '';
-        suggestionsEl.style.display = 'none';
+        hideSuggestions();
       });
       suggestionsEl.appendChild(item);
     });
@@ -667,18 +691,31 @@ function setupTagInput(existingTags, allTagNames) {
 
   input.addEventListener('input', showSuggestions);
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ',') {
+    const suggestionsOpen = suggestionsEl.style.display === 'block' && currentMatches.length;
+    if (e.key === 'ArrowDown' && suggestionsOpen) {
       e.preventDefault();
-      addTag(input.value.replace(/,$/, ''));
+      setActiveIndex(activeIndex < currentMatches.length - 1 ? activeIndex + 1 : 0);
+    } else if (e.key === 'ArrowUp' && suggestionsOpen) {
+      e.preventDefault();
+      setActiveIndex(activeIndex > 0 ? activeIndex - 1 : currentMatches.length - 1);
+    } else if (e.key === 'Escape' && suggestionsOpen) {
+      e.preventDefault();
+      hideSuggestions();
+    } else if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      // A highlighted suggestion wins over the raw typed text — matches
+      // what arrow keys visually promised the user Enter would pick.
+      const name = suggestionsOpen && activeIndex >= 0 ? currentMatches[activeIndex] : input.value.replace(/,$/, '');
+      addTag(name);
       input.value = '';
-      suggestionsEl.style.display = 'none';
+      hideSuggestions();
     } else if (e.key === 'Backspace' && input.value === '' && tags.length) {
       tags.pop();
       render();
     }
   });
   input.addEventListener('blur', () => {
-    setTimeout(() => { suggestionsEl.style.display = 'none'; }, 150);
+    setTimeout(hideSuggestions, 150);
   });
 
   render();

@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . '/../includes/articles.php';
+require __DIR__ . '/../includes/uploads.php';
 
 $raw = file_get_contents('php://input');
 $data = json_decode($raw, true);
@@ -17,17 +18,9 @@ $excerpt = isset($data['excerpt']) ? trim($data['excerpt']) : '';
 $showSidebarRaw = isset($data['show_sidebar']) ? (string) $data['show_sidebar'] : '';
 $showSidebar = $showSidebarRaw === '1' ? 1 : ($showSidebarRaw === '0' ? 0 : null);
 
-// Only accept a path that looks like one of our own uploads (matches the
-// naming api/upload.php produces) — never trust an arbitrary URL into og:image.
-// Allows uploads/YYYY/MM/ subfolders and non-ASCII filenames (Thai/Chinese/...,
-// since api/upload.php keeps the sanitized original name) but rejects "..".
-$featuredImage = isset($data['featured_image']) ? trim($data['featured_image']) : '';
-if ($featuredImage !== '' && (
-    str_contains($featuredImage, '..')
-    || !preg_match('#^uploads/[\p{L}\p{N}\p{M}_./-]+\.(jpg|jpeg|png|gif|webp)$#iu', $featuredImage)
-)) {
-    $featuredImage = '';
-}
+// See sanitizeFeaturedImagePath() — accepts one of our own uploads or a
+// plain external http(s) URL, '' otherwise.
+$featuredImage = sanitizeFeaturedImagePath((string) ($data['featured_image'] ?? ''));
 
 // Pages don't have a category — it's a blog-content concept, doesn't apply
 // to a standalone page like "About"/"Privacy Policy". For posts, category is
@@ -107,5 +100,13 @@ if ($existing) {
 
 syncArticleImages($articleId, $content, $featuredImage);
 syncArticleTags($articleId, $tagNames);
+
+// Only the featured_image slot is cleaned up automatically here — an image
+// removed from inside the rich-text body is left for mblog_images/
+// syncArticleImages() bookkeeping only, same "never touch the filesystem
+// from a regex guess" caution as before, just not extended to this new path.
+if ($existing && !empty($existing['featured_image']) && $existing['featured_image'] !== $featuredImage) {
+    deleteUploadIfUnused($existing['featured_image']);
+}
 
 echo json_encode(['success' => true, 'id' => $articleId, 'slug' => $slug, 'status' => $status, 'type' => $type]);

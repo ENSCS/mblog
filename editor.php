@@ -107,7 +107,7 @@ include __DIR__ . '/partials/header.php';
     <label for="tag-input">แท็ก (ไม่บังคับ — พิมพ์ชื่อแล้วกด Enter หรือเลือกจากรายการที่แนะนำ)</label>
     <div class="tag-input-wrap">
       <div id="tag-chips" class="tag-chip-list"></div>
-      <input type="text" id="tag-input" placeholder="พิมพ์แท็ก แล้วกด Enter...">
+      <input type="text" id="tag-input" placeholder="พิมพ์แท็ก แล้วกด Enter..." autocomplete="off">
       <div id="tag-suggestions" class="tag-suggestions"></div>
     </div>
     <input type="hidden" id="tags" value="">

@@ -13,6 +13,7 @@
 //   $linkToView        true: title/"อ่าน" link to article.php/page.php;
 //                       false: title links to editor.php, no "อ่าน" (drafts)
 //   $page, $totalPages, $pageUrl  pagination — $pageUrl is fn(int $p): string
+require_once __DIR__ . '/../includes/stats.php';
 $showCategoryBadge = $showCategoryBadge ?? false;
 $showStatusBadge = $showStatusBadge ?? false;
 $showFeaturedImage = $showFeaturedImage ?? true;
@@ -55,7 +56,7 @@ $pageUrl = $pageUrl ?? null;
           <?php endif; ?>
         <?php endif; ?>
       </h2>
-      <div class="meta"><?= relativeTimeTag($a['published_at'] ?? $a['updated_at']) ?></div>
+      <div class="meta">การดู <?= number_format(articleViewCount($a['id'])) ?> ครั้ง • <?= relativeTimeTag($a['published_at'] ?? $a['updated_at']) ?></div>
       <?php $preview = articleContentPreview($a); ?>
       <?php if ($preview !== ''): ?>
         <p class="article-preview"><?= htmlspecialchars($preview) ?></p>

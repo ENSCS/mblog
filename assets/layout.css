@@ -329,6 +329,12 @@
 .sidebar-item-content > *:last-child {
   margin-bottom: 0;
 }
+/* .ql-video's own margin: 16px 0 (above) is sized for a full-width article
+   body, not this 14px-padded card — cancel it here so a video sits flush
+   like an <img> does (which has no margin of its own). */
+.sidebar-item-content .ql-video {
+  margin: 0;
+}
 @media (max-width: 900px) {
   .container-with-sidebar {
     flex-direction: column;
@@ -343,7 +349,7 @@
 .topbar {
   background: var(--topbar-bg);
   color: var(--topbar-text);
-  border-bottom: 1px solid var(--topbar-border);
+  border-bottom: 0px solid var(--topbar-border);
 }
 .topbar-brand-row .container {
   padding: 8px 20px;

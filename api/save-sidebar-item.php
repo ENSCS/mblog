@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . '/../includes/sidebar.php';
+require __DIR__ . '/../includes/uploads.php';
 
 $raw = file_get_contents('php://input');
 $data = json_decode($raw, true);
@@ -23,15 +24,8 @@ if (trim(strip_tags($content)) === '' && !str_contains($content, '<img') && !str
     $content = null;
 }
 
-// Same validation as api/save.php's featured_image — only accept a path that
-// looks like one of our own uploads, never trust an arbitrary URL.
-$image = isset($data['image']) ? trim($data['image']) : '';
-if ($image !== '' && (
-    str_contains($image, '..')
-    || !preg_match('#^uploads/[\p{L}\p{N}\p{M}_./-]+\.(jpg|jpeg|png|gif|webp)$#iu', $image)
-)) {
-    $image = '';
-}
+// Same validation as api/save.php's featured_image — see sanitizeFeaturedImagePath().
+$image = sanitizeFeaturedImagePath((string) ($data['image'] ?? ''));
 
 if ($title === '') {
     http_response_code(400);
@@ -47,6 +41,12 @@ if ($existing) {
     $itemId = (int) $existing['id'];
 } else {
     $itemId = createSidebarItem($title, $content, $image, $linkUrl, $isActive, nextSidebarSortOrder());
+}
+
+// Same featured-image-only cleanup as api/save.php — an image removed from
+// inside the rich-text body isn't touched here.
+if ($existing && !empty($existing['image']) && $existing['image'] !== $image) {
+    deleteUploadIfUnused($existing['image']);
 }
 
 echo json_encode(['success' => true, 'id' => $itemId]);

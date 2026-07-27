@@ -73,8 +73,8 @@ include __DIR__ . '/partials/header.php';
         <?php if ($categoryName = articleCategory($article)): ?>
           <span class="category-tag category-tag-<?= htmlspecialchars(articleCategoryColor($article)) ?>"><?= htmlspecialchars($categoryName) ?></span>
         <?php endif; ?>
+        <span class="view-count"> การดู <?= number_format(articleViewCount($article['id'])) ?> ครั้ง</span> • 
         <?= relativeTimeTag($article['published_at']) ?>
-        <span class="view-count">👁 <?= number_format(articleViewCount($article['id'])) ?> ครั้ง</span>
       </div>
       <div class="article-content rich-content ql-editor"><?= $article['content'] ?></div>
       <?php if (!empty($article['source_url'])): ?>
