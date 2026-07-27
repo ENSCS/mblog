@@ -146,6 +146,28 @@ Meta description + OG tags (`og:title`/`description`/`image`/`url`/`type=article
 Environment flag (`APP_ENV` ใน `config.php`) คุม `display_errors`/`log_errors` ตามโหมด (`includes/error-handling.php`, log ไปที่ `logs/php-error.log`), หน้า error กลาง 404/500 (`error.php` + `renderErrorPage()`, ไม่พึ่ง config/menu อื่นกันพังซ้ำ), `set_error_handler()`/`set_exception_handler()` จับ error/exception ที่ไม่คาดคิดทั้งหมด, เช็ค return value การเขียนไฟล์/DB และ `json_decode() === null` ครบทุกจุดที่โหลดบทความ
 - **หมายเหตุค้าง**: ยังไม่ได้ผูก Apache `ErrorDocument` กับ 404/500 กลาง เพราะ path ขึ้นกับ document root จริงตอน deploy ซึ่งเครื่อง dev กับที่ตั้งใจ deploy จริงยังไม่ตรงกัน ต้องรอตอนนั้น
 
+### 13. ฟีเจอร์บทความเพิ่มเติม — การมองเห็น/จัดระเบียบ/SEO (คุยกัน 2026-07-28 ก่อนทำระบบ backup) — 🔜 ยังไม่ทำ (schema พร้อมแล้ว)
+คุยก่อนทำระบบ backup ตามหลักที่ว่า "ควรคิดฟีเจอร์บทความให้รอบด้านก่อนจะได้ schema solid ทีเดียว ไม่ต้องมา ALTER TABLE ทีละนิดทีหลัง" — ไล่เทียบว่า WordPress มีอะไรที่ mBlog ยังไม่มีบ้าง (เฉพาะกลุ่มที่เกี่ยวกับบทความ) แล้วตัดสินใจทีละข้อ:
+
+- **Private post** — สถานะใหม่ต่างจาก draft/password-protect: บทความมี URL เปิดได้จริงถ้ารู้ลิงก์+login แอดมิน แต่**ไม่โผล่ที่ไหนเลย**ทั้ง list/RSS/search/sitemap สาธารณะ → เพิ่มค่า `'private'` ใน `mblog_articles.status` ENUM
+- **Scheduled publishing** — ตั้งเวลาเผยแพร่ล่วงหน้า ใช้ `published_at` เดิมได้ (แค่ตั้งเป็นอนาคต) แต่ต้องมีสถานะแยกให้แอดมินดูออกว่า "ตั้งไว้ยังไม่ถึงเวลา" ต่างจาก published จริง → เพิ่มค่า `'scheduled'` ใน ENUM เดียวกัน — **โค้ดที่ query หน้าเว็บสาธารณะต้องแก้เพิ่ม** เป็น `status='published' AND published_at <= NOW()` (ตอนนี้เช็คแค่ `status='published'` เฉยๆ ทุกจุดใน `includes/articles.php`)
+- **Post expiration** — ส่วนขยายของ scheduled (จุดจบเผยแพร่ ไม่ใช่แค่จุดเริ่ม) → เพิ่มคอลัมน์ `expires_at DATETIME NULL` — **ยังไม่มี cron ที่มา auto-flip สถานะตอนหมดอายุ** เป็นงานฝั่งแอปที่ต้องทำแยกทีหลัง
+- **Sticky/ปักหมุด** — เทียบกับ WP แล้วพบว่า WP **ไม่ได้**เก็บเป็นคอลัมน์บน `wp_posts` แต่เก็บ option `sticky_posts` ใน `wp_options` เป็น array ของ post ID — mBlog เลยตัดสินใจตามแนวเดียวกัน: ใช้ `mblog_settings` key `sticky_article_ids` เก็บค่าเป็น **JSON array** (เช่น `[45,102]`) แทนที่จะเพิ่มคอลัมน์ `is_sticky` ใน `mblog_articles` — ข้อดี: ไม่ต้อง ALTER TABLE, รองรับปักได้หลายบทความพร้อมกันแบบ WP จริง — **ต้องเพิ่ม logic** ใน `bulkPermanentlyDeleteArticles()` ให้เคลียร์ id ออกจาก array นี้ตอนลบถาวรด้วย (id ที่หายไปไม่อันตราย เพราะ MySQL ไม่เอา id มาใช้ซ้ำ แค่จะเงียบๆ ไม่โชว์อะไร ไม่ชี้ผิดบทความ)
+- **SEO override ต่อบทความ** — ตอนนี้ meta description ดึงจาก excerpt อัตโนมัติเสมอ (`article.php`) ยังตั้งเองแยกจากเนื้อหา หรือตั้ง noindex ไม่ได้ → เพิ่ม `seo_title`, `seo_description`, `seo_noindex` (ค่า NULL/0 = ใช้ auto-generate เหมือนเดิม ไม่กระทบบทความเก่า)
+- **Hierarchical pages** — `type='page'` ตอนนี้เป็น flat list ยังทำ parent/child page ไม่ได้ → เพิ่ม `parent_id` self-reference แบบเดียวกับที่ `mblog_menu_items.parent_id` ทำไว้แล้ว — **กันวนเป็นวง (parent ชี้กลับมาตัวเอง) ต้องเช็คที่โค้ด `editor.php` เอง** ไม่ใช่ระดับ DB
+- **Revision history** — ตัดสินใจ**ไม่ทำ** ไม่อยู่ในสโคปนี้
+- **Custom fields (meta key-value ต่อบทความ)** — ตัดสินใจ**ไม่ทำ**ตอนนี้ เพราะไม่มี use case จริงรองรับ (เจอแค่ 1 field ที่น่าจะได้ประโยชน์คือ `channel_name` จาก YouTube import ที่ตอนนี้ใช้ผ่านๆ ไม่ได้เก็บถาวร — [includes/markdown-import.php:81](includes/markdown-import.php:81) — ถ้าจะเก็บจริงเพิ่ม column เดี่ยวๆ คุ้มกว่าสร้างตารางทั่วไปทั้งระบบ) รอจนกว่าจะมีความต้องการแบบ flexible อย่างน้อย 2 อย่างขึ้นไปค่อยกลับมาทำเป็นตารางแยก
+
+Schema ทั้งหมดของหัวข้อนี้ (ยกเว้น sticky ที่ไม่ต้องแตะ `mblog_articles`) รวมไว้ในไฟล์เดียว **`database/article_visibility_and_seo.sql`** แล้ว (สร้างไฟล์แล้ว ยังไม่ได้รันเข้า DB จริง) — ส่วน sticky ใช้ `INSERT` ลง `mblog_settings` ในไฟล์เดียวกัน
+
+### 14. บทความล็อกด้วยรหัสผ่าน (ต้นเรื่องของการคุยรอบนี้) — 🔜 ยังไม่ทำ (ยังไม่สร้าง schema)
+ไม่ใช่ระบบ login ผู้ใช้ — เป็น "รหัสผ่านร่วม" ต่อบทความ (คนที่รู้รหัสถึงอ่านเนื้อหาได้) ต่างจาก private (หัวข้อ 13) ตรงที่**ชื่อบทความยังโชว์ปกติทุกที่** (list/RSS/search/sitemap) แค่กดเข้าไปอ่านเนื้อหาจริงต้องใส่รหัสก่อน
+
+- **Schema ที่ต้องเพิ่ม** (ยังไม่ได้สร้างไฟล์ — แยกจาก `article_visibility_and_seo.sql` ตั้งใจ เพราะต้องมีกลไก unlock ฝั่งโค้ดเพิ่มด้วย ไม่ใช่แค่ schema เฉยๆ): `mblog_articles.is_locked TINYINT(1) DEFAULT 0` + `access_code_hash VARCHAR(255) NULL` (เก็บด้วย `password_hash()` ไม่เก็บรหัสตรงๆ)
+- **กลไก unlock** — เว็บนี้**ไม่มีระบบ session/login เลยตอนนี้** (`mblog_users`/Phase 3 สร้างตารางรอไว้แต่ยังไม่มีโค้ดใช้งานจริง — ดู "ประเด็นที่วนกลับมาซ้ำๆ") ฟีเจอร์นี้จะเป็นตัวแรกที่ต้องนำ session/cookie เข้ามาใช้ — ยังไม่ตัดสินใจว่าจะใช้ `$_SESSION` (จำแค่จนปิดเบราว์เซอร์) หรือ cookie เซ็นด้วย HMAC (จำได้นานกว่า เช่น 30 วัน)
+- **จุดที่ต้องกันเนื้อหารั่ว** — `articleExcerpt()`/`articleContentPreview()` ต้องโชว์ placeholder แทน excerpt จริงถ้าล็อกอยู่ (หน้า list/category/tag/search), `feed.php` (RSS) ใช้ placeholder เดียวกันแทน description จริง — ชื่อเรื่อง/sitemap ไม่กระทบ (ตั้งใจให้เห็น)
+- **ยังต้องตัดสินใจก่อนลงมือ**: รูปแบบรหัส (พิมพ์รหัสเองแชร์ร่วมกัน — เลือกแบบนี้แล้ว), ระยะเวลาจำการ unlock, rate-limit กันเดารหัสมั่ว
+
 ---
 
 ## ประเด็นที่วนกลับมาซ้ำๆ (dependency สำคัญ)
@@ -215,6 +237,21 @@ Environment flag (`APP_ENV` ใน `config.php`) คุม `display_errors`/`log
 - [ ] หน้ากฎหมาย: Privacy Policy, Terms of Service (จำเป็นก่อนเปิดให้คนทั่วไปใช้จริง โดยเฉพาะถ้าจะขายของในอนาคต)
 - [ ] อีเมล: SMTP ผ่านบริการนอก (SendGrid/Mailgun) แทน `mail()` ของ PHP เมื่อเริ่มต้องส่งอีเมลจริง
 
+### Phase 11 — ฟีเจอร์บทความเพิ่มเติม: การมองเห็น/จัดระเบียบ/SEO (ส่วน 13) — 🔜 ยังไม่ทำ (schema พร้อมแล้ว)
+- [x] Schema รวมไฟล์เดียว `database/article_visibility_and_seo.sql` (private/scheduled status, `expires_at`, SEO override 3 คอลัมน์, `parent_id` hierarchical pages, `sticky_article_ids` ใน `mblog_settings`) — สร้างไฟล์แล้ว **ยังไม่ได้รันเข้า DB จริง**
+- [ ] แก้ query ทุกจุดที่เช็ค `status='published'` ตรงๆ ใน `includes/articles.php` ให้กรอง `published_at <= NOW()` ด้วย (รองรับ scheduled) และกัน `private`/`scheduled` ไม่ให้หลุดเข้าหน้า list/RSS/search/sitemap สาธารณะ
+- [ ] UI แอดมิน: ตัวเลือกสถานะ private/scheduled ใน `editor.php`, ปักหมุดในหน้าจัดการบทความ (อ่าน/เขียน `sticky_article_ids`), ช่อง SEO override, dropdown เลือก parent page
+- [ ] Cron/logic auto-flip เมื่อ `expires_at` ถึงเวลา (ยังไม่ออกแบบ)
+- [ ] กัน parent_id วนเป็นวงฝั่งโค้ด (validate ตอนบันทึกหน้า)
+- [ ] เคลียร์ id ออกจาก `sticky_article_ids` ตอนลบบทความถาวรใน `bulkPermanentlyDeleteArticles()`
+
+### Phase 12 — บทความล็อกด้วยรหัสผ่าน (ส่วน 14) — 🔜 ยังไม่ทำ (ยังไม่สร้าง schema)
+- [ ] Schema: `is_locked` + `access_code_hash` บน `mblog_articles` (ยังไม่สร้างไฟล์ — รอคุยกลไก unlock ให้จบก่อน)
+- [ ] เลือกกลไกจำการ unlock: `$_SESSION` vs cookie เซ็นด้วย HMAC (ยังไม่ตัดสินใจ)
+- [ ] ฟอร์มกรอกรหัสที่ `article.php` แทนเนื้อหาเมื่อยังไม่ปลดล็อก + rate-limit กันเดามั่ว
+- [ ] แก้ `articleExcerpt()`/`articleContentPreview()`/`feed.php` ให้โชว์ placeholder แทนเนื้อหาจริงถ้าล็อกอยู่
+- [ ] UI ตั้ง/เปลี่ยนรหัสใน `editor.php` + badge 🔒 ใน `manage-articles.php`
+
 ---
 
 ## นอกขอบเขต Roadmap นี้ (ตกลงไว้ว่ายังไม่นับตอนนี้ — วางแผนแยกภายหลัง)
@@ -262,3 +299,4 @@ Environment flag (`APP_ENV` ใน `config.php`) คุม `display_errors`/`log
 - แก้ backup script ให้ครอบคลุม MySQL (ด่วน — ความเสี่ยงข้อมูลหาย)
 - Phase 3 (ระบบล็อกอิน/สิทธิ์) — ตัวบล็อก Phase 7 (คอมเมนต์) และความปลอดภัยของระบบร่างต่อ ตารางพร้อมแล้ว — ยิ่งสำคัญขึ้นหลังเพิ่มช่องใส่ head/body code เองได้ (Phase 9) เพราะตอนนี้ยังไม่มีใครล็อกไม่ให้คนนอกเข้ามาแก้/แทรก script ได้
 - Phase 9 ที่ยังพักไว้: retention/rollup ของ `mblog_pageview_log` (รอข้อมูลเยอะขึ้นก่อนค่อยตัดสินใจระดับความละเอียด), ทบทวน/อัปเดต pattern บอทใน `isBotUserAgent()` เป็นระยะ
+- **Phase 11/12 (คุยจบแล้ว 2026-07-28 รอลงมือทำ)** — ฟีเจอร์บทความเพิ่มเติม (private/scheduled/expiration/sticky/SEO override/hierarchical pages) schema พร้อมแล้วที่ `database/article_visibility_and_seo.sql` แค่ยังไม่รันเข้า DB จริง + บทความล็อกด้วยรหัสผ่าน (ยังไม่สร้าง schema รอตัดสินใจกลไก unlock ก่อน) — ดูรายละเอียดหัวข้อ 13/14
