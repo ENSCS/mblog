@@ -110,7 +110,8 @@
 
 ### 9. โครงสร้างเก็บรูปภาพ/ไฟล์ + แผน backup/migrate — ✅ ทำแล้วเกือบหมด (เหลือ backup script)
 - ~~ตอนนี้ (ไฟล์): `articles/*.json` + `uploads/` แบบ flat ทั้งคู่~~ — เลิกใช้แล้ว บทความย้ายเข้า MySQL หมด, `uploads/` เปลี่ยนโครงสร้างแล้ว (ดูข้อถัดไป)
-- **ทำแล้ว** — ตาราง `mblog_images` (id, `article_id` FK `ON DELETE CASCADE`, path, caption, created_at) ผูกรูปกับบทความด้วย foreign key จริง ไม่ต้องเดาจาก path/parse HTML อีกต่อไป — sync อัตโนมัติทุกครั้งที่บันทึกบทความผ่าน `syncArticleImages()` ใน `api/save.php` (parse `<img>` ในเนื้อหา + featured_image, insert รูปใหม่/ลบแถวรูปที่ไม่ใช้แล้ว — **ลบแค่แถว DB ไม่ลบไฟล์จริง** กันเผลอลบรูปที่ยังใช้อยู่จาก false positive)
+- **ทำแล้ว** — ตาราง `mblog_images` (id, `article_id` FK `ON DELETE CASCADE`, path, caption, created_at) ผูกรูปกับบทความด้วย foreign key จริง ไม่ต้องเดาจาก path/parse HTML อีกต่อไป — sync อัตโนมัติทุกครั้งที่บันทึกบทความผ่าน `syncArticleImages()` ใน `api/save.php` (parse `<img>` ในเนื้อหา + featured_image, insert รูปใหม่/ลบแถวรูปที่ไม่ใช้แล้ว — **ฟังก์ชันนี้ลบแค่แถว DB ไม่แตะไฟล์จริง** กันเผลอลบรูปที่ยังใช้อยู่จาก false positive ของ regex parse `<img>`)
+- **ทำแล้ว (เพิ่มทีหลัง 2026-07-28)** — การลบไฟล์จริงมีอีกกลไกแยกต่างหาก `includes/uploads.php`: `uploadPathInUse(string $path): bool` เช็คว่า path ยังถูกอ้างอิงอยู่ไหมทั้งใน `mblog_articles` (`featured_image`/`content`) และ `mblog_sidebar_items` (`image`/`content`) เพราะสองตารางนี้ใช้พูล `uploads/` ร่วมกัน แล้ว `deleteUploadIfUnused(string $path): void` ค่อย `unlink()` ไฟล์จริง**เฉพาะ**เมื่อเช็คแล้วว่าไม่มีที่ไหนใช้ — เรียกจาก `api/save.php`/`api/save-sidebar-item.php` หลัง UPDATE/INSERT เสร็จ เทียบ `featured_image`/`image` เก่ากับใหม่ ถ้าเปลี่ยน/ลบก็เรียกกับค่าเก่า — รายละเอียดเต็มดู [BUILT.md](BUILT.md)
 - **ทำแล้ว** — โฟลเดอร์แบ่งรายเดือนจริงแล้ว `uploads/YYYY/MM/` (เช่น `uploads/2026/07/xxxx.jpg`) ไม่ต้องผูกกับ slug/บทความเลย (DB จัดการความสัมพันธ์แทนแล้วผ่าน `mblog_images`) ไฟล์เก่าที่เป็น flat path ยังอยู่ที่เดิมได้ ไม่ต้องย้าย เพราะ DB เก็บ path เต็มตรงๆ ไม่ได้คำนวณจาก pattern โฟลเดอร์
 - **ทำแล้ว** — ชื่อไฟล์อัปโหลดเปลี่ยนจากสุ่ม timestamp+random เป็นเก็บชื่อเดิม (sanitize แบบ WP `wp_unique_filename()`: คงชื่อที่มนุษย์อ่านออก รองรับทุกภาษา ชนกันแล้วเติม `-2`, `-3` ต่อท้าย) ดีต่อ SEO รูปภาพกว่าเดิมมาก
 - **ยังไม่ทำ** — `scripts/backup.php` ยัง backup แค่โฟลเดอร์ `articles/`+`uploads/` (คอมเมนต์เก่าบอก "mysqldump ยังไม่เกี่ยวข้องเพราะยังไม่มี DB" ซึ่งไม่จริงแล้ว) **ตอนนี้เนื้อหาจริงย้ายไป MySQL หมดแล้ว แปลว่า backup ปัจจุบันไม่ครอบคลุมเนื้อหาบทความเลย** ต้องเพิ่ม `mysqldump` เข้าไปคู่กับการ backup ไฟล์ก่อน ไม่งั้นเสี่ยงข้อมูลหายถ้าเครื่องพัง (มี task ที่ flag ไว้ให้แล้วรอทำ)
@@ -167,6 +168,32 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 - **กลไก unlock** — เว็บนี้**ไม่มีระบบ session/login เลยตอนนี้** (`mblog_users`/Phase 3 สร้างตารางรอไว้แต่ยังไม่มีโค้ดใช้งานจริง — ดู "ประเด็นที่วนกลับมาซ้ำๆ") ฟีเจอร์นี้จะเป็นตัวแรกที่ต้องนำ session/cookie เข้ามาใช้ — ยังไม่ตัดสินใจว่าจะใช้ `$_SESSION` (จำแค่จนปิดเบราว์เซอร์) หรือ cookie เซ็นด้วย HMAC (จำได้นานกว่า เช่น 30 วัน)
 - **จุดที่ต้องกันเนื้อหารั่ว** — `articleExcerpt()`/`articleContentPreview()` ต้องโชว์ placeholder แทน excerpt จริงถ้าล็อกอยู่ (หน้า list/category/tag/search), `feed.php` (RSS) ใช้ placeholder เดียวกันแทน description จริง — ชื่อเรื่อง/sitemap ไม่กระทบ (ตั้งใจให้เห็น)
 - **ยังต้องตัดสินใจก่อนลงมือ**: รูปแบบรหัส (พิมพ์รหัสเองแชร์ร่วมกัน — เลือกแบบนี้แล้ว), ระยะเวลาจำการ unlock, rate-limit กันเดารหัสมั่ว
+
+### 15. โครงสร้างประกอบหน้า (header/sidebar/footer) — 🔜 ยังไม่ทำ (วางแนวทางไว้ 2026-07-28, ยังไม่ลงมือ)
+
+จุดเริ่ม: คุยเรื่อง sidebar 2 แบบ (item ธรรมดาแบบบทความ vs item ที่รันโค้ด/embed หน้าอื่นได้) แล้วพบว่าโครงเดิมมีปัญหาก่อนถึงเรื่อง type — **`partials/footer.php` ตอนนี้แบกหน้าที่เกินชื่อตัวเอง**: มันปิด `.main-content`, render `<aside class="sidebar">` ทั้งก้อน, แล้วค่อย render `<footer>` จริง รวม 3 อย่างในไฟล์เดียว ตัดสินใจแก้รากฐานนี้ก่อน ค่อยไปต่อเรื่อง type ทีหลัง
+
+**แนวทางที่ตกลงแล้ว (อ้างอิงเทียบกับกลไกจริงของ WordPress `get_header()`/`get_sidebar()`/`get_footer()` + `load_template()`):**
+1. แยก `partials/footer.php` เป็น 2 ไฟล์ — `partials/sidebar.php` ใหม่ (ปิด `.main-content` + render `<aside>` เท่านั้น) กับ `footer.php` เดิม (เหลือแค่ `<footer>` จริง + script ท้ายหน้า)
+2. แต่ละไฟล์หน้า (`article.php` ฯลฯ) ต้อง**เรียกทั้ง 3 ส่วนเอง แบบ explicit** เรียงกัน (header → เนื้อหา → sidebar → footer) — **ห้าม**ให้ `footer.php` แอบเรียก `sidebar.php` ให้เองข้างใน แม้จะแก้ไฟล์น้อยกว่า เพราะขัดหลัก Single Responsibility (จะพาปัญหาข้อ 1 กลับมาอีก แค่ย้ายที่ซ่อน) — WP ทำแบบ explicit นี้จริงในทุก theme template
+3. ห่อ `require` ด้วย **wrapper function** (`render_header($args)`, `render_sidebar($args)`, `render_footer($args)`) ที่ `extract($args)` ก่อน `require` ข้างใน — เพื่อประกาศ "สัญญา" ของตัวแปรที่แต่ละส่วนต้องการไว้เป็นกลไกจริงในโค้ด (ไม่ใช่แค่คอมเมนต์) ตามแบบ WP `load_template()` ที่มี `global $post, $wp_query, ...` ประกาศชัดเจนในฟังก์ชันกลาง
+
+**เหตุผลหลัก:** Single Responsibility (ไฟล์ไหนทำหน้าที่เดียวของตัวเอง ไม่ปนงานอื่น) + explicit composition (เปิดไฟล์หน้าไหนก็เห็นทันทีว่าประกอบด้วยอะไรบ้าง ไม่ต้องเดา) + Open/Closed (อนาคตเพิ่มส่วนใหม่ เช่น เมนูซ้ายแบบ FB 3 คอลัมน์ แค่เพิ่ม `render_leftnav()` ใหม่ 1 ฟังก์ชัน ไม่กระทบของเดิมที่ทำงานอยู่แล้วเลย)
+
+**ผลกระทบที่ต้องยอมรับ:** ต้องแก้ **22 ไฟล์** ที่ `require partials/footer.php` อยู่ตอนนี้ (เพิ่มเรียก `render_sidebar()` + เปลี่ยนไปเรียกผ่าน wrapper function ทั้ง 3 ส่วน) — เป็นการแก้แบบกลไกเดียวกันหมดทุกไฟล์ ความเสี่ยงต่ำ แต่ปริมาณงานเยอะกว่าทางลัด (ตัดสินใจแล้วว่าคุ้ม เพราะเป้าหมายคือรากฐานถูกต้องรองรับอนาคต ไม่ใช่แก้น้อยที่สุด)
+
+**ตั้งใจแยกจาก sidebar 2 แบบ (item type):** เรื่อง type (`article` vs `iframe`/custom) จะทำ**ต่อจากนี้**หลังรากฐานนี้เสร็จ แนวทางคร่าวๆ ที่คุยไว้ (ยังไม่ตัดสินใจรายละเอียด): เพิ่มคอลัมน์ `type` ใน `mblog_sidebar_items`, ฝั่ง render ใช้ **renderer-map** (ไฟล์ render แยกต่อ type เช่น `sidebar-renderers/article.php`, `sidebar-renderers/iframe.php` ผูกกับ type ผ่าน array) แทน if/switch ยาวในไฟล์เดียว — ยังไม่ตัดสินใจ: จะเก็บ field เฉพาะ type (`iframe_src`, `iframe_height`) หรือ column `meta` แบบ JSON กลางๆ
+
+### 16. ระบบกำจัดไฟล์กำพร้า (orphan upload cleanup) — 🔜 ยังไม่ทำ (วางแนวทางไว้ 2026-07-28)
+
+จุดเริ่ม: คุยต่อจากกลไก `deleteUploadIfUnused()` (หัวข้อ 9) แล้วพบช่องโหว่ที่เหลืออยู่ — รูปที่ถูกลบออกจาก**เนื้อหาบทความ** (ไม่ใช่ featured image) ไม่มีการลบไฟล์จริงเลยตามที่ตั้งใจไว้แต่แรก (กัน false positive จาก regex parse `<img>` ในเนื้อหา) ผลคือไฟล์เหล่านั้นค้างอยู่ใน `uploads/` ถาวรถ้าไม่มีระบบมากวาดทีหลัง
+
+**แนวทางที่ตกลงแล้ว:**
+- **reuse `uploadPathInUse()`** ที่มีอยู่แล้ว (`includes/uploads.php`) ตรงๆ — loop ทุกไฟล์จริงใน `uploads/` เทียบทีละไฟล์ผ่านฟังก์ชันนี้ ไฟล์ไหนตอบ `false` คือ candidate กำพร้า ไม่ต้องเขียน check logic ใหม่
+- **ห้าม auto-delete** — ต้องแสดงรายการ candidate (path, วันที่สร้างจาก filesystem, ขนาดไฟล์) ให้แอดมินตรวจ + ติ๊กเลือกเองก่อนลบจริง เพราะลบไฟล์จริงเป็นการกระทำที่ย้อนกลับไม่ได้ ต่างจากลบแถว DB ที่ระบบนี้ยึดหลักความระมัดระวังมาตลอด (ดู `syncArticleImages()`/`deleteUploadIfUnused()` หัวข้อ 9) — เหมือนระบบถังขยะบทความที่มีอยู่แล้วซึ่ง soft-delete ก่อนเสมอ ไม่ hard-delete ทันที
+- รูปแบบหน้าตา: หน้า/สคริปต์แยกต่างหาก (เมนูแอดมินใหม่ หรือรวมเข้ากับ `scripts/backup.php` เดิม) ให้แอดมินสั่งสแกน+ลบเอง ไม่ใช่ cron auto-delete เงียบๆ เบื้องหลัง
+
+**ยังไม่ตัดสินใจ:** แยกเป็นหน้าแอดมินใหม่ต่างหาก หรือรวมเข้า `scripts/backup.php` เดิม, ความถี่ที่ควรรันสแกน (กดเองตามต้องการ vs ตั้งเวลาแจ้งเตือน)
 
 ---
 
@@ -251,6 +278,17 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 - [ ] ฟอร์มกรอกรหัสที่ `article.php` แทนเนื้อหาเมื่อยังไม่ปลดล็อก + rate-limit กันเดามั่ว
 - [ ] แก้ `articleExcerpt()`/`articleContentPreview()`/`feed.php` ให้โชว์ placeholder แทนเนื้อหาจริงถ้าล็อกอยู่
 - [ ] UI ตั้ง/เปลี่ยนรหัสใน `editor.php` + badge 🔒 ใน `manage-articles.php`
+
+### Phase 13 — แยกโครงสร้างประกอบหน้า header/sidebar/footer (ส่วน 15) — 🔜 ยังไม่ทำ (วางแนวทางไว้ 2026-07-28)
+- [ ] แยก `partials/footer.php` → `partials/sidebar.php` ใหม่ (render `<aside>` เท่านั้น) + `footer.php` เดิม (เหลือแค่ `<footer>` จริง)
+- [ ] เขียน wrapper function `render_header($args)` / `render_sidebar($args)` / `render_footer($args)` ห่อ `require` เดิม (extract `$args` ก่อน) แทนการ `require` ตรงๆ — ใช้ประกาศสัญญาตัวแปรชัดเจนแบบ WP `load_template()`
+- [ ] แก้ 22 ไฟล์หน้าที่ `require partials/footer.php` อยู่ตอนนี้ ให้เรียกทั้ง 3 ส่วนแบบ explicit ผ่าน wrapper function (header → เนื้อหา → sidebar → footer)
+- [ ] (ทำต่อจากนี้ แยกเฟส) Sidebar 2 แบบ (item type `article`/`iframe`) ต่อยอดจากโครงนี้ด้วย renderer-map — ยังไม่ตัดสินใจ schema (`meta` JSON vs คอลัมน์เฉพาะ)
+
+### Phase 14 — ระบบกำจัดไฟล์กำพร้า (ส่วน 16) — 🔜 ยังไม่ทำ (วางแนวทางไว้ 2026-07-28)
+- [ ] เขียนสคริปต์/ฟังก์ชันสแกนไฟล์ทั้งหมดใน `uploads/` เทียบกับ `uploadPathInUse()` ทีละไฟล์ (reuse ของเดิม ไม่เขียน check ใหม่)
+- [ ] หน้า/ส่วนแสดงผลรายการ candidate ไฟล์กำพร้า (path, วันที่สร้าง, ขนาด) ให้แอดมินติ๊กเลือกก่อนลบจริง — ห้าม auto-delete
+- [ ] ตัดสินใจ: แยกหน้าแอดมินใหม่ หรือรวมเข้า `scripts/backup.php` เดิม
 
 ---
 
