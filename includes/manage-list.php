@@ -207,7 +207,7 @@ function renderManageListPage(string $type, array $config): void
             <?php foreach ($articles as $article): ?>
               <tr>
                 <td><input type="checkbox" name="ids[]" value="<?= $article['id'] ?>" class="row-select" form="bulk-form"></td>
-                <td><a href="editor.php?slug=<?= urlencode($article['slug']) ?>"><?= htmlspecialchars($article['title']) ?></a></td>
+                <td><a href="editor.php?slug=<?= urlencode($article['slug']) ?>"><?= htmlspecialchars($article['title']) ?></a><?= isStickyArticle((int) $article['id']) ? ' 📌' : '' ?></td>
                 <?php if ($showTaxonomyFilters): ?>
                   <?php $articleTags = getArticleTags((int) $article['id']); ?>
                   <td>

@@ -439,7 +439,7 @@ function fetchOneArticle(string $whereSql, array $params): ?array
 // $perPage = 0 means "no pagination, return every match in one page".
 // Returns ['items' => [...], 'total' => N] so the caller can render
 // "หน้า X จาก Y" without a second query.
-function getArticleList(array $filters, int $page = 1, int $perPage = 0): array
+function getArticleList(array $filters, int $page = 1, int $perPage = 0, bool $stickyFirst = false): array
 {
     $joinSql = '';
     $joinParams = [];
@@ -463,6 +463,10 @@ function getArticleList(array $filters, int $page = 1, int $perPage = 0): array
         $where[] = 'c.slug = ?';
         $params[] = $filters['category_slug'];
     }
+    if (($filters['search'] ?? '') !== '') {
+        $where[] = 'a.title LIKE ?';
+        $params[] = '%' . $filters['search'] . '%';
+    }
 
     $whereSql = implode(' AND ', $where);
     $allParams = array_merge($joinParams, $params);
@@ -470,6 +474,27 @@ function getArticleList(array $filters, int $page = 1, int $perPage = 0): array
     // everything else sorts by publish date, matching what's shown next to
     // each item (see relativeTimeTag() calls in partials/article-list.php).
     $orderBy = ($filters['status'] ?? '') === 'draft' ? 'a.updated_at DESC' : 'a.published_at DESC';
+
+    // Sticky ids come from getStickyArticleIds(), already int-cast — inlined
+    // into ORDER BY the same way $perPage/$offset are inlined below (no
+    // injection risk), since there's no ? placeholder for "sort these rows
+    // first". Opt-in per call ($stickyFirst) rather than always-on: only the
+    // main public lists (articles.php/pages.php) want pinned items to float
+    // up — category.php/tag.php/drafts.php etc. all share this same
+    // function but query a narrower slice where "pinned to the top" doesn't
+    // apply. The WHERE clause's own type/status filters already mean a
+    // pinned post's id simply never matches while querying pages (and vice
+    // versa), so passing $stickyFirst=true from both callers is safe — each
+    // only ever promotes ids that belong in its own result set. FIELD()
+    // sorts sticky rows by their position in the array (the admin-picked
+    // order from sticky-items.php), not just "sticky vs not".
+    if ($stickyFirst) {
+        $stickyIds = getStickyArticleIds();
+        if ($stickyIds) {
+            $idList = implode(',', $stickyIds);
+            $orderBy = "CASE WHEN a.id IN ($idList) THEN 0 ELSE 1 END, FIELD(a.id, $idList), " . $orderBy;
+        }
+    }
 
     $countStmt = db()->prepare(
         "SELECT COUNT(*) FROM mblog_articles a
@@ -756,6 +781,66 @@ function getArticlesForAdmin(array $filters, int $page, int $perPage): array
     return ['items' => $items, 'total' => $total];
 }
 
+// Sticky posts/pages — pinned to the top of articles.php/pages.php in a
+// custom admin-picked order, regardless of publish date. Stored as a JSON
+// array of article ids in mblog_settings (same pattern as WordPress's
+// wp_options 'sticky_posts') instead of a column on mblog_articles, so
+// pinning/unpinning never needs an ALTER TABLE — array order IS display
+// order (first id shows first among stickies), managed entirely from
+// sticky-items.php's own picker+reorder form (see setStickyArticles()) —
+// manage-articles.php/manage-pages.php have no pin control of their own.
+function getStickyArticleIds(): array
+{
+    $decoded = json_decode(siteSetting('sticky_article_ids', '[]'), true);
+
+    return is_array($decoded) ? array_values(array_unique(array_map('intval', $decoded))) : [];
+}
+
+function isStickyArticle(int $id): bool
+{
+    return in_array($id, getStickyArticleIds(), true);
+}
+
+// Replaces the whole pinned set in one go, in the given order. Safe to call
+// with "the complete current pinned set, reordered" (sticky-items.php's own
+// reorder form always submits every pinned row, never a filtered subset) —
+// NOT safe to call with an arbitrary partial list, which would silently
+// unpin anything left out. pinArticle()/unpinArticle() below are what
+// single search-result rows actually call, precisely to avoid that trap.
+function setStickyArticles(array $orderedIds): void
+{
+    $ids = array_values(array_unique(array_map('intval', $orderedIds)));
+    updateSiteSettings(['sticky_article_ids' => json_encode($ids)]);
+}
+
+// Appends to the end (new pins show after existing ones until manually
+// reordered) — the single-row "ปักหมุด" button in sticky-items.php's search
+// results calls this instead of setStickyArticles(), so pinning one more
+// item never depends on which other rows happened to be on screen at the
+// time (a search filter, in particular, only ever shows a subset).
+function pinArticle(int $id): void
+{
+    $ids = getStickyArticleIds();
+    if (!in_array($id, $ids, true)) {
+        setStickyArticles(array_merge($ids, [$id]));
+    }
+}
+
+function unpinArticle(int $id): void
+{
+    setStickyArticles(array_diff(getStickyArticleIds(), [$id]));
+}
+
+// Called from bulkPermanentlyDeleteArticles() — a stale id left in this
+// array wouldn't point at a different article later (MySQL never reuses an
+// id), so it's not unsafe, just untidy, so clear it out at the one point an
+// id is actually gone for good rather than leaving it to accumulate forever.
+function unstickArticles(array $ids): void
+{
+    $remaining = array_values(array_diff(getStickyArticleIds(), array_map('intval', $ids)));
+    updateSiteSettings(['sticky_article_ids' => json_encode($remaining)]);
+}
+
 // Moves articles to the trash — sets deleted_at instead of touching status,
 // so restoreArticles() knows whether to bring each one back as a draft or
 // as published. $ids empty is a no-op (not an error) so callers don't need
@@ -796,6 +881,7 @@ function bulkPermanentlyDeleteArticles(array $ids): void
     foreach ($ids as $id) {
         $stmt->execute([(int) $id]);
     }
+    unstickArticles($ids);
 }
 
 // Bulk publish/unpublish from manage-articles.php — same published_at-set-

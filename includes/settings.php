@@ -4,12 +4,19 @@
 // querying it directly, same as every other data layer in this project.
 require_once __DIR__ . '/db.php';
 
-function getSettings(): array
+// $overrides merges straight into the cache without a re-query — how
+// updateSiteSettings() below keeps this in-request cache in sync with what
+// it just wrote, since a static local var can't be reached from another
+// function any other way. Every other caller (siteSetting()) passes nothing.
+function getSettings(?array $overrides = null): array
 {
     static $settings = null;
     if ($settings === null) {
         $rows = db()->query('SELECT setting_key, value FROM mblog_settings')->fetchAll();
         $settings = array_column($rows, 'value', 'setting_key');
+    }
+    if ($overrides !== null) {
+        $settings = array_merge($settings, $overrides);
     }
 
     return $settings;
@@ -32,4 +39,10 @@ function updateSiteSettings(array $values): void
     foreach ($values as $key => $value) {
         $stmt->execute([$key, $value]);
     }
+    // Without this, a read via siteSetting() later in the same request
+    // (e.g. getStickyArticleIds() right after setStickyArticles() writes
+    // here) would see the pre-write value — every existing caller of this
+    // function happens to redirect+exit right after, which is what hid this
+    // until a same-request read-after-write case actually needed it.
+    getSettings($values);
 }

@@ -12,6 +12,7 @@ $categoryCount = count(getAllCategories());
 $menuCount = count(getAllMenuItems());
 $sidebarItemCount = count(getAllSidebarItems());
 $feedItemCount = countFeedItems();
+$stickyCount = count(getStickyArticleIds());
 
 $pageTitle = 'จัดการเว็บ';
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
@@ -42,6 +43,10 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
     <a class="dashboard-card" href="pages.php">
       <div class="dashboard-card-count"><?= $pageCount ?></div>
       <div class="dashboard-card-label">หน้า</div>
+    </a>
+    <a class="dashboard-card" href="sticky-items.php">
+      <div class="dashboard-card-count"><?= $stickyCount ?></div>
+      <div class="dashboard-card-label">จัดการปักหมุด</div>
     </a>
     <a class="dashboard-card" href="import-markdown.php">
       <div class="dashboard-card-label">นำเข้าจาก Markdown</div>

@@ -4,7 +4,7 @@ require __DIR__ . '/includes/articles.php';
 $perPage = max(1, (int) siteSetting('articles_per_page', 10));
 $page = max(1, (int) ($_GET['page'] ?? 1));
 
-$result = getArticleList(['type' => 'page', 'status' => 'published'], $page, $perPage);
+$result = getArticleList(['type' => 'page', 'status' => 'published'], $page, $perPage, true);
 $articles = $result['items'];
 $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 

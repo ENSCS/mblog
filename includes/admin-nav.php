@@ -28,6 +28,7 @@ function adminNavGroups(): array
             ['label' => 'จัดการบทความ', 'href' => 'manage-articles.php', 'badge' => count(getArticles())],
             ['label' => 'ร่าง', 'href' => 'drafts.php', 'badge' => count(getDraftArticles())],
             ['label' => 'จัดการหน้า', 'href' => 'manage-pages.php'],
+            ['label' => 'จัดการปักหมุด', 'href' => 'sticky-items.php', 'badge' => count(getStickyArticleIds())],
             ['label' => 'นำเข้าจาก Markdown', 'href' => 'import-markdown.php'],
             ['label' => 'จัดการฟีดข่าว', 'href' => 'manage-feed.php', 'badge' => countFeedItems()],
         ],
