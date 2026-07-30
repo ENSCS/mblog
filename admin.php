@@ -16,7 +16,7 @@ $feedItemCount = countFeedItems();
 $pageTitle = 'จัดการเว็บ';
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 $showAdminSidebar = true;
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">จัดการเว็บ</h1>
 
@@ -77,4 +77,4 @@ include __DIR__ . '/partials/header.php';
       <div class="dashboard-card-label">จัดการ Sidebar</div>
     </a>
   </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php render_sidebar($layout); render_footer(); ?>

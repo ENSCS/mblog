@@ -72,7 +72,7 @@ $pageTitle = 'สถิติเว็บ';
 $topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
 $extraHead = '<link rel="stylesheet" href="assets/stats.css?v=' . @filemtime(__DIR__ . '/assets/stats.css') . '">';
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar', 'extraHead'));
 ?>
   <h1 class="article-title">สถิติเว็บ</h1>
 
@@ -197,4 +197,4 @@ include __DIR__ . '/partials/header.php';
       <?php endif; ?>
     </div>
   </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php render_sidebar($layout); render_footer(); ?>

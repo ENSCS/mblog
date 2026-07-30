@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_FILES['md_files'])) {
 $pageTitle = 'นำเข้าบทความจาก Markdown';
 $topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">นำเข้าบทความจาก Markdown</h1>
   <div class="card">
@@ -74,4 +74,4 @@ include __DIR__ . '/partials/header.php';
       </div>
     <?php endif; ?>
   </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php render_sidebar($layout); render_footer(); ?>

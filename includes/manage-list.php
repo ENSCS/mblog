@@ -115,7 +115,7 @@ function renderManageListPage(string $type, array $config): void
     <?php
     $footerScripts = ob_get_clean();
 
-    include __DIR__ . '/../partials/header.php';
+    $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
     ?>
   <h1 class="article-title"><?= htmlspecialchars($config['pageTitle']) ?></h1>
 
@@ -256,5 +256,6 @@ function renderManageListPage(string $type, array $config): void
     <?php endif; ?>
   </div>
 <?php
-    include __DIR__ . '/../partials/footer.php';
+    render_sidebar($layout);
+    render_footer(compact('footerScripts'));
 }

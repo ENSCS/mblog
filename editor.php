@@ -50,7 +50,7 @@ ob_start();
 <?php
 $footerScripts = ob_get_clean();
 
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'showAdminSidebar'));
 ?>
   <div class="field">
     <label for="title">ชื่อบทความ</label>
@@ -131,4 +131,4 @@ include __DIR__ . '/partials/header.php';
     <a id="view-link" href="<?= $article ? ($currentType === 'page' ? 'page.php' : 'article.php') . '?slug=' . urlencode($article['slug']) : '#' ?>"
        style="margin-left:16px; display:<?= $article ? 'inline' : 'none' ?>;">ดูบทความ &rarr;</a>
   </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php render_sidebar($layout); render_footer(compact('footerScripts')); ?>

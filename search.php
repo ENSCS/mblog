@@ -16,7 +16,7 @@ $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 $pageTitle = $q !== '' ? 'ค้นหา: ' . $qSafe : 'ค้นหาบทความ';
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 $showSidebar = true;
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'topbarActions', 'showSidebar'));
 ?>
   <h1 class="article-title"><?= $q !== '' ? 'ผลการค้นหา: "' . $qSafe . '"' : 'ค้นหาบทความ' ?></h1>
   <?php if ($q === ''): ?>
@@ -29,4 +29,4 @@ include __DIR__ . '/partials/header.php';
     include __DIR__ . '/partials/article-list.php';
     ?>
   <?php endif; ?>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php render_sidebar($layout); render_footer(); ?>

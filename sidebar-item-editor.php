@@ -33,7 +33,7 @@ ob_start();
 <?php
 $footerScripts = ob_get_clean();
 
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'showAdminSidebar'));
 ?>
   <div class="field">
     <label for="title">ชื่อรายการ (ไว้อ้างอิงในหน้าจัดการ — ไม่ได้แสดงบนเว็บ)</label>
@@ -73,4 +73,4 @@ include __DIR__ . '/partials/header.php';
     <button class="btn" id="save-btn">บันทึก</button>
     <span id="save-status"></span>
   </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php render_sidebar($layout); render_footer(compact('footerScripts')); ?>

@@ -20,7 +20,7 @@ $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 $pageTitle = 'แท็ก: ' . htmlspecialchars($tag['name']);
 $topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 $showSidebar = true;
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'topbarActions', 'showSidebar'));
 ?>
   <h1 class="article-title">#<?= htmlspecialchars($tag['name']) ?></h1>
   <?php
@@ -29,4 +29,4 @@ include __DIR__ . '/partials/header.php';
   $pageUrl = fn(int $p) => 'tag.php?slug=' . urlencode($slug) . '&page=' . $p;
   include __DIR__ . '/partials/article-list.php';
   ?>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php render_sidebar($layout); render_footer(); ?>

@@ -15,7 +15,7 @@ ob_start();
 $renderedFullChrome = false;
 try {
     $pageTitle = 'ข้อผิดพลาด ' . $errorCode;
-    include __DIR__ . '/partials/header.php';
+    $layout = render_header(compact('pageTitle'));
     ?>
       <h1 class="article-title"><?= htmlspecialchars((string) $errorCode) ?></h1>
       <div class="card">
@@ -23,7 +23,8 @@ try {
         <p><a href="index.php">กลับหน้าแรก</a></p>
       </div>
     <?php
-    include __DIR__ . '/partials/footer.php';
+    render_sidebar($layout);
+    render_footer();
     $renderedFullChrome = true;
 } catch (Throwable $e) {
     // Swallow — fall through to the standalone fallback below. Whatever

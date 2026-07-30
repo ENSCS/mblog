@@ -50,7 +50,7 @@ $footerScripts = '<script src="assets/copy-button.js"></script>';
 // articleShowsSidebar()/database/article_sidebar_toggle.sql.
 $showSidebar = articleShowsSidebar($page);
 $sidebarSiteGate = false;
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'showSidebar', 'sidebarSiteGate'));
 ?>
     <div class="card">
       <?php if ($manualFeaturedImage): ?>
@@ -59,4 +59,4 @@ include __DIR__ . '/partials/header.php';
       <h1 class="article-title"><?= htmlspecialchars($page['title']) ?></h1>
       <div class="article-content rich-content ql-editor"><?= $page['content'] ?></div>
     </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php render_sidebar($layout); render_footer(compact('footerScripts')); ?>

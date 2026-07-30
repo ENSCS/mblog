@@ -11,9 +11,9 @@ recordPageview('other');
 $pageTitle = 'Hello World';
 $containerWide = true;
 $showMenu = false;
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'containerWide', 'showMenu'));
 ?>
 
     <p>Hello world</p>
 
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php render_sidebar($layout); render_footer(); ?>

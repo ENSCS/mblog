@@ -157,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pageTitle = 'ตั้งค่าเว็บ';
 $topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">ตั้งค่าเว็บ</h1>
   <div class="card">
@@ -321,5 +321,6 @@ $footerScripts = <<<'HTML'
   setupTokenField('feed_import_token', 'generate-feed-token-btn', 'copy-feed-token-btn');
 </script>
 HTML;
-include __DIR__ . '/partials/footer.php';
+render_sidebar($layout);
+render_footer(compact('footerScripts'));
 ?>

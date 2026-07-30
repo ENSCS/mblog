@@ -35,7 +35,7 @@ $editItem = $editId ? getFeedItemById($editId) : null;
 $pageTitle = 'จัดการฟีดข่าว';
 $topbarActions = adminTopbarActions();
 $showAdminSidebar = true;
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">จัดการฟีดข่าว</h1>
 
@@ -88,4 +88,4 @@ include __DIR__ . '/partials/header.php';
       </div>
     <?php endif; ?>
   </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php render_sidebar($layout); render_footer(); ?>

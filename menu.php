@@ -78,7 +78,7 @@ foreach ($allItems as $item) {
 $pageTitle = 'จัดการเมนู';
 $topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">จัดการเมนู</h1>
 
@@ -172,4 +172,4 @@ include __DIR__ . '/partials/header.php';
       <?php endif; ?>
     </form>
   </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php render_sidebar($layout); render_footer(); ?>

@@ -13,7 +13,7 @@ $topbarActions = '<a href="editor.php">+ เขียนบทความให
 $showSidebar = true;
 $extraHead = '<link rel="stylesheet" href="assets/feed.css?v=' . @filemtime(__DIR__ . '/assets/feed.css') . '">';
 $footerScripts = '<script src="assets/feed.js?v=' . @filemtime(__DIR__ . '/assets/feed.js') . '" defer></script>';
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'topbarActions', 'showSidebar', 'extraHead'));
 ?>
   <h1 class="article-title">ฟีดข่าว</h1>
   <div id="feed-list" class="feed-list" data-last-id="<?= $lastId ?>">
@@ -25,4 +25,4 @@ include __DIR__ . '/partials/header.php';
       <?php endforeach; ?>
     <?php endif; ?>
   </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php render_sidebar($layout); render_footer(compact('footerScripts')); ?>

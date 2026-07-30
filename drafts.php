@@ -12,7 +12,7 @@ $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 $pageTitle = 'ร่างบทความ';
 $topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
 ?>
   <?php
   $emptyMessage = 'ไม่มีร่างบทความ';
@@ -22,4 +22,4 @@ include __DIR__ . '/partials/header.php';
   $pageUrl = fn(int $p) => 'drafts.php?page=' . $p;
   include __DIR__ . '/partials/article-list.php';
   ?>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php render_sidebar($layout); render_footer(); ?>

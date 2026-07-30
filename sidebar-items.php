@@ -38,7 +38,7 @@ $items = getAllSidebarItems();
 $pageTitle = 'จัดการ Sidebar';
 $topbarActions = adminTopbarActions(['<a href="sidebar-item-editor.php">+ เพิ่มรายการใหม่</a>']);
 $showAdminSidebar = true;
-include __DIR__ . '/partials/header.php';
+$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">จัดการ Sidebar</h1>
   <div class="card">
@@ -81,4 +81,4 @@ include __DIR__ . '/partials/header.php';
       <button type="submit" form="reorder-form" class="btn" style="margin-top:12px;">บันทึกลำดับ/สถานะ</button>
     <?php endif; ?>
   </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<?php render_sidebar($layout); render_footer(); ?>
