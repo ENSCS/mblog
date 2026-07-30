@@ -156,16 +156,13 @@ function deleteCategory(int $id): void
     $stmt->execute([$id]);
 }
 
-// Uses the author-written excerpt if there is one, otherwise auto-generates
-// one from the content (stripped of HTML, trimmed to ~160 chars at a word
-// boundary) — used for <meta name="description"> and OG/Twitter descriptions.
-function articleExcerpt(array $article): string
+// Auto-generates a description from the content (stripped of HTML, trimmed
+// to ~160 chars at a word boundary) — the fallback articleSeoDescription()
+// uses when seo_description is empty. There used to be an author-written
+// excerpt field checked first here; it was dropped (2026-07-30) once
+// seo_description took over that exact job, so this is content-only now.
+function autoArticleDescription(array $article): string
 {
-    $stored = trim($article['excerpt'] ?? '');
-    if ($stored !== '') {
-        return $stored;
-    }
-
     $text = trim(preg_replace('/\s+/u', ' ', strip_tags($article['content'] ?? '')));
     if ($text === '' || mb_strlen($text) <= 160) {
         return $text;
@@ -178,6 +175,24 @@ function articleExcerpt(array $article): string
     }
 
     return $truncated . '…';
+}
+
+// seo_title/seo_description (see database/article_visibility_and_seo.sql) are
+// an editor override for <title>/meta description — NULL/'' means "keep
+// using the real title / auto-generated description", so an article that
+// never sets them behaves exactly as it did before this column existed.
+function articleSeoTitle(array $article): string
+{
+    $override = trim($article['seo_title'] ?? '');
+
+    return $override !== '' ? $override : $article['title'];
+}
+
+function articleSeoDescription(array $article): string
+{
+    $override = trim($article['seo_description'] ?? '');
+
+    return $override !== '' ? $override : autoArticleDescription($article);
 }
 
 // Thai has no spaces between words, so cutting at "the last space before

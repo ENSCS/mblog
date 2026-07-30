@@ -725,9 +725,11 @@ function saveArticle(quill, articleId, slug, status) {
   const title = document.getElementById('title').value.trim();
   const type = document.getElementById('type').value;
   const category = document.getElementById('category').value;
-  const excerpt = document.getElementById('excerpt').value.trim();
   const featuredImage = document.getElementById('featured-image').value;
   const showSidebar = document.getElementById('show-sidebar').value;
+  const seoTitle = document.getElementById('seo-title').value.trim();
+  const seoDescription = document.getElementById('seo-description').value.trim();
+  const seoNoindex = document.getElementById('seo-noindex').checked;
   const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(Boolean);
   const statusEl = document.getElementById('save-status');
   if (!title) {
@@ -754,9 +756,11 @@ function saveArticle(quill, articleId, slug, status) {
       status: status,
       type: type,
       category: category,
-      excerpt: excerpt,
       featured_image: featuredImage,
       show_sidebar: showSidebar,
+      seo_title: seoTitle,
+      seo_description: seoDescription,
+      seo_noindex: seoNoindex,
       tags: tags
     })
   })

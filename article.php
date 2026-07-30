@@ -16,7 +16,13 @@ if (!$article) {
 recordPageview('article', $article['id']);
 
 $canonicalUrl = siteBaseUrl() . '/article.php?slug=' . urlencode($slug);
-$description = articleExcerpt($article);
+// seo_title/seo_description override the real title/auto-generated
+// description for everything search/social-facing below — NULL/'' (the
+// vast majority of articles, which never set them) falls straight back to
+// the same values this page always used, so this is a no-op for existing
+// content.
+$seoTitle = articleSeoTitle($article);
+$seoDescription = articleSeoDescription($article);
 $imageUrl = articleFeaturedImageUrl($article);
 // Only the manually-picked one is shown as a banner — the auto-detected
 // fallback is already the first image inside the content, so showing it
@@ -24,17 +30,21 @@ $imageUrl = articleFeaturedImageUrl($article);
 $manualFeaturedImage = $article['featured_image'] ?? '';
 $tags = getArticleTags($article['id']);
 
-$pageTitle = htmlspecialchars($article['title']);
+$pageTitle = htmlspecialchars($seoTitle);
 $extraHead = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
     . '<link rel="stylesheet" href="assets/article.css?v=' . @filemtime(__DIR__ . '/assets/article.css') . '">'
-    . "\n" . '<meta name="description" content="' . htmlspecialchars($description) . '">'
+    . "\n" . '<meta name="description" content="' . htmlspecialchars($seoDescription) . '">'
     . "\n" . '<link rel="canonical" href="' . htmlspecialchars($canonicalUrl) . '">'
     . "\n" . '<meta property="og:type" content="article">'
-    . "\n" . '<meta property="og:title" content="' . htmlspecialchars($article['title']) . '">'
-    . "\n" . '<meta property="og:description" content="' . htmlspecialchars($description) . '">'
+    . "\n" . '<meta property="og:title" content="' . htmlspecialchars($seoTitle) . '">'
+    . "\n" . '<meta property="og:description" content="' . htmlspecialchars($seoDescription) . '">'
     . "\n" . '<meta property="og:url" content="' . htmlspecialchars($canonicalUrl) . '">'
-    . "\n" . '<meta name="twitter:title" content="' . htmlspecialchars($article['title']) . '">'
-    . "\n" . '<meta name="twitter:description" content="' . htmlspecialchars($description) . '">';
+    . "\n" . '<meta name="twitter:title" content="' . htmlspecialchars($seoTitle) . '">'
+    . "\n" . '<meta name="twitter:description" content="' . htmlspecialchars($seoDescription) . '">';
+
+if (!empty($article['seo_noindex'])) {
+    $extraHead .= "\n" . '<meta name="robots" content="noindex,follow">';
+}
 
 if ($imageUrl) {
     $extraHead .= "\n" . '<meta property="og:image" content="' . htmlspecialchars($imageUrl) . '">'
@@ -47,10 +57,10 @@ if ($imageUrl) {
 $extraHead .= "\n" . '<script type="application/ld+json">' . json_encode([
     '@context' => 'https://schema.org',
     '@type' => 'Article',
-    'headline' => $article['title'],
+    'headline' => $seoTitle,
     'datePublished' => $article['published_at'] ?? $article['created_at'],
     'dateModified' => $article['updated_at'],
-    'description' => $description,
+    'description' => $seoDescription,
     'image' => $imageUrl ? [$imageUrl] : [],
     'url' => $canonicalUrl,
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . '</script>';

@@ -14,6 +14,9 @@ $currentFeaturedImage = $article['featured_image'] ?? '';
 $currentShowSidebar = isset($article['show_sidebar']) && $article['show_sidebar'] !== null
     ? (string) (int) $article['show_sidebar']
     : '';
+$currentSeoTitle = $article['seo_title'] ?? '';
+$currentSeoDescription = $article['seo_description'] ?? '';
+$currentSeoNoindex = !empty($article['seo_noindex']);
 $currentTags = $article ? array_column(getArticleTags($article['id']), 'name') : [];
 $allTagNames = array_column(getAllTags(), 'name');
 
@@ -73,10 +76,6 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
     </select>
   </div>
   <div class="field">
-    <label for="excerpt">สรุปสั้น (ไม่บังคับ — ถ้าไม่ใส่จะตัดจากเนื้อหาให้อัตโนมัติ)</label>
-    <textarea id="excerpt" rows="2" placeholder="สรุปสั้นๆ สำหรับแสดงตอนแชร์ลิงก์..."><?= $article ? htmlspecialchars($article['excerpt'] ?? '') : '' ?></textarea>
-  </div>
-  <div class="field">
     <label>ภาพหลัก (Featured Image, ไม่บังคับ — ถ้าไม่ใส่จะใช้รูปแรกในเนื้อหาแทน)</label>
     <div id="featured-image-preview" class="featured-image-preview" style="display:<?= $currentFeaturedImage ? 'flex' : 'none' ?>;">
       <img id="featured-image-thumb" src="<?= htmlspecialchars($currentFeaturedImage) ?>" alt="">
@@ -111,6 +110,17 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
       <div id="tag-suggestions" class="tag-suggestions"></div>
     </div>
     <input type="hidden" id="tags" value="">
+  </div>
+  <div class="field">
+    <label for="seo-title">SEO Title (ไม่บังคับ — ถ้าไม่ใส่จะใช้ชื่อบทความแทนใน &lt;title&gt;/og:title)</label>
+    <input type="text" id="seo-title" value="<?= htmlspecialchars($currentSeoTitle) ?>" placeholder="เว้นว่างไว้ให้ใช้ชื่อบทความ">
+  </div>
+  <div class="field">
+    <label for="seo-description">SEO Description (ไม่บังคับ — ถ้าไม่ใส่จะตัดจากเนื้อหาให้อัตโนมัติแทนใน meta description)</label>
+    <textarea id="seo-description" rows="2" placeholder="เว้นว่างไว้ให้ตัดจากเนื้อหาอัตโนมัติ..."><?= htmlspecialchars($currentSeoDescription) ?></textarea>
+  </div>
+  <div class="field">
+    <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="seo-noindex" <?= $currentSeoNoindex ? 'checked' : '' ?>> Noindex (ไม่ให้ Google เก็บบทความนี้ในผลค้นหา)</label>
   </div>
   <div class="field">
     <label for="slug">Slug (URL ของบทความ — ไม่ใส่จะสร้างจากชื่อบทความให้อัตโนมัติ)</label>

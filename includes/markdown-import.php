@@ -357,11 +357,11 @@ function importMarkdownArticle(string $rawContent, string $sourceFilename): arra
 
     $stmt = db()->prepare(
         'INSERT INTO mblog_articles
-            (slug, title, content, excerpt, category_id, featured_image, show_sidebar, status, type, created_at, updated_at, published_at, source_file, source_url)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            (slug, title, content, category_id, featured_image, show_sidebar, status, type, created_at, updated_at, published_at, source_file, source_url)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     $featuredImage = youtubeThumbnailUrl($sourceUrl) ?? '';
-    $stmt->execute([$slug, $title, $content, '', $categoryId, $featuredImage, null, 'published', 'post', $now, $now, $publishedAt, $sourceFilename, $sourceUrl]);
+    $stmt->execute([$slug, $title, $content, $categoryId, $featuredImage, null, 'published', 'post', $now, $now, $publishedAt, $sourceFilename, $sourceUrl]);
     $articleId = (int) db()->lastInsertId();
 
     syncArticleTags($articleId, $tagNames);

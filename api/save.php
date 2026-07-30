@@ -11,7 +11,14 @@ $content = isset($data['content']) ? $data['content'] : '';
 $requestedSlug = isset($data['slug']) ? trim($data['slug']) : '';
 $status = (isset($data['status']) && $data['status'] === 'published') ? 'published' : 'draft';
 $type = (isset($data['type']) && $data['type'] === 'page') ? 'page' : 'post';
-$excerpt = isset($data['excerpt']) ? trim($data['excerpt']) : '';
+// '' stored as-is (not NULL) — articleSeoTitle()/articleSeoDescription() in
+// includes/articles.php already treat '' the same as NULL (fall back to the
+// real title / auto-generated description), so there's no behavior
+// difference, and it keeps this INSERT/UPDATE simpler (no NULL-vs-''
+// branching for 3 fields).
+$seoTitle = isset($data['seo_title']) ? trim($data['seo_title']) : '';
+$seoDescription = isset($data['seo_description']) ? trim($data['seo_description']) : '';
+$seoNoindex = !empty($data['seo_noindex']) ? 1 : 0;
 
 // '' (ตามค่าเว็บ) -> NULL, '1'/'0' -> บังคับเปิด/ปิด ไม่สน sidebar_enabled ของเว็บ —
 // ดู show_sidebar ใน database/article_sidebar_toggle.sql สำหรับความหมายเต็ม
@@ -78,11 +85,12 @@ if ($status === 'published' && $publishedAt === null) {
 if ($existing) {
     $stmt = db()->prepare(
         'UPDATE mblog_articles
-         SET slug = ?, title = ?, content = ?, excerpt = ?, category_id = ?, featured_image = ?,
-             show_sidebar = ?, status = ?, type = ?, updated_at = ?, published_at = ?
+         SET slug = ?, title = ?, content = ?, category_id = ?, featured_image = ?,
+             show_sidebar = ?, status = ?, type = ?, updated_at = ?, published_at = ?,
+             seo_title = ?, seo_description = ?, seo_noindex = ?
          WHERE id = ?'
     );
-    $stmt->execute([$slug, $title, $content, $excerpt, $categoryId, $featuredImage, $showSidebar, $status, $type, $now, $publishedAt, $existing['id']]);
+    $stmt->execute([$slug, $title, $content, $categoryId, $featuredImage, $showSidebar, $status, $type, $now, $publishedAt, $seoTitle, $seoDescription, $seoNoindex, $existing['id']]);
     $articleId = (int) $existing['id'];
 
     if ($existing['slug'] !== $slug) {
@@ -91,10 +99,11 @@ if ($existing) {
 } else {
     $stmt = db()->prepare(
         'INSERT INTO mblog_articles
-            (slug, title, content, excerpt, category_id, featured_image, show_sidebar, status, type, created_at, updated_at, published_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            (slug, title, content, category_id, featured_image, show_sidebar, status, type, created_at, updated_at, published_at,
+             seo_title, seo_description, seo_noindex)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
-    $stmt->execute([$slug, $title, $content, $excerpt, $categoryId, $featuredImage, $showSidebar, $status, $type, $now, $now, $publishedAt]);
+    $stmt->execute([$slug, $title, $content, $categoryId, $featuredImage, $showSidebar, $status, $type, $now, $now, $publishedAt, $seoTitle, $seoDescription, $seoNoindex]);
     $articleId = (int) db()->lastInsertId();
 }
 
