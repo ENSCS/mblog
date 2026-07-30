@@ -2,7 +2,7 @@
 
 เอกสารนี้สรุปสิ่งที่คุย/ตัดสินใจ/สร้างไปแล้วในการปรึกษาออกแบบเว็บ mBlog (บทความ + landing page ขายคอร์ส + ข้อมูลหุ้น) เพื่อให้กลับมาอ่านแล้วรู้ทันทีว่าคุยกันไปถึงไหน
 
-อัปเดตล่าสุด: 2026-07-28
+อัปเดตล่าสุด: 2026-07-30
 
 ---
 
@@ -58,7 +58,7 @@
 หัวข้อที่ทำเสร็จแล้วสรุปย่อไว้ (รายละเอียดเต็มอยู่ที่ [BUILT.md](BUILT.md) หรือ Roadmap) หัวข้อที่ยังไม่ทำ/ยังไม่ตัดสินใจคงรายละเอียดเต็มไว้เป็นแนวทางสำหรับตอนลงมือทำจริง
 
 ### 1. โครงสร้างเว็บสำหรับ "ทำจริง" — ✅ ทำแล้วเกือบหมด
-- **Layout/CSS/Git** — แยกเสร็จหมดแล้ว: `partials/header.php`/`footer.php`, CSS แยกเป็น `base`/`layout`/`components`/`article`/`editor.css` (`editor.css` โหลดเฉพาะหน้าแก้ไข), git repo มีประวัติเต็มแล้ว
+- **Layout/CSS/Git** — แยกเสร็จหมดแล้ว: `partials/header.php`/`sidebar.php`/`footer.php` (แยก `sidebar.php` ออกจาก `footer.php` แล้ว — ดูหัวข้อ 15), CSS แยกเป็น `base`/`layout`/`components`/`article`/`editor.css` (`editor.css` โหลดเฉพาะหน้าแก้ไข), git repo มีประวัติเต็มแล้ว
 - **PHP Backend** — `config.php` รวม credentials/path จุดเดียว + data layer (`includes/articles.php` ฯลฯ) ครอบ SQL ไม่ปนหน้าเว็บ ตามหลักการหลักของเอกสารนี้ — **routing ยังไม่ตัดสินใจ** (ดูหัวข้อ "สิ่งที่ยังไม่ตัดสินใจ")
 - **แยกตามโมดูลธุรกิจ** (`/blog` `/course` `/stock`) — ยังไม่ทำ อยู่นอกขอบเขต Roadmap นี้ (ดู "นอกขอบเขต")
 - **Auth/Admin zone** — ยังไม่ทำ รอ Phase 3
@@ -147,7 +147,7 @@ Meta description + OG tags (`og:title`/`description`/`image`/`url`/`type=article
 Environment flag (`APP_ENV` ใน `config.php`) คุม `display_errors`/`log_errors` ตามโหมด (`includes/error-handling.php`, log ไปที่ `logs/php-error.log`), หน้า error กลาง 404/500 (`error.php` + `renderErrorPage()`, ไม่พึ่ง config/menu อื่นกันพังซ้ำ), `set_error_handler()`/`set_exception_handler()` จับ error/exception ที่ไม่คาดคิดทั้งหมด, เช็ค return value การเขียนไฟล์/DB และ `json_decode() === null` ครบทุกจุดที่โหลดบทความ
 - **หมายเหตุค้าง**: ยังไม่ได้ผูก Apache `ErrorDocument` กับ 404/500 กลาง เพราะ path ขึ้นกับ document root จริงตอน deploy ซึ่งเครื่อง dev กับที่ตั้งใจ deploy จริงยังไม่ตรงกัน ต้องรอตอนนั้น
 
-### 13. ฟีเจอร์บทความเพิ่มเติม — การมองเห็น/จัดระเบียบ/SEO (คุยกัน 2026-07-28 ก่อนทำระบบ backup) — 🔜 ยังไม่ทำ (schema พร้อมแล้ว)
+### 13. ฟีเจอร์บทความเพิ่มเติม — การมองเห็น/จัดระเบียบ/SEO (คุยกัน 2026-07-28 ก่อนทำระบบ backup) — ✅ ทำแล้ว 4/6 (2026-07-30: SEO override, Sticky, Scheduled publishing, Post expiration) — เหลือ Private post (ติด Phase 3 auth) และ Hierarchical pages (ตั้งใจพักไว้จนกว่าจะทำ pretty URL เสร็จก่อน — ดูหัวข้อ 10)
 คุยก่อนทำระบบ backup ตามหลักที่ว่า "ควรคิดฟีเจอร์บทความให้รอบด้านก่อนจะได้ schema solid ทีเดียว ไม่ต้องมา ALTER TABLE ทีละนิดทีหลัง" — ไล่เทียบว่า WordPress มีอะไรที่ mBlog ยังไม่มีบ้าง (เฉพาะกลุ่มที่เกี่ยวกับบทความ) แล้วตัดสินใจทีละข้อ:
 
 - **Private post** — สถานะใหม่ต่างจาก draft/password-protect: บทความมี URL เปิดได้จริงถ้ารู้ลิงก์+login แอดมิน แต่**ไม่โผล่ที่ไหนเลย**ทั้ง list/RSS/search/sitemap สาธารณะ → เพิ่มค่า `'private'` ใน `mblog_articles.status` ENUM
@@ -159,7 +159,13 @@ Environment flag (`APP_ENV` ใน `config.php`) คุม `display_errors`/`log
 - **Revision history** — ตัดสินใจ**ไม่ทำ** ไม่อยู่ในสโคปนี้
 - **Custom fields (meta key-value ต่อบทความ)** — ตัดสินใจ**ไม่ทำ**ตอนนี้ เพราะไม่มี use case จริงรองรับ (เจอแค่ 1 field ที่น่าจะได้ประโยชน์คือ `channel_name` จาก YouTube import ที่ตอนนี้ใช้ผ่านๆ ไม่ได้เก็บถาวร — [includes/markdown-import.php:81](includes/markdown-import.php:81) — ถ้าจะเก็บจริงเพิ่ม column เดี่ยวๆ คุ้มกว่าสร้างตารางทั่วไปทั้งระบบ) รอจนกว่าจะมีความต้องการแบบ flexible อย่างน้อย 2 อย่างขึ้นไปค่อยกลับมาทำเป็นตารางแยก
 
-Schema ทั้งหมดของหัวข้อนี้ (ยกเว้น sticky ที่ไม่ต้องแตะ `mblog_articles`) รวมไว้ในไฟล์เดียว **`database/article_visibility_and_seo.sql`** แล้ว (สร้างไฟล์แล้ว ยังไม่ได้รันเข้า DB จริง) — ส่วน sticky ใช้ `INSERT` ลง `mblog_settings` ในไฟล์เดียวกัน
+Schema ทั้งหมดของหัวข้อนี้ (ยกเว้น sticky ที่ไม่ต้องแตะ `mblog_articles`) รวมไว้ในไฟล์เดียว **`database/article_visibility_and_seo.sql`** — **รันเข้า DB จริงแล้ว** (2026-07-30) ส่วน sticky ใช้ `INSERT` ลง `mblog_settings` ในไฟล์เดียวกัน
+
+**ทำจริงแล้ว (2026-07-30) — เบี่ยงจากแผนเดิมหลายจุด สรุปดังนี้ (รายละเอียดระดับไฟล์/ฟังก์ชันดู [BUILT.md](BUILT.md)):**
+
+- **SEO override** — ทำตามแผนเดิมเป๊ะ (`seo_title`/`seo_description`/`seo_noindex`) **บวกงานที่ไม่ได้วางแผนไว้**: พบว่าฟิลด์ "สรุปสั้น" (`excerpt`) เดิมมีจุดใช้งานจุดเดียวในระบบคือเป็น fallback ให้ meta description — พอมี `seo_description` มาทำหน้าที่เดียวกัน (แถมมี priority สูงกว่า) `excerpt` เลยกลายเป็นข้อมูลที่กรอกแล้วไม่มีผลอะไรทันที → ตัดสินใจ**ลบคอลัมน์ `excerpt` ทิ้งเลย** (ไม่ใช่แค่เลิกใช้) หลัง migrate ค่าที่มีอยู่จริง (11 แถว) เข้า `seo_description` ก่อน — เปลี่ยนชื่อ `articleExcerpt()` → `autoArticleDescription()` ตามไปด้วยเพราะไม่มี "excerpt ที่เขียนเอง" ให้ fallback หาอีกต่อไป
+- **Sticky/ปักหมุด** — **ดีไซน์สุดท้ายต่างจากที่ร่างไว้ในหัวข้อนี้พอสมควร** ผ่านการคุยปรับ 3 รอบ: (1) เริ่มจากปุ่มปักหมุดในตาราง `manage-articles.php` ตรงๆ ตามที่ร่างไว้ — จำกัดแค่ post (2) เปลี่ยนเป็นหน้าแยก `sticky-items.php` รองรับทั้ง post **และ page** (ต่างจากร่างเดิมที่คิดว่า sticky มีความหมายแค่กับ post) พร้อมลำดับที่กำหนดเองได้ (ไม่ใช่แค่ปัก/ไม่ปักแบบ boolean) แต่เวอร์ชันนี้โหลดบทความ**ทั้งหมด**มาแสดงในตารางเดียว (3) รอบสุดท้าย: แยกเป็น "ค้นหาก่อนแล้วค่อยปัก" (ไม่โหลดทั้งหมด, กันหน้าช้าเมื่อบทความเยอะ) + "รายการที่ปักหมุดอยู่" แยกเป็น section เล็กสำหรับจัดลำดับ/ถอดหมุดเท่านั้น — เหตุผลที่แยกแบบนี้ไม่ใช่แค่เรื่อง performance: ถ้าใช้ตารางเดียวที่กรองด้วย search แล้ว "บันทึก" ทีเดียว จะมีบั๊กจริง (การบันทึกตอนกรองอยู่จะลบการปักหมุดของบทความที่ไม่โผล่ในผลค้นหาทิ้งไปด้วย) การแยก action "ปักทีละอัน" (`pinArticle()`/`unpinArticle()`) ออกจาก "จัดลำดับ" (`setStickyArticles()`, ทำงานกับ set ที่ปักหมุดไว้แล้วซึ่งสมบูรณ์เสมอ) ทำให้บั๊กนี้เป็นไปไม่ได้ตั้งแต่การออกแบบเลย ไม่ใช่แค่ระวังไม่ให้เกิด — เก็บ `sticky_article_ids` เป็น JSON array ใน `mblog_settings` ตามแผนเดิม แต่ตอนนี้**ลำดับใน array มีความหมาย** (คือลำดับแสดงผล ไม่ใช่แค่ membership) เรียงด้วย SQL `FIELD()` ไม่ใช่แค่ `CASE WHEN...IN(...)` แบบที่ร่างไว้ตอนแรก
+- **Scheduled publishing + Post expiration** — ทำพร้อมกัน ตามแผนเดิมที่ไม่ใช้ cron (`publicVisibilitySql()` ฟังก์ชันเดียวใน `includes/articles.php` นิยาม "เผยแพร่จริงต่อสาธารณะ" ครอบทุก query สาธารณะ) — **ระหว่างทำเจอบั๊กจริง 2 ตัวที่ไม่เกี่ยวกับแผนเดิมโดยตรงแต่ทำให้ฟีเจอร์นี้พังถ้าไม่แก้**: (1) MySQL มีนาฬิกาของตัวเอง (`NOW()`) แยกจาก PHP โดยสิ้นเชิง ผูกกับ timezone ของเครื่อง server ที่รัน MySQL (`SYSTEM`) ไม่ใช่ `mblog_settings.timezone` ที่เว็บตั้งไว้ — บนเครื่อง dev ทั้งสองบังเอิญตรงกัน (Bangkok) เลยไม่มีอาการ แต่ deploy ขึ้น host จริงที่มักตั้ง MySQL เป็น UTC จะทำให้บทความที่ตั้งเวลาไว้ขึ้นช้ากว่าที่ตั้งจริงหลายชั่วโมง — แก้ด้วย `SET time_zone` ใน `config.php` ทุกครั้งที่เชื่อมต่อ DB (ดู [BUILT.md](BUILT.md)) (2) `includes/settings.php`'s `updateSiteSettings()` เขียนลง DB แต่ไม่เคย sync static cache ของ `getSettings()` ทำให้อ่านค่าที่เพิ่งเขียนซ้ำในคำขอเดียวกัน (เช่นตอนปักหมุดแล้วอ่านกลับทันที) ได้ค่าเก่า — ปกติไม่มีใครเจอเพราะทุกจุดที่เรียกมี redirect+exit ตามทันที จนกว่าจะมีจุดที่ไม่ทำแบบนั้น
 
 ### 14. บทความล็อกด้วยรหัสผ่าน (ต้นเรื่องของการคุยรอบนี้) — 🔜 ยังไม่ทำ (ยังไม่สร้าง schema)
 ไม่ใช่ระบบ login ผู้ใช้ — เป็น "รหัสผ่านร่วม" ต่อบทความ (คนที่รู้รหัสถึงอ่านเนื้อหาได้) ต่างจาก private (หัวข้อ 13) ตรงที่**ชื่อบทความยังโชว์ปกติทุกที่** (list/RSS/search/sitemap) แค่กดเข้าไปอ่านเนื้อหาจริงต้องใส่รหัสก่อน
@@ -169,7 +175,7 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 - **จุดที่ต้องกันเนื้อหารั่ว** — `articleExcerpt()`/`articleContentPreview()` ต้องโชว์ placeholder แทน excerpt จริงถ้าล็อกอยู่ (หน้า list/category/tag/search), `feed.php` (RSS) ใช้ placeholder เดียวกันแทน description จริง — ชื่อเรื่อง/sitemap ไม่กระทบ (ตั้งใจให้เห็น)
 - **ยังต้องตัดสินใจก่อนลงมือ**: รูปแบบรหัส (พิมพ์รหัสเองแชร์ร่วมกัน — เลือกแบบนี้แล้ว), ระยะเวลาจำการ unlock, rate-limit กันเดารหัสมั่ว
 
-### 15. โครงสร้างประกอบหน้า (header/sidebar/footer) — 🔜 ยังไม่ทำ (วางแนวทางไว้ 2026-07-28, ยังไม่ลงมือ)
+### 15. โครงสร้างประกอบหน้า (header/sidebar/footer) — ✅ ทำแล้ว (2026-07-30, ตรงตามแนวทางที่วางไว้เกือบทั้งหมด)
 
 จุดเริ่ม: คุยเรื่อง sidebar 2 แบบ (item ธรรมดาแบบบทความ vs item ที่รันโค้ด/embed หน้าอื่นได้) แล้วพบว่าโครงเดิมมีปัญหาก่อนถึงเรื่อง type — **`partials/footer.php` ตอนนี้แบกหน้าที่เกินชื่อตัวเอง**: มันปิด `.main-content`, render `<aside class="sidebar">` ทั้งก้อน, แล้วค่อย render `<footer>` จริง รวม 3 อย่างในไฟล์เดียว ตัดสินใจแก้รากฐานนี้ก่อน ค่อยไปต่อเรื่อง type ทีหลัง
 
@@ -183,6 +189,8 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 **ผลกระทบที่ต้องยอมรับ:** ต้องแก้ **22 ไฟล์** ที่ `require partials/footer.php` อยู่ตอนนี้ (เพิ่มเรียก `render_sidebar()` + เปลี่ยนไปเรียกผ่าน wrapper function ทั้ง 3 ส่วน) — เป็นการแก้แบบกลไกเดียวกันหมดทุกไฟล์ ความเสี่ยงต่ำ แต่ปริมาณงานเยอะกว่าทางลัด (ตัดสินใจแล้วว่าคุ้ม เพราะเป้าหมายคือรากฐานถูกต้องรองรับอนาคต ไม่ใช่แก้น้อยที่สุด)
 
 **ตั้งใจแยกจาก sidebar 2 แบบ (item type):** เรื่อง type (`article` vs `iframe`/custom) จะทำ**ต่อจากนี้**หลังรากฐานนี้เสร็จ แนวทางคร่าวๆ ที่คุยไว้ (ยังไม่ตัดสินใจรายละเอียด): เพิ่มคอลัมน์ `type` ใน `mblog_sidebar_items`, ฝั่ง render ใช้ **renderer-map** (ไฟล์ render แยกต่อ type เช่น `sidebar-renderers/article.php`, `sidebar-renderers/iframe.php` ผูกกับ type ผ่าน array) แทน if/switch ยาวในไฟล์เดียว — ยังไม่ตัดสินใจ: จะเก็บ field เฉพาะ type (`iframe_src`, `iframe_height`) หรือ column `meta` แบบ JSON กลางๆ
+
+**ทำจริงแล้ว (2026-07-30) — ตรงตามแนวทาง 3 ข้อข้างบนเป๊ะ มีแค่รายละเอียดเดียวที่ต้องตัดสินใจเพิ่มระหว่างทำ:** `$hasSidebar`/`$showAdminSidebar`/`$sidebarItems` เดิมคำนวณอยู่ใน `header.php` แล้ว "รั่ว" เข้า scope ของหน้าที่ include เอง (เพราะ `include` แชร์ scope กับไฟล์ที่เรียก) — พอเปลี่ยนเป็นเรียกผ่าน wrapper function ตัวแปรพวกนี้จะกลายเป็น local เฉพาะใน `render_header()` ไม่รั่วออกมาให้ `render_sidebar()` เห็นอีกต่อไป — แก้ด้วยให้ `render_header()` **คืนค่า array** ของตัวแปรกลุ่มนี้ แล้วหน้าเว็บส่งต่อเข้า `render_sidebar($layout)` ตรงๆ (ดู [BUILT.md](BUILT.md) สำหรับโค้ดจริง) — เท่ากับ "สัญญา" ของ WP's `load_template()` ที่ข้อ 3 พูดถึง ไม่ใช่แค่ตัวแปร input แต่รวมถึง output ที่ส่งต่อระหว่าง wrapper function ด้วย
 
 ### 16. ระบบกำจัดไฟล์กำพร้า (orphan upload cleanup) — 🔜 ยังไม่ทำ (วางแนวทางไว้ 2026-07-28)
 
@@ -202,6 +210,8 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 **ยังไม่มีระบบล็อกอิน/สิทธิ์เลย** — ตอนนี้ใครเข้า `editor.php` ก็เขียน/แก้ได้หมด เรื่องนี้เป็นตัวบล็อกฟีเจอร์ต่อไปนี้ให้สมบูรณ์:
 - คอมเมนต์ (ต้องมีคนอนุมัติก่อนเผยแพร่)
 - ระบบร่าง (ต้องรู้ว่าใครคือเจ้าของถึงจะพรีวิวร่างได้แบบปลอดภัยจริง)
+- **Private post** (หัวข้อ 13) — ต้องรู้ "login แอดมินอยู่ไหม" ก่อนถึงจะปล่อยให้เปิด URL ตรงได้ทั้งที่ไม่โผล่ list สาธารณะ — ฟีเจอร์เดียวในหัวข้อ 13 ที่ยังทำไม่ได้เพราะเหตุนี้ (อีก 4 ตัวทำเสร็จแล้ว 2026-07-30)
+- **บทความล็อกด้วยรหัสผ่าน** (หัวข้อ 14) — ต้องมี session/cookie ก่อน (จะเป็นตัวแรกที่นำกลไก login-like มาใช้จริง แม้จะไม่ใช่ระบบ login แอดมินโดยตรงก็ตาม)
 - ~~YouTube auto-import (ต้องมีคนตรวจสอบก่อนเผยแพร่)~~ — **ไม่บล็อกแล้ว**: ตอนทำจริง (Phase 6) เปลี่ยนใจให้เผยแพร่ทันทีแทนการรอคนตรวจ (แท็ก "สรุปโดย AI" ถือว่าเตือนผู้อ่านเพียงพอแล้ว) เลยไม่ต้องพึ่งระบบล็อกอินอีกต่อไป
 
 → ควรพิจารณาทำระบบล็อกอินเร็วๆ นี้ เพราะยิ่งเลื่อนยิ่งกระทบหลายฟีเจอร์พร้อมกัน
@@ -264,13 +274,13 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 - [ ] หน้ากฎหมาย: Privacy Policy, Terms of Service (จำเป็นก่อนเปิดให้คนทั่วไปใช้จริง โดยเฉพาะถ้าจะขายของในอนาคต)
 - [ ] อีเมล: SMTP ผ่านบริการนอก (SendGrid/Mailgun) แทน `mail()` ของ PHP เมื่อเริ่มต้องส่งอีเมลจริง
 
-### Phase 11 — ฟีเจอร์บทความเพิ่มเติม: การมองเห็น/จัดระเบียบ/SEO (ส่วน 13) — 🔜 ยังไม่ทำ (schema พร้อมแล้ว)
-- [x] Schema รวมไฟล์เดียว `database/article_visibility_and_seo.sql` (private/scheduled status, `expires_at`, SEO override 3 คอลัมน์, `parent_id` hierarchical pages, `sticky_article_ids` ใน `mblog_settings`) — สร้างไฟล์แล้ว **ยังไม่ได้รันเข้า DB จริง**
-- [ ] แก้ query ทุกจุดที่เช็ค `status='published'` ตรงๆ ใน `includes/articles.php` ให้กรอง `published_at <= NOW()` ด้วย (รองรับ scheduled) และกัน `private`/`scheduled` ไม่ให้หลุดเข้าหน้า list/RSS/search/sitemap สาธารณะ
-- [ ] UI แอดมิน: ตัวเลือกสถานะ private/scheduled ใน `editor.php`, ปักหมุดในหน้าจัดการบทความ (อ่าน/เขียน `sticky_article_ids`), ช่อง SEO override, dropdown เลือก parent page
-- [ ] Cron/logic auto-flip เมื่อ `expires_at` ถึงเวลา (ยังไม่ออกแบบ)
-- [ ] กัน parent_id วนเป็นวงฝั่งโค้ด (validate ตอนบันทึกหน้า)
-- [ ] เคลียร์ id ออกจาก `sticky_article_ids` ตอนลบบทความถาวรใน `bulkPermanentlyDeleteArticles()`
+### Phase 11 — ฟีเจอร์บทความเพิ่มเติม: การมองเห็น/จัดระเบียบ/SEO (ส่วน 13) — ✅ ทำแล้ว 4/6 (2026-07-30)
+- [x] Schema รวมไฟล์เดียว `database/article_visibility_and_seo.sql` (private/scheduled status, `expires_at`, SEO override 3 คอลัมน์, `parent_id` hierarchical pages, `sticky_article_ids` ใน `mblog_settings`) — **รันเข้า DB จริงแล้ว**
+- [x] แก้ query ทุกจุดที่เช็ค `status='published'` ตรงๆ ใน `includes/articles.php` ให้กรอง `published_at <= NOW()` ด้วย (รองรับ scheduled) และกัน `expired` ไม่ให้หลุดเข้าหน้า list/RSS/search/sitemap สาธารณะ — รวมไว้ที่ฟังก์ชันเดียว `publicVisibilitySql()` (ยังไม่รวม `private` เพราะติด Phase 3 auth)
+- [x] UI แอดมิน: ตัวเลือกสถานะ scheduled ใน `editor.php` (ปุ่ม "ตั้งเวลาเผยแพร่" แยกจาก "เผยแพร่"), ปักหมุดผ่านหน้าแยก `sticky-items.php` (ไม่ใช่ใน `manage-articles.php` ตามที่ร่างไว้ทีแรก — ดูหัวข้อ 13), ช่อง SEO override ใน `editor.php` — เหลือ private (ติด auth) และ dropdown เลือก parent page (พักไว้รอ pretty URL)
+- [ ] Cron/logic auto-flip เมื่อ `expires_at` ถึงเวลา — **ตัดสินใจไม่ต้องมี** เช่นเดียวกับ scheduled publishing (query-time comparison ใน `publicVisibilitySql()` พอแล้ว ไม่ต้องมีอะไรมา flip สถานะจริง)
+- [ ] กัน parent_id วนเป็นวงฝั่งโค้ด (validate ตอนบันทึกหน้า) — รอทำพร้อม hierarchical pages
+- [x] เคลียร์ id ออกจาก `sticky_article_ids` ตอนลบบทความถาวรใน `bulkPermanentlyDeleteArticles()` — ทำผ่าน `unstickArticles()`
 
 ### Phase 12 — บทความล็อกด้วยรหัสผ่าน (ส่วน 14) — 🔜 ยังไม่ทำ (ยังไม่สร้าง schema)
 - [ ] Schema: `is_locked` + `access_code_hash` บน `mblog_articles` (ยังไม่สร้างไฟล์ — รอคุยกลไก unlock ให้จบก่อน)
@@ -279,10 +289,10 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 - [ ] แก้ `articleExcerpt()`/`articleContentPreview()`/`feed.php` ให้โชว์ placeholder แทนเนื้อหาจริงถ้าล็อกอยู่
 - [ ] UI ตั้ง/เปลี่ยนรหัสใน `editor.php` + badge 🔒 ใน `manage-articles.php`
 
-### Phase 13 — แยกโครงสร้างประกอบหน้า header/sidebar/footer (ส่วน 15) — 🔜 ยังไม่ทำ (วางแนวทางไว้ 2026-07-28)
-- [ ] แยก `partials/footer.php` → `partials/sidebar.php` ใหม่ (render `<aside>` เท่านั้น) + `footer.php` เดิม (เหลือแค่ `<footer>` จริง)
-- [ ] เขียน wrapper function `render_header($args)` / `render_sidebar($args)` / `render_footer($args)` ห่อ `require` เดิม (extract `$args` ก่อน) แทนการ `require` ตรงๆ — ใช้ประกาศสัญญาตัวแปรชัดเจนแบบ WP `load_template()`
-- [ ] แก้ 22 ไฟล์หน้าที่ `require partials/footer.php` อยู่ตอนนี้ ให้เรียกทั้ง 3 ส่วนแบบ explicit ผ่าน wrapper function (header → เนื้อหา → sidebar → footer)
+### Phase 13 — แยกโครงสร้างประกอบหน้า header/sidebar/footer (ส่วน 15) — ✅ ทำแล้วทั้งหมด (2026-07-30)
+- [x] แยก `partials/footer.php` → `partials/sidebar.php` ใหม่ (render `<aside>` เท่านั้น) + `footer.php` เดิม (เหลือแค่ `<footer>` จริง)
+- [x] เขียน wrapper function `render_header($args)` / `render_sidebar($args)` / `render_footer($args)` (`includes/layout.php`) ห่อ `require` เดิม (extract `$args` ก่อน) แทนการ `require` ตรงๆ — `render_header()` คืนค่า `hasSidebar`/`showAdminSidebar`/`sidebarItems` กลับมาด้วย (รายละเอียดดูหัวข้อ 15)
+- [x] แก้ 22 ไฟล์หน้าที่ `require partials/footer.php` อยู่ตอนนี้ ให้เรียกทั้ง 3 ส่วนแบบ explicit ผ่าน wrapper function (header → เนื้อหา → sidebar → footer)
 - [ ] (ทำต่อจากนี้ แยกเฟส) Sidebar 2 แบบ (item type `article`/`iframe`) ต่อยอดจากโครงนี้ด้วย renderer-map — ยังไม่ตัดสินใจ schema (`meta` JSON vs คอลัมน์เฉพาะ)
 
 ### Phase 14 — ระบบกำจัดไฟล์กำพร้า (ส่วน 16) — 🔜 ยังไม่ทำ (วางแนวทางไว้ 2026-07-28)
@@ -301,7 +311,7 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 
 ---
 
-## สถานะล่าสุด — Phase 1 เสร็จสมบูรณ์ ✅ + ระบบ Page/หมวดหมู่/เมนูขยายเพิ่มเติมมาก + Phase 5/6 นำเข้า Markdown เสร็จแล้ว
+## สถานะล่าสุด — Phase 1 เสร็จสมบูรณ์ ✅ + ระบบ Page/หมวดหมู่/เมนูขยายเพิ่มเติมมาก + Phase 5/6 นำเข้า Markdown เสร็จแล้ว + Phase 11/13 ส่วนใหญ่เสร็จแล้ว (2026-07-30)
 
 บทความ/รูปภาพ/หมวดหมู่/เมนู ย้ายเข้า MySQL ครบทั้งหมดแล้ว (ดูรายละเอียดใน [BUILT.md](BUILT.md)) พร้อมของแถมนอกแผนเดิม (แก้ slug เองได้ + 301 redirect, ระบบค่าตั้งค่าเว็บ, ชื่อไฟล์อัปโหลดแบบ SEO-friendly) ตารางของทุก Phase ถัดไปก็สร้างรอไว้ล่วงหน้าหมดแล้วด้วย (`database/phase3_users.sql` ถึง `phase9_stats.sql`)
 
@@ -331,10 +341,15 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 
 **งานปรับปรุงย่อยรอบ 2026-07-28** — ดูรายละเอียดเต็มที่ [BUILT.md](BUILT.md) หัวข้อ "งานปรับปรุงย่อยรอบ 2026-07-28" สรุปสั้น: page-level flag ใหม่ 2 ตัวใน `partials/header.php` (`$containerWide`, `$showMenu`), แก้บั๊กปุ่ม "ลบรูป" ใน `sidebar-item-editor.php` (markup ขาด ทำให้ JS throw ก่อนผูก event), เพิ่มระบบลบไฟล์อัปโหลดที่ไม่ได้ใช้แล้วจริงเมื่อลบ/เปลี่ยน featured image (`includes/uploads.php`, เช็คไม่ให้ไฟล์ที่ยังใช้อยู่ที่อื่นโดนลบ), ทดลอง full-bleed วิดีโอใน sidebar item แล้วย้อนกลับเป็น `margin: 0` ธรรมดา (เจอ `max-width` จาก quill.snow.css ที่ override ไม่ถึง), ขยายคอลัมน์ `mblog_pageview_log.page_path` เป็น `TEXT` (เดิม `varchar(255)` ตัดทิ้ง URL ที่มี slug ภาษาไทยยาวๆ เงียบๆ), เพิ่มยอดวิวในการ์ดรายการทั้ง 5 หน้า, เพิ่ม keyboard navigation (arrow key) ให้ช่องแท็กใน editor พร้อมแก้ `autocomplete="off"` ที่แย่งคีย์ ArrowDown, และเพิ่มค้นหาแท็กในระบบค้นหา (หัวข้อ 2) — ตัดสินใจสำคัญที่ยังมีผลไปข้างหน้า: validate ให้ตรงจุดเสี่ยงจริง ไม่ใช่ตรงจุดรับเข้าเสมอไป (ดู "หลักการรอง" ด้านบน)
 
+**Phase 11/13 (ทำเสร็จ 2026-07-30):**
+- **Phase 13 — โครงสร้าง header/sidebar/footer** ✅ เสร็จทั้งหมด — ดูหัวข้อ 15
+- **Phase 11 — ฟีเจอร์บทความเพิ่มเติม** ✅ เสร็จ 4/6 (SEO override, Sticky, Scheduled publishing, Post expiration) เหลือ Private post (ติด auth) และ Hierarchical pages (พักไว้รอ pretty URL) — ดูหัวข้อ 13 สำหรับรายละเอียดที่เบี่ยงจากแผนเดิม (โดยเฉพาะ sticky ที่ดีไซน์เปลี่ยนไปมากหลังคุยกัน 3 รอบ) และบั๊ก 2 ตัวที่เจอ+แก้ระหว่างทำ (settings cache ไม่ sync, PHP/MySQL timezone ไม่ตรงกัน)
+
 **งานค้างที่สำคัญที่สุดตอนนี้:** `scripts/backup.php` ยังไม่ dump MySQL (ดูหัวข้อ 9/Phase 2) — เนื้อหาจริงย้ายออกจากไฟล์หมดแล้ว แปลว่า backup ปัจจุบัน**ไม่ครอบคลุมเนื้อหาบทความเลย** ควรทำก่อนเรื่องอื่น
 
 **ตัวเลือกขั้นต่อไป:**
 - แก้ backup script ให้ครอบคลุม MySQL (ด่วน — ความเสี่ยงข้อมูลหาย)
-- Phase 3 (ระบบล็อกอิน/สิทธิ์) — ตัวบล็อก Phase 7 (คอมเมนต์) และความปลอดภัยของระบบร่างต่อ ตารางพร้อมแล้ว — ยิ่งสำคัญขึ้นหลังเพิ่มช่องใส่ head/body code เองได้ (Phase 9) เพราะตอนนี้ยังไม่มีใครล็อกไม่ให้คนนอกเข้ามาแก้/แทรก script ได้
+- Phase 3 (ระบบล็อกอิน/สิทธิ์) — ตัวบล็อกที่เหลือหลัง Phase 11/13 เสร็จแล้ว: Phase 7 (คอมเมนต์), Private post (หัวข้อ 13), บทความล็อกด้วยรหัสผ่าน (หัวข้อ 14), ความปลอดภัยของระบบร่าง — ตารางพร้อมแล้ว — ยิ่งสำคัญขึ้นหลังเพิ่มช่องใส่ head/body code เองได้ (Phase 9) เพราะตอนนี้ยังไม่มีใครล็อกไม่ให้คนนอกเข้ามาแก้/แทรก script ได้
 - Phase 9 ที่ยังพักไว้: retention/rollup ของ `mblog_pageview_log` (รอข้อมูลเยอะขึ้นก่อนค่อยตัดสินใจระดับความละเอียด), ทบทวน/อัปเดต pattern บอทใน `isBotUserAgent()` เป็นระยะ
-- **Phase 11/12 (คุยจบแล้ว 2026-07-28 รอลงมือทำ)** — ฟีเจอร์บทความเพิ่มเติม (private/scheduled/expiration/sticky/SEO override/hierarchical pages) schema พร้อมแล้วที่ `database/article_visibility_and_seo.sql` แค่ยังไม่รันเข้า DB จริง + บทความล็อกด้วยรหัสผ่าน (ยังไม่สร้าง schema รอตัดสินใจกลไก unlock ก่อน) — ดูรายละเอียดหัวข้อ 13/14
+- **Hierarchical pages** (หัวข้อ 13) — ตั้งใจพักไว้จนกว่าจะทำ pretty URL (หัวข้อ 10) เสร็จก่อน เพราะประโยชน์หลักของ WP (URL ซ้อนกัน, sub-nav อัตโนมัติ) ต้องมี pretty URL/breadcrumb รองรับด้วยถึงจะเห็นผลจริง ไม่ใช่แค่เห็นโครงสร้างในหน้าแอดมิน
+- **Phase 14 (ระบบกำจัดไฟล์กำพร้า, หัวข้อ 16)** — วางแนวทางไว้แล้ว 2026-07-28 ยังไม่ลงมือ

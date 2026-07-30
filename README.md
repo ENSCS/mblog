@@ -13,7 +13,9 @@
 - **นำเข้าบทความจาก Markdown อัตโนมัติ** — รับไฟล์สรุปหุ้นรายวันจากสคริปต์ภายนอกผ่าน API (ยืนยันตัวตนด้วย token) หรืออัปโหลดมือที่ [import-markdown.php](import-markdown.php) พร้อมแท็ก/เครดิตแหล่งที่มา/ภาพปกจาก YouTube ให้อัตโนมัติ
 - **ค้นหาบทความสาธารณะ** ([search.php](search.php)) — ค้นทั้งชื่อเรื่อง/เนื้อหา/แท็ก
 - เมนูเว็บปรับแต่งได้ รองรับเมนูย่อย — desktop เปิดด้วย hover แบบ WordPress, มือถือเป็น hamburger + accordion
-- SEO พื้นฐานครบ: excerpt, featured image, meta description, Open Graph/Twitter Card, canonical tag, JSON-LD, [sitemap.php](sitemap.php), [robots.txt](robots.txt)
+- SEO พื้นฐานครบ: featured image, meta description (auto-generate จากเนื้อหา), Open Graph/Twitter Card, canonical tag, JSON-LD, [sitemap.php](sitemap.php), [robots.txt](robots.txt) — **ปรับ SEO เองต่อบทความได้ด้วย** (title/description/noindex แยกจากค่า auto-generate) ที่ [editor.php](editor.php)
+- **ปักหมุดบทความ/หน้า** — เลือกให้ขึ้นก่อนใครใน [articles.php](articles.php)/[pages.php](pages.php) ได้ พร้อมจัดลำดับเอง จัดการรวมที่หน้าแยก [sticky-items.php](sticky-items.php) (ค้นหาแล้วปัก ไม่ต้องไล่หาทั้งรายการ)
+- **ตั้งเวลาเผยแพร่ + วันหมดอายุ** — ตั้งบทความให้เผยแพร่ล่วงหน้าหรือหมดอายุอัตโนมัติได้ที่ [editor.php](editor.php) โดยไม่ต้องมี cron ฝั่งเซิร์ฟเวอร์
 - หน้า error กลาง (404/500) + log ข้อผิดพลาด + สคริปต์ backup ไฟล์อัตโนมัติพร้อม retention ([scripts/backup.php](scripts/backup.php)) — **หมายเหตุ:** ยัง backup แค่ไฟล์ ไม่ได้ dump ฐานข้อมูลด้วย (งานค้าง)
 - **ธีมเว็บสว่าง/มืดสลับได้** พร้อม**แบรนด์เว็บ** (โลโก้/favicon/สโลแกน) ตั้งค่าได้เองที่ [settings.php](settings.php)
 - **Sidebar** — แบนเนอร์/ประกาศ/ป้ายลิงก์ข้างเนื้อหา จัดการได้เต็มรูปแบบที่ [sidebar-items.php](sidebar-items.php) เปิด/ปิดได้ทั้งระดับเว็บและบังคับต่อบทความ/หน้า
@@ -39,6 +41,8 @@
 - **ฟีดข่าวสั้นแยกตาราง (`mblog_feed_items`) ไม่ยุบรวมกับบทความ** เหตุผลเดียวกับ sidebar item — โครงสร้างต่างกันเกินไป (ไม่มี SEO/รูปปก/หมวดหมู่ ความถี่สูงกว่ามาก)
 - **หน้าฟีดสด (`feed.php`) ให้เซิร์ฟเวอร์ render HTML ทั้งชุดใหม่ทุกครั้งที่ poll แทนการ query แค่ "อะไรใหม่"** — เรียบง่ายกว่าและได้ผลพลอยได้ฟรี: แก้ไข/ลบข้อความเก่า sync ไปหน้าที่เปิดค้างไว้ได้ทันที ไม่ต้องมีโค้ดแยกสำหรับกรณีนั้น
 - **ไฟล์อัปโหลดที่ไม่ได้ใช้แล้วถูกลบจริง** (`includes/uploads.php`) เมื่อเปลี่ยน/ลบ featured image — เช็คก่อนเสมอว่าไม่มีบทความ/sidebar item อื่นยังอ้างถึงไฟล์เดิมอยู่ กันลบรูปที่ยังใช้อยู่จริงพลาด
+- **header/sidebar/footer ประกอบหน้าผ่าน wrapper function จริง** (`render_header()`/`render_sidebar()`/`render_footer()` ใน `includes/layout.php`) แทนการ `include` ตรงๆ — เปิดไฟล์หน้าไหนก็เห็นทันทีว่าประกอบด้วยอะไรบ้าง ไม่ต้องเดา, เพิ่มส่วนใหม่ (เช่นเมนูซ้ายในอนาคต) แค่เพิ่มฟังก์ชันใหม่ 1 ตัวไม่กระทบของเดิม
+- **การเทียบเวลา (ตั้งเวลาเผยแพร่/วันหมดอายุ) ไม่ใช้ cron เลย** — เทียบ `published_at`/`expires_at` กับเวลาปัจจุบันตอน query ตรงๆ ผ่านฟังก์ชันเดียว (`publicVisibilitySql()`) ครอบทุก query สาธารณะ — บทความที่ถึงเวลาจะขึ้นเองโดยไม่ต้องมีอะไรมา "flip" สถานะ
 
 เหตุผลการตัดสินใจแต่ละจุด สถานะปัจจุบัน และแผนงานที่เหลือ ดูที่ [PLANNING.md](PLANNING.md) — รายละเอียดเชิงลึกระดับไฟล์/ฟังก์ชัน/บั๊กที่แก้แล้วของทุกฟีเจอร์ ดูที่ [BUILT.md](BUILT.md)
 
