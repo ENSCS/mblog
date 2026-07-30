@@ -218,7 +218,17 @@ function renderManageListPage(string $type, array $config): void
                   <td><?= htmlspecialchars(implode(', ', array_column($articleTags, 'name'))) ?: '—' ?></td>
                 <?php endif; ?>
                 <td><?= relativeTimeTag($article['created_at']) ?></td>
-                <td><span class="status-badge status-<?= $article['deleted_at'] ? 'draft' : $article['status'] ?>"><?= $article['deleted_at'] ? 'ถังขยะ' : ($article['status'] === 'published' ? 'เผยแพร่แล้ว' : 'ร่าง') ?></span></td>
+                <?php
+                $displayStatus = $article['deleted_at'] ? 'trash' : $article['status'];
+                $statusBadgeLabels = ['published' => 'เผยแพร่แล้ว', 'scheduled' => 'ตั้งเวลา', 'draft' => 'ร่าง', 'trash' => 'ถังขยะ'];
+                $statusBadgeClass = $displayStatus === 'trash' ? 'draft' : $displayStatus;
+                ?>
+                <td>
+                  <span class="status-badge status-<?= htmlspecialchars($statusBadgeClass) ?>"><?= htmlspecialchars($statusBadgeLabels[$displayStatus] ?? $displayStatus) ?></span>
+                  <?php if ($displayStatus === 'scheduled' && !empty($article['published_at'])): ?>
+                    <div style="font-size:12px; color:var(--text-muted); margin-top:2px;"><?= htmlspecialchars(date('j/n/Y H:i', strtotime($article['published_at']))) ?></div>
+                  <?php endif; ?>
+                </td>
                 <td class="row-actions">
                   <?php if ($status === 'trash'): ?>
                     <form method="post" action="<?= htmlspecialchars($actionTarget) ?>" style="display:inline">

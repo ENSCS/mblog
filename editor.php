@@ -17,6 +17,15 @@ $currentShowSidebar = isset($article['show_sidebar']) && $article['show_sidebar'
 $currentSeoTitle = $article['seo_title'] ?? '';
 $currentSeoDescription = $article['seo_description'] ?? '';
 $currentSeoNoindex = !empty($article['seo_noindex']);
+// datetime-local wants "Y-m-d\TH:i" with no timezone/seconds — only prefill
+// scheduled-at when the article is actually still in the scheduled state
+// (a published article's published_at is its real publish date, not
+// something to show back as a pending schedule).
+$currentScheduledAt = ($currentStatus === 'scheduled' && !empty($article['published_at']))
+    ? date('Y-m-d\TH:i', strtotime($article['published_at']))
+    : '';
+$currentExpiresAt = !empty($article['expires_at']) ? date('Y-m-d\TH:i', strtotime($article['expires_at'])) : '';
+$statusLabels = ['published' => 'เผยแพร่แล้ว', 'scheduled' => 'ตั้งเวลา', 'draft' => 'ร่าง'];
 $currentTags = $article ? array_column(getArticleTags($article['id']), 'name') : [];
 $allTagNames = array_column(getAllTags(), 'name');
 
@@ -48,6 +57,18 @@ ob_start();
   });
   document.getElementById('publish-btn').addEventListener('click', () => {
     saveArticle(quill, document.getElementById('article-id').value, document.getElementById('slug').value, 'published');
+  });
+  document.getElementById('schedule-btn').addEventListener('click', () => {
+    const scheduledAt = document.getElementById('scheduled-at').value;
+    if (!scheduledAt) {
+      alert('กรุณาเลือกวันที่/เวลาที่ต้องการเผยแพร่');
+      return;
+    }
+    if (new Date(scheduledAt) <= new Date()) {
+      alert('เวลาที่ตั้งต้องเป็นอนาคต');
+      return;
+    }
+    saveArticle(quill, document.getElementById('article-id').value, document.getElementById('slug').value, 'scheduled');
   });
 </script>
 <?php
@@ -123,6 +144,14 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
     <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="seo-noindex" <?= $currentSeoNoindex ? 'checked' : '' ?>> Noindex (ไม่ให้ Google เก็บบทความนี้ในผลค้นหา)</label>
   </div>
   <div class="field">
+    <label for="scheduled-at">ตั้งเวลาเผยแพร่ (ไม่บังคับ — เลือกวันที่/เวลาในอนาคต แล้วกด "ตั้งเวลาเผยแพร่" ด้านล่างแทนปุ่มเผยแพร่)</label>
+    <input type="datetime-local" id="scheduled-at" value="<?= htmlspecialchars($currentScheduledAt) ?>">
+  </div>
+  <div class="field">
+    <label for="expires-at">วันหมดอายุ (ไม่บังคับ — พ้นเวลานี้แล้วบทความจะไม่แสดงบนเว็บสาธารณะอีก)</label>
+    <input type="datetime-local" id="expires-at" value="<?= htmlspecialchars($currentExpiresAt) ?>">
+  </div>
+  <div class="field">
     <label for="slug">Slug (URL ของบทความ — ไม่ใส่จะสร้างจากชื่อบทความให้อัตโนมัติ)</label>
     <input type="text" id="slug" value="<?= $article ? htmlspecialchars($article['slug']) : '' ?>" placeholder="เว้นว่างไว้ให้สร้างอัตโนมัติจากชื่อบทความ">
     <div id="slug-warning" style="display:<?= $currentStatus === 'published' ? 'block' : 'none' ?>; margin-top:4px; font-size:13px; color:#92400e;">
@@ -135,8 +164,9 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
 
   <div class="toolbar-row">
     <button class="btn btn-secondary" id="save-draft-btn">บันทึกร่าง</button>
+    <button class="btn btn-secondary" id="schedule-btn">ตั้งเวลาเผยแพร่</button>
     <button class="btn" id="publish-btn">เผยแพร่</button>
-    <span id="status-badge" class="status-badge status-<?= $currentStatus ?>"><?= $currentStatus === 'published' ? 'เผยแพร่แล้ว' : 'ร่าง' ?></span>
+    <span id="status-badge" class="status-badge status-<?= $currentStatus ?>"><?= $statusLabels[$currentStatus] ?? 'ร่าง' ?></span>
     <span id="save-status"></span>
     <a id="view-link" href="<?= $article ? ($currentType === 'page' ? 'page.php' : 'article.php') . '?slug=' . urlencode($article['slug']) : '#' ?>"
        style="margin-left:16px; display:<?= $article ? 'inline' : 'none' ?>;">ดูบทความ &rarr;</a>

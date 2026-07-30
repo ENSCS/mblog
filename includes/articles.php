@@ -25,6 +25,21 @@ function articleStatus(array $article): string
     return $article['status'] ?? 'published';
 }
 
+// Single definition of "visible to the public" — a scheduled article/page
+// becomes visible once its time arrives without anything ever flipping its
+// status column back to 'published' (no cron; see database/
+// article_visibility_and_seo.sql), this comparison at query time is the
+// entire mechanism. Expired content stops being visible the same way,
+// regardless of status. Every public-facing query (getArticleList()'s
+// 'published' filter, searchArticles(), getArticle(), getPage()) goes
+// through this one place — admin-facing queries (getArticlesForAdmin(),
+// getArticleStatusCounts()) deliberately do NOT, since the admin needs to
+// see and manage scheduled/expired items, not have them hidden.
+function publicVisibilitySql(string $alias = 'a'): string
+{
+    return "$alias.status IN ('published', 'scheduled') AND $alias.published_at <= NOW() AND ($alias.expires_at IS NULL OR $alias.expires_at > NOW())";
+}
+
 function getCategories(): array
 {
     $rows = db()->query('SELECT name FROM mblog_categories ORDER BY sort_order')->fetchAll();
@@ -456,8 +471,12 @@ function getArticleList(array $filters, int $page = 1, int $perPage = 0, bool $s
         $params[] = $filters['type'];
     }
     if (!empty($filters['status'])) {
-        $where[] = 'a.status = ?';
-        $params[] = $filters['status'];
+        if ($filters['status'] === 'published') {
+            $where[] = publicVisibilitySql();
+        } else {
+            $where[] = 'a.status = ?';
+            $params[] = $filters['status'];
+        }
     }
     if (!empty($filters['category_slug'])) {
         $where[] = 'c.slug = ?';
@@ -551,10 +570,11 @@ function searchArticles(string $query, int $page, int $perPage): array
         JOIN mblog_tags t ON t.id = mat.tag_id
         WHERE mat.article_id = a.id AND t.name LIKE ?
     )";
+    $visibilitySql = publicVisibilitySql();
 
     $countStmt = db()->prepare(
         "SELECT COUNT(*) FROM mblog_articles a
-         WHERE a.type = 'post' AND a.status = 'published' AND a.deleted_at IS NULL
+         WHERE a.type = 'post' AND $visibilitySql AND a.deleted_at IS NULL
            AND (a.title LIKE ? OR a.content LIKE ? OR $tagMatchSql)"
     );
     $countStmt->execute([$like, $like, $like]);
@@ -571,7 +591,7 @@ function searchArticles(string $query, int $page, int $perPage): array
                  + CASE WHEN $tagMatchSql THEN 2 ELSE 0 END) AS relevance
          FROM mblog_articles a
          LEFT JOIN mblog_categories c ON a.category_id = c.id
-         WHERE a.type = 'post' AND a.status = 'published' AND a.deleted_at IS NULL
+         WHERE a.type = 'post' AND $visibilitySql AND a.deleted_at IS NULL
            AND (a.title LIKE ? OR a.content LIKE ? OR $tagMatchSql)
          ORDER BY relevance DESC, a.published_at DESC
          LIMIT $perPage OFFSET $offset"
@@ -650,14 +670,14 @@ function getDraftArticles(): array
 // viewable directly either, not just hidden from the list).
 function getArticle(string $slug): ?array
 {
-    return fetchOneArticle('a.slug = ? AND a.status = ? AND a.type = ?', [$slug, 'published', 'post']);
+    return fetchOneArticle('a.slug = ? AND a.type = ? AND ' . publicVisibilitySql(), [$slug, 'post']);
 }
 
 // Public single-page lookup — same idea as getArticle() but for pages
 // (About/Contact/Privacy Policy/...), used by page.php.
 function getPage(string $slug): ?array
 {
-    return fetchOneArticle('a.slug = ? AND a.status = ? AND a.type = ?', [$slug, 'published', 'page']);
+    return fetchOneArticle('a.slug = ? AND a.type = ? AND ' . publicVisibilitySql(), [$slug, 'page']);
 }
 
 // Editor lookup — any status, so an author can reopen a draft to keep working on it.

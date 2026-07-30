@@ -730,6 +730,8 @@ function saveArticle(quill, articleId, slug, status) {
   const seoTitle = document.getElementById('seo-title').value.trim();
   const seoDescription = document.getElementById('seo-description').value.trim();
   const seoNoindex = document.getElementById('seo-noindex').checked;
+  const scheduledAt = document.getElementById('scheduled-at').value;
+  const expiresAt = document.getElementById('expires-at').value;
   const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(Boolean);
   const statusEl = document.getElementById('save-status');
   if (!title) {
@@ -744,7 +746,11 @@ function saveArticle(quill, articleId, slug, status) {
   embedYoutubeLinks(clone);
   expandImageCaptions(clone);
 
-  statusEl.textContent = status === 'published' ? 'กำลังเผยแพร่...' : 'กำลังบันทึกร่าง...';
+  const savingMessages = { published: 'กำลังเผยแพร่...', scheduled: 'กำลังตั้งเวลา...', draft: 'กำลังบันทึกร่าง...' };
+  const savedMessages = { published: 'เผยแพร่แล้ว', scheduled: 'ตั้งเวลาแล้ว', draft: 'บันทึกร่างแล้ว' };
+  const statusLabels = { published: 'เผยแพร่แล้ว', scheduled: 'ตั้งเวลา', draft: 'ร่าง' };
+
+  statusEl.textContent = savingMessages[status] || savingMessages.draft;
   fetch('api/save.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -761,13 +767,15 @@ function saveArticle(quill, articleId, slug, status) {
       seo_title: seoTitle,
       seo_description: seoDescription,
       seo_noindex: seoNoindex,
+      scheduled_at: scheduledAt,
+      expires_at: expiresAt,
       tags: tags
     })
   })
     .then(r => r.json())
     .then(data => {
       if (data.success) {
-        statusEl.textContent = data.status === 'published' ? 'เผยแพร่แล้ว' : 'บันทึกร่างแล้ว';
+        statusEl.textContent = savedMessages[data.status] || savedMessages.draft;
         document.getElementById('article-id').value = data.id;
         document.getElementById('slug').value = data.slug;
         window.history.replaceState({}, '', 'editor.php?slug=' + data.slug);
@@ -776,7 +784,7 @@ function saveArticle(quill, articleId, slug, status) {
         document.getElementById('view-link').style.display = 'inline';
 
         const badge = document.getElementById('status-badge');
-        badge.textContent = data.status === 'published' ? 'เผยแพร่แล้ว' : 'ร่าง';
+        badge.textContent = statusLabels[data.status] || statusLabels.draft;
         badge.className = 'status-badge status-' + data.status;
         document.getElementById('slug-warning').style.display = data.status === 'published' ? 'block' : 'none';
       } else {

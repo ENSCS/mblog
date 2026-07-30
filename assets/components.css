@@ -108,6 +108,7 @@
 }
 .field input[type=text],
 .field input[type=number],
+.field input[type=datetime-local],
 .field select,
 .field textarea {
   width: 100%;
@@ -225,6 +226,10 @@ input[type=file]::file-selector-button:hover {
 .status-published {
   background: var(--success-bg);
   color: var(--success-text);
+}
+.status-scheduled {
+  background: var(--tag-blue-bg);
+  color: var(--tag-blue-text);
 }
 .category-tag {
   display: inline-block;

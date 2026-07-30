@@ -9,7 +9,7 @@ $data = json_decode($raw, true);
 $title = isset($data['title']) ? trim($data['title']) : '';
 $content = isset($data['content']) ? $data['content'] : '';
 $requestedSlug = isset($data['slug']) ? trim($data['slug']) : '';
-$status = (isset($data['status']) && $data['status'] === 'published') ? 'published' : 'draft';
+$status = in_array($data['status'] ?? '', ['published', 'scheduled'], true) ? $data['status'] : 'draft';
 $type = (isset($data['type']) && $data['type'] === 'page') ? 'page' : 'post';
 // '' stored as-is (not NULL) — articleSeoTitle()/articleSeoDescription() in
 // includes/articles.php already treat '' the same as NULL (fall back to the
@@ -72,25 +72,45 @@ if ($baseSlug === '') {
 $slug = uniqueSlug($baseSlug, $existing['id'] ?? null);
 
 $now = date('Y-m-d H:i:s');
+$existingPublishedAt = $existing['published_at'] ?? null;
 
-// published_at is set once, the first time an article goes live, and kept
-// after that — switching back to draft and re-publishing doesn't reset it.
-$publishedAt = $existing['published_at'] ?? null;
-if ($status === 'published' && $publishedAt === null) {
-    $publishedAt = $now;
-} elseif ($publishedAt !== null) {
-    $publishedAt = date('Y-m-d H:i:s', strtotime($publishedAt));
+if ($status === 'scheduled') {
+    // The admin-picked date/time from editor.php's "ตั้งเวลาเผยแพร่" field —
+    // falls back to now on a missing/unparseable value rather than leaving
+    // published_at NULL, since publicVisibilitySql() requires a real
+    // published_at to ever show this article once its status does allow it.
+    $scheduledAtRaw = isset($data['scheduled_at']) ? trim($data['scheduled_at']) : '';
+    $scheduledTs = $scheduledAtRaw !== '' ? strtotime($scheduledAtRaw) : false;
+    $publishedAt = $scheduledTs !== false ? date('Y-m-d H:i:s', $scheduledTs) : $now;
+} elseif ($status === 'published') {
+    // "now" both the first time an article goes live AND when explicitly
+    // publishing over a still-pending schedule (clicking "เผยแพร่" means
+    // "make this live immediately", overriding whatever future date was set
+    // before) — only a genuine republish of something already live in the
+    // past keeps its original published_at, so toggling draft<->published
+    // afterward doesn't keep resetting it.
+    $publishedAt = ($existingPublishedAt === null || strtotime($existingPublishedAt) > strtotime($now))
+        ? $now
+        : date('Y-m-d H:i:s', strtotime($existingPublishedAt));
+} else {
+    $publishedAt = $existingPublishedAt !== null ? date('Y-m-d H:i:s', strtotime($existingPublishedAt)) : null;
 }
+
+// '' -> NULL (no expiration, the default/original behavior for every
+// article saved before this column existed).
+$expiresAtRaw = isset($data['expires_at']) ? trim($data['expires_at']) : '';
+$expiresAtTs = $expiresAtRaw !== '' ? strtotime($expiresAtRaw) : false;
+$expiresAt = $expiresAtTs !== false ? date('Y-m-d H:i:s', $expiresAtTs) : null;
 
 if ($existing) {
     $stmt = db()->prepare(
         'UPDATE mblog_articles
          SET slug = ?, title = ?, content = ?, category_id = ?, featured_image = ?,
-             show_sidebar = ?, status = ?, type = ?, updated_at = ?, published_at = ?,
+             show_sidebar = ?, status = ?, type = ?, updated_at = ?, published_at = ?, expires_at = ?,
              seo_title = ?, seo_description = ?, seo_noindex = ?
          WHERE id = ?'
     );
-    $stmt->execute([$slug, $title, $content, $categoryId, $featuredImage, $showSidebar, $status, $type, $now, $publishedAt, $seoTitle, $seoDescription, $seoNoindex, $existing['id']]);
+    $stmt->execute([$slug, $title, $content, $categoryId, $featuredImage, $showSidebar, $status, $type, $now, $publishedAt, $expiresAt, $seoTitle, $seoDescription, $seoNoindex, $existing['id']]);
     $articleId = (int) $existing['id'];
 
     if ($existing['slug'] !== $slug) {
@@ -99,11 +119,11 @@ if ($existing) {
 } else {
     $stmt = db()->prepare(
         'INSERT INTO mblog_articles
-            (slug, title, content, category_id, featured_image, show_sidebar, status, type, created_at, updated_at, published_at,
+            (slug, title, content, category_id, featured_image, show_sidebar, status, type, created_at, updated_at, published_at, expires_at,
              seo_title, seo_description, seo_noindex)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
-    $stmt->execute([$slug, $title, $content, $categoryId, $featuredImage, $showSidebar, $status, $type, $now, $now, $publishedAt, $seoTitle, $seoDescription, $seoNoindex]);
+    $stmt->execute([$slug, $title, $content, $categoryId, $featuredImage, $showSidebar, $status, $type, $now, $now, $publishedAt, $expiresAt, $seoTitle, $seoDescription, $seoNoindex]);
     $articleId = (int) db()->lastInsertId();
 }
 
