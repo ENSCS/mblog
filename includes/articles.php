@@ -323,7 +323,7 @@ function articleShowsSidebar(array $article): bool
 // write the JSON files.
 function normalizeArticleRow(array $row): array
 {
-    foreach (['created_at', 'updated_at', 'published_at'] as $field) {
+    foreach (['created_at', 'updated_at', 'published_at', 'expires_at'] as $field) {
         if (!empty($row[$field])) {
             $row[$field] = date('c', strtotime($row[$field]));
         }
