@@ -41,6 +41,7 @@ function adminNavGroups(): array
             ['label' => 'จัดการหมวดหมู่', 'href' => 'categories.php', 'badge' => count(getAllCategories())],
             ['label' => 'จัดการ Sidebar', 'href' => 'sidebar-items.php', 'badge' => count(getAllSidebarItems())],
             ['label' => 'Backup', 'href' => 'backup.php'],
+            ['label' => 'ไฟล์กำพร้า', 'href' => 'orphan-files.php'],
         ],
     ];
 }

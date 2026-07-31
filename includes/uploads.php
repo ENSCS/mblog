@@ -8,11 +8,13 @@
 // "in use" too.
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/settings.php';
 
 // True if $path (an "uploads/..." relative path) is still referenced by any
-// article's featured_image/content, or any sidebar item's image/content —
-// articles and sidebar items share the same uploads/ pool, so both tables
-// need checking regardless of which editor is doing the deleting.
+// article's featured_image/content, any sidebar item's image/content, or the
+// site logo/favicon in mblog_settings — articles, sidebar items, and site
+// branding all share the same uploads/ pool, so all three need checking
+// regardless of which caller is doing the deleting.
 function uploadPathInUse(string $path): bool
 {
     $stmt = db()->prepare('SELECT COUNT(*) FROM mblog_articles WHERE deleted_at IS NULL AND (featured_image = ? OR content LIKE ?)');
@@ -23,8 +25,11 @@ function uploadPathInUse(string $path): bool
 
     $stmt = db()->prepare('SELECT COUNT(*) FROM mblog_sidebar_items WHERE image = ? OR content LIKE ?');
     $stmt->execute([$path, '%' . $path . '%']);
+    if ((int) $stmt->fetchColumn() > 0) {
+        return true;
+    }
 
-    return (int) $stmt->fetchColumn() > 0;
+    return $path === siteSetting('site_logo', '') || $path === siteSetting('site_favicon', '');
 }
 
 // No validation beyond trim() — same trust level as $content (api/save.php
