@@ -15,14 +15,14 @@
   background: var(--card-bg);
   border-radius: var(--radius-lg);
   padding: 5px 16px;
-  font-size: 18px;
+  font-size: var(--feed-item-font-size, 18px);
   color: var(--text-primary);
   line-height: 1.5;
   white-space: pre-line;
   max-width: 85%;
 }
 .feed-item-time {
-  font-size: 13px;
+  font-size: var(--feed-item-time-font-size, 13px);
   color: var(--text-muted);
   flex-shrink: 0;
   white-space: nowrap;

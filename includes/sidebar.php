@@ -12,7 +12,7 @@ require_once __DIR__ . '/db.php';
 function getActiveSidebarItems(): array
 {
     return db()->query(
-        'SELECT id, title, content, image, link_url FROM mblog_sidebar_items WHERE is_active = 1 ORDER BY sort_order'
+        'SELECT id, title, type, content, image, link_url, iframe_src, iframe_height FROM mblog_sidebar_items WHERE is_active = 1 ORDER BY sort_order'
     )->fetchAll();
 }
 
@@ -40,14 +40,14 @@ function nextSidebarSortOrder(): int
     return $max !== null ? ((int) $max + 1) : 1;
 }
 
-function createSidebarItem(string $title, ?string $content, string $image, string $linkUrl, int $isActive, int $sortOrder): int
+function createSidebarItem(string $title, string $type, ?string $content, string $image, string $linkUrl, ?string $iframeSrc, ?int $iframeHeight, int $isActive, int $sortOrder): int
 {
     $now = date('Y-m-d H:i:s');
     $stmt = db()->prepare(
-        'INSERT INTO mblog_sidebar_items (title, content, image, link_url, is_active, sort_order, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO mblog_sidebar_items (title, type, content, image, link_url, iframe_src, iframe_height, is_active, sort_order, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
-    $stmt->execute([$title, $content, $image, $linkUrl, $isActive, $sortOrder, $now, $now]);
+    $stmt->execute([$title, $type, $content, $image, $linkUrl, $iframeSrc, $iframeHeight, $isActive, $sortOrder, $now, $now]);
 
     return (int) db()->lastInsertId();
 }
@@ -56,12 +56,12 @@ function createSidebarItem(string $title, ?string $content, string $image, strin
 // touch sort_order, so re-saving an item's text/image never silently
 // reshuffles its position (that's sidebar-items.php's reorder form's job,
 // see updateSidebarItemOrder() below).
-function updateSidebarItem(int $id, string $title, ?string $content, string $image, string $linkUrl, int $isActive): void
+function updateSidebarItem(int $id, string $title, string $type, ?string $content, string $image, string $linkUrl, ?string $iframeSrc, ?int $iframeHeight, int $isActive): void
 {
     $stmt = db()->prepare(
-        'UPDATE mblog_sidebar_items SET title = ?, content = ?, image = ?, link_url = ?, is_active = ?, updated_at = ? WHERE id = ?'
+        'UPDATE mblog_sidebar_items SET title = ?, type = ?, content = ?, image = ?, link_url = ?, iframe_src = ?, iframe_height = ?, is_active = ?, updated_at = ? WHERE id = ?'
     );
-    $stmt->execute([$title, $content, $image, $linkUrl, $isActive, date('Y-m-d H:i:s'), $id]);
+    $stmt->execute([$title, $type, $content, $image, $linkUrl, $iframeSrc, $iframeHeight, $isActive, date('Y-m-d H:i:s'), $id]);
 }
 
 // Position/visibility only, from sidebar-items.php's bulk reorder form — the

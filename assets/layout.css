@@ -134,6 +134,11 @@
   width: 100%;
   display: block;
 }
+.sidebar-item-iframe {
+  display: block;
+  width: 100%;
+  border: 0;
+}
 /* --- Shared Quill-rendered content ---
    Everything here is *behavior* intrinsic to Quill's own output (alignment,
    image float/caption, blockquote, code blocks, hr) — identical wherever it

@@ -804,8 +804,11 @@ function saveArticle(quill, articleId, slug, status) {
 // set: no slug/status/type/category/tags, just what a sidebar card needs.
 function saveSidebarItem(quill, itemId) {
   const title = document.getElementById('title').value.trim();
+  const itemType = document.getElementById('item-type').value;
   const image = document.getElementById('featured-image').value;
   const linkUrl = document.getElementById('link-url').value.trim();
+  const iframeSrc = document.getElementById('iframe-src').value.trim();
+  const iframeHeight = document.getElementById('iframe-height').value;
   const isActive = document.getElementById('is-active').checked;
   const statusEl = document.getElementById('save-status');
   if (!title) {
@@ -827,9 +830,12 @@ function saveSidebarItem(quill, itemId) {
     body: JSON.stringify({
       id: itemId || '',
       title: title,
+      type: itemType,
       content: clone.innerHTML,
       image: image,
       link_url: linkUrl,
+      iframe_src: iframeSrc,
+      iframe_height: iframeHeight,
       is_active: isActive
     })
   })

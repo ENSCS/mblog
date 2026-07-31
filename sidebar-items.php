@@ -62,6 +62,9 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
                     <img src="<?= htmlspecialchars($item['image']) ?>" alt="" style="max-width:60px; max-height:40px; object-fit:cover; border-radius:4px; vertical-align:middle; margin-right:8px;">
                   <?php endif; ?>
                   <?= htmlspecialchars($item['title']) ?>
+                  <?php if (($item['type'] ?? 'article') === 'iframe'): ?>
+                    <span class="status-badge status-scheduled">iframe</span>
+                  <?php endif; ?>
                 </td>
                 <td><input type="checkbox" name="active[<?= $item['id'] ?>]" value="1" <?= $item['is_active'] ? 'checked' : '' ?> form="reorder-form"></td>
                 <td><input type="number" name="sort_order[<?= $item['id'] ?>]" value="<?= (int) $item['sort_order'] ?>" form="reorder-form" style="max-width:80px;"></td>
