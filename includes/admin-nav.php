@@ -40,6 +40,7 @@ function adminNavGroups(): array
             ['label' => 'จัดการเมนู', 'href' => 'menu.php', 'badge' => count(getAllMenuItems())],
             ['label' => 'จัดการหมวดหมู่', 'href' => 'categories.php', 'badge' => count(getAllCategories())],
             ['label' => 'จัดการ Sidebar', 'href' => 'sidebar-items.php', 'badge' => count(getAllSidebarItems())],
+            ['label' => 'Backup', 'href' => 'backup.php'],
         ],
     ];
 }

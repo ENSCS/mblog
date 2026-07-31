@@ -16,7 +16,8 @@
 - SEO พื้นฐานครบ: featured image, meta description (auto-generate จากเนื้อหา), Open Graph/Twitter Card, canonical tag, JSON-LD, [sitemap.php](sitemap.php), [robots.txt](robots.txt) — **ปรับ SEO เองต่อบทความได้ด้วย** (title/description/noindex แยกจากค่า auto-generate) ที่ [editor.php](editor.php)
 - **ปักหมุดบทความ/หน้า** — เลือกให้ขึ้นก่อนใครใน [articles.php](articles.php)/[pages.php](pages.php) ได้ พร้อมจัดลำดับเอง จัดการรวมที่หน้าแยก [sticky-items.php](sticky-items.php) (ค้นหาแล้วปัก ไม่ต้องไล่หาทั้งรายการ)
 - **ตั้งเวลาเผยแพร่ + วันหมดอายุ** — ตั้งบทความให้เผยแพร่ล่วงหน้าหรือหมดอายุอัตโนมัติได้ที่ [editor.php](editor.php) โดยไม่ต้องมี cron ฝั่งเซิร์ฟเวอร์
-- หน้า error กลาง (404/500) + log ข้อผิดพลาด + สคริปต์ backup ไฟล์อัตโนมัติพร้อม retention ([scripts/backup.php](scripts/backup.php)) — **หมายเหตุ:** ยัง backup แค่ไฟล์ ไม่ได้ dump ฐานข้อมูลด้วย (งานค้าง)
+- หน้า error กลาง (404/500) + log ข้อผิดพลาด
+- **Backup ทั้งเว็บ** (ฐานข้อมูลทุกตาราง + ไฟล์อัปโหลด ไม่ใช่แค่ไฟล์เหมือนเดิม) — กดปุ่ม "Backup ตอนนี้" ที่หน้าแอดมิน [backup.php](backup.php) ได้เลย มีลิสต์ backup เก่า ดาวน์โหลด/ลบทีละไฟล์ พร้อม retention อัตโนมัติ (`scripts/backup.php` รันผ่าน cron ได้เช่นกัน)
 - **ธีมเว็บสว่าง/มืดสลับได้** พร้อม**แบรนด์เว็บ** (โลโก้/favicon/สโลแกน) ตั้งค่าได้เองที่ [settings.php](settings.php)
 - **Sidebar** — แบนเนอร์/ประกาศ/ป้ายลิงก์ข้างเนื้อหา จัดการได้เต็มรูปแบบที่ [sidebar-items.php](sidebar-items.php) เปิด/ปิดได้ทั้งระดับเว็บและบังคับต่อบทความ/หน้า
 - **ระบบสถิติ** — เก็บ pageview อัตโนมัติทั้งเว็บ (ไม่เก็บ IP ดิบ) แยกอุปกรณ์/ระบบปฏิบัติการ/บอท/ที่มา ดูภาพรวมพร้อมกราฟที่ [stats.php](stats.php) — มีช่องใส่โค้ด `<head>`/`</body>` เองได้ที่ [settings.php](settings.php) ด้วย เผื่ออยากต่อ Google Analytics/GTM ในอนาคต
@@ -48,7 +49,7 @@
 
 ## ยังไม่มี
 
-ล็อกอิน/สิทธิ์ผู้ใช้ (หน้าแอดมินทุกหน้าตอนนี้เข้าได้โดยไม่ต้องล็อกอิน — ยิ่งสำคัญขึ้นหลังเพิ่มช่องใส่โค้ด head/body เองได้), คอมเมนต์, backup ที่ครอบคลุมฐานข้อมูล — อยู่ในแผนแล้ว ดูรายละเอียดที่ [PLANNING.md](PLANNING.md)
+ล็อกอิน/สิทธิ์ผู้ใช้ (หน้าแอดมินทุกหน้าตอนนี้เข้าได้โดยไม่ต้องล็อกอิน — ยิ่งสำคัญขึ้นหลังเพิ่มช่องใส่โค้ด head/body เองได้), คอมเมนต์, cron/offsite copy อัตโนมัติสำหรับ backup — อยู่ในแผนแล้ว ดูรายละเอียดที่ [PLANNING.md](PLANNING.md)
 
 ## รันโปรเจกต์
 

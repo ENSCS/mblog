@@ -108,13 +108,13 @@
 `status` (draft/published) + `published_at` แยกจาก `created_at`, กรองทั้งหน้ารายการและเข้าตรงด้วย URL แล้ว, `editor.php` แยกปุ่ม "บันทึกร่าง"/"เผยแพร่" ชัดเจนแบบ WP
 - **ยังไม่ทำ**: Scheduled publish (ตั้งเวลาเผยแพร่ล่วงหน้า) — ไม่ต้องมี cron แยก แค่เทียบ `published_at <= เวลาปัจจุบัน` ตอน query
 
-### 9. โครงสร้างเก็บรูปภาพ/ไฟล์ + แผน backup/migrate — ✅ ทำแล้วเกือบหมด (เหลือ backup script)
+### 9. โครงสร้างเก็บรูปภาพ/ไฟล์ + แผน backup/migrate — ✅ ทำแล้วทั้งหมด (2026-08-01 backup script ครอบคลุม MySQL แล้ว)
 - ~~ตอนนี้ (ไฟล์): `articles/*.json` + `uploads/` แบบ flat ทั้งคู่~~ — เลิกใช้แล้ว บทความย้ายเข้า MySQL หมด, `uploads/` เปลี่ยนโครงสร้างแล้ว (ดูข้อถัดไป)
 - **ทำแล้ว** — ตาราง `mblog_images` (id, `article_id` FK `ON DELETE CASCADE`, path, caption, created_at) ผูกรูปกับบทความด้วย foreign key จริง ไม่ต้องเดาจาก path/parse HTML อีกต่อไป — sync อัตโนมัติทุกครั้งที่บันทึกบทความผ่าน `syncArticleImages()` ใน `api/save.php` (parse `<img>` ในเนื้อหา + featured_image, insert รูปใหม่/ลบแถวรูปที่ไม่ใช้แล้ว — **ฟังก์ชันนี้ลบแค่แถว DB ไม่แตะไฟล์จริง** กันเผลอลบรูปที่ยังใช้อยู่จาก false positive ของ regex parse `<img>`)
 - **ทำแล้ว (เพิ่มทีหลัง 2026-07-28)** — การลบไฟล์จริงมีอีกกลไกแยกต่างหาก `includes/uploads.php`: `uploadPathInUse(string $path): bool` เช็คว่า path ยังถูกอ้างอิงอยู่ไหมทั้งใน `mblog_articles` (`featured_image`/`content`) และ `mblog_sidebar_items` (`image`/`content`) เพราะสองตารางนี้ใช้พูล `uploads/` ร่วมกัน แล้ว `deleteUploadIfUnused(string $path): void` ค่อย `unlink()` ไฟล์จริง**เฉพาะ**เมื่อเช็คแล้วว่าไม่มีที่ไหนใช้ — เรียกจาก `api/save.php`/`api/save-sidebar-item.php` หลัง UPDATE/INSERT เสร็จ เทียบ `featured_image`/`image` เก่ากับใหม่ ถ้าเปลี่ยน/ลบก็เรียกกับค่าเก่า — รายละเอียดเต็มดู [BUILT.md](BUILT.md)
 - **ทำแล้ว** — โฟลเดอร์แบ่งรายเดือนจริงแล้ว `uploads/YYYY/MM/` (เช่น `uploads/2026/07/xxxx.jpg`) ไม่ต้องผูกกับ slug/บทความเลย (DB จัดการความสัมพันธ์แทนแล้วผ่าน `mblog_images`) ไฟล์เก่าที่เป็น flat path ยังอยู่ที่เดิมได้ ไม่ต้องย้าย เพราะ DB เก็บ path เต็มตรงๆ ไม่ได้คำนวณจาก pattern โฟลเดอร์
 - **ทำแล้ว** — ชื่อไฟล์อัปโหลดเปลี่ยนจากสุ่ม timestamp+random เป็นเก็บชื่อเดิม (sanitize แบบ WP `wp_unique_filename()`: คงชื่อที่มนุษย์อ่านออก รองรับทุกภาษา ชนกันแล้วเติม `-2`, `-3` ต่อท้าย) ดีต่อ SEO รูปภาพกว่าเดิมมาก
-- **ยังไม่ทำ** — `scripts/backup.php` ยัง backup แค่โฟลเดอร์ `articles/`+`uploads/` (คอมเมนต์เก่าบอก "mysqldump ยังไม่เกี่ยวข้องเพราะยังไม่มี DB" ซึ่งไม่จริงแล้ว) **ตอนนี้เนื้อหาจริงย้ายไป MySQL หมดแล้ว แปลว่า backup ปัจจุบันไม่ครอบคลุมเนื้อหาบทความเลย** ต้องเพิ่ม `mysqldump` เข้าไปคู่กับการ backup ไฟล์ก่อน ไม่งั้นเสี่ยงข้อมูลหายถ้าเครื่องพัง (มี task ที่ flag ไว้ให้แล้วรอทำ)
+- **ทำแล้ว (2026-08-01)** — `scripts/backup.php` บีบอัดทั้งเว็บแล้ว (ทุกตาราง `mblog_*` ยกเว้น `mblog_pageview_log` + `uploads/`) ไม่ใช่แค่ไฟล์เหมือนเดิม — รายละเอียดเต็มดูหัวข้อ 11
 - ใช้ `id` (auto-increment) เป็น primary key ภายในตาราง `mblog_articles`/`mblog_images` จริงตามที่วางแผนไว้, `slug` เป็นแค่ unique column สำหรับ URL — ผลคือแก้ slug บทความที่เผยแพร่แล้วได้อย่างปลอดภัยระดับ DB จริงๆ (ไม่กระทบ FK ใดๆ) ตามที่ตั้งใจไว้ตั้งแต่ต้น — ต่อยอดทำระบบ **301 redirect** (`mblog_slug_redirects`) เพิ่มด้วย กัน SEO/ลิงก์เก่าเสียตอนเปลี่ยน slug
 
 ### 10. SEO และการแชร์เนื้อหา — ✅ ทำแล้วเกือบหมด (เว้น URL สวย)
@@ -123,25 +123,28 @@ Meta description + OG tags (`og:title`/`description`/`image`/`url`/`type=article
   - แผนเมื่อจะทำจริง: (1) เพิ่ม `.htaccess` root ใหม่ rewrite path สวย → query string เดิม (2) แก้จุดสร้างลิงก์ในไฟล์ที่ประกอบ `?slug=` เอง — เจอแล้ว 9 จุด: `article.php`, `category.php`, `tag.php`, `page.php`, `includes/articles.php`, `menu.php`, `partials/article-list.php`, `sidebar-item-editor.php`, `sitemap.php` (3) 301 redirect URL เก่า → ใหม่ กันของที่เคย index ไว้เสีย SEO (ใช้ pattern เดียวกับตอนแก้ slug เอง)
   - **พักไว้ก่อน ยังไม่ทำ**: ยังไม่มั่นใจว่าโฮสจริงตอน deploy จะเปิด `AllowOverride`/`mod_rewrite` ให้ได้หรือเปล่า (เครื่อง dev/XAMPP ตอนนี้เปิดให้อยู่แล้ว ไม่ใช่ปัญหาฝั่ง dev) และยังไม่จำเป็นเร่งด่วนตอนนี้ — รอจนกว่าจะรู้ spec โฮสจริงก่อนค่อยกลับมาทำ
 
-### 11. Backup ระบบ (ครอบคลุมทั้งเว็บ ไม่ใช่แค่รูป)
+### 11. Backup ระบบ (ครอบคลุมทั้งเว็บ ไม่ใช่แค่รูป) — ✅ ทำแล้วเกือบหมด (2026-08-01, เหลือ cron/offsite/เก็บสำเนา credentials)
 หัวข้อ 9 ข้างบนคุยเรื่องโครงสร้างไฟล์รูป/backup ไว้แล้วบางส่วน หัวข้อนี้ขยายให้ครอบคลุมทั้งระบบ (บทความ + database + credentials)
 
 - **หลักการ 3-2-1** — มีสำเนาข้อมูลอย่างน้อย 3 ชุด, เก็บใน 2 สื่อ/ระบบต่างกัน, อย่างน้อย 1 ชุดอยู่นอกเซิร์ฟเวอร์หลัก (offsite) — ไม่งั้นถ้าเซิร์ฟเวอร์เสีย backup ที่อยู่เครื่องเดียวกันก็หายไปด้วย
-- **ตอนนี้ (ไฟล์)**: backup = คัดลอก `articles/` + `uploads/` ทั้งโฟลเดอร์ ง่ายมาก ไม่มี DB ต้อง dump
-- **พอมี MySQL**: ต้องเพิ่ม `mysqldump` เข้าไปคู่กับการ backup ไฟล์ (สอง process แยกกัน ต้องรันคู่กันเสมอ)
-- **`config.php` / credentials** — เป็นข้อมูลลับ ไม่ควรอยู่ใน git และไม่ควรปนกับ backup ที่ส่งไปที่เก็บทั่วไป ควรมีสำเนาไว้ในที่ปลอดภัยแยกต่างหาก (เช่น password manager) เผื่อเซิร์ฟเวอร์ล่มแล้วต้องตั้งใหม่
-- **อัตโนมัติ** — เขียนสคริปต์ (shell หรือ PHP CLI) รันผ่าน cron job ตามตารางเวลา (เช่น ทุกคืน) แทนการจำเป็นสำรองเอง
+- **ทำแล้ว** — `scripts/backup.php` + `includes/backup.php` บีบอัดทั้งเว็บลง zip ชุดเดียว (db-dump.sql ของทุกตาราง `mblog_*` ยกเว้น `mblog_pageview_log` + `uploads/`) — DB dump เขียนด้วย **PHP ล้วน** (`SHOW CREATE TABLE` + `SELECT *` ต่อตาราง, ไม่เรียก `mysqldump` ผ่าน `shell_exec`) เพราะยังไม่รู้ spec โฮสจริงตอน deploy และโฮสแชร์หลายเจ้าปิด `exec`/`shell_exec` ไว้ด้วยเหตุผลความปลอดภัย — pure-PHP รันได้แน่นอนทุกที่ไม่มีความเสี่ยงเรื่อง dependency เลย
+  - **`mysqldump` ยังเป็นทางเลือกไว้ทำอนาคตได้** ถ้าข้อมูลโตขึ้นมากจนโหลดทั้งตารางเข้า PHP memory ทีเดียวไม่ไหว (`mysqldump` สตรีมทีละแถวที่ระดับ DB ประหยัดกว่า) หรืออยากได้ `--single-transaction` (snapshot ทุกตารางพร้อมกันตอนมีคนเขียนข้อมูลพร้อมกัน — ตอนนี้ยังไม่ครอบ transaction เพราะ query แยกทีละตาราง เว็บนี้ traffic ต่ำเลยความเสี่ยงต่ำมาก) — ถ้าจะทำต้อง fallback เป็น PHP dump เมื่อ `shell_exec` ใช้ไม่ได้ด้วย
+  - **หน้าแอดมิน `backup.php`** — ปุ่ม "Backup ตอนนี้" (trigger ด้วยมือ, ระดับแรกก่อนตั้ง cron) + ตารางลิสต์ backup ที่มีอยู่ (ชื่อ/ขนาด/เวลา) พร้อมดาวน์โหลด/ลบทีละไฟล์ — จำเป็นเพราะ `backups/` โดน `.htaccess` deny-all กันไว้ (self-provision อัตโนมัติตอนสร้างโฟลเดอร์ครั้งแรก เนื่องจาก `backups/` ถูก `.gitignore` ทั้งโฟลเดอร์ ไม่มีทางส่ง `.htaccess` ผ่าน git ได้) ถ้าไม่มีหน้านี้จะไม่มีทางดึงไฟล์ zip ออกไปเก็บที่อื่นเองได้เลย
+- **`config.php` / credentials** — เป็นข้อมูลลับ ไม่ควรอยู่ใน git และไม่ควรปนกับ backup ที่ส่งไปที่เก็บทั่วไป ควรมีสำเนาไว้ในที่ปลอดภัยแยกต่างหาก (เช่น password manager) เผื่อเซิร์ฟเวอร์ล่มแล้วต้องตั้งใหม่ — **ยังไม่ทำ** ตอนนี้มี credentials จริงแล้ว (`DB_USER`/`DB_PASS` ใน `config.php`) แต่ยังไม่ได้เก็บสำเนาแยกไว้
+- **อัตโนมัติ** — ยังเป็นแบบกดปุ่มเองอยู่ (ระดับแรกที่ตกลงกันไว้) บรรทัด cron ที่ต้องใช้เขียนไว้เป็นคอมเมนต์บนสุดของ `scripts/backup.php` แล้ว รอเจ้าของเครื่องสั่งเองเมื่อพร้อม
 - **Retention** — เก็บย้อนหลังกี่วัน/กี่ชุด แล้วลบของเก่าทิ้งอัตโนมัติ ไม่งั้นพื้นที่เก็บบวมเรื่อยๆ
 - **ทดสอบ restore จริง** — backup ที่ไม่เคยลองกู้คืนดู ถือว่ายังไม่รู้ว่าใช้ได้จริงหรือเปล่า ควรลองอย่างน้อยครั้งหนึ่งตอนตั้งระบบเสร็จใหม่ๆ
 - ถ้าใช้ hosting ที่มี backup อัตโนมัติให้อยู่แล้ว (VPS/hosting บางเจ้ามี) ควรใช้ของที่มีให้ก่อน แล้วค่อยเสริมด้วยของที่ทำเอง ไม่ต้องเริ่มจากศูนย์เสมอไป
 
 **สิ่งที่ต้องทำ:**
-- [x] เขียนสคริปต์ backup (บีบอัด `articles/` + `uploads/`) — `scripts/backup.php` (PHP CLI, ใช้ ZipArchive ไม่พึ่ง `tar` เพื่อความพกพา) `mysqldump` ยังไม่เกี่ยวข้องเพราะยังไม่มี DB
+- [x] เขียนสคริปต์ backup ครอบคลุมทั้งเว็บ — `scripts/backup.php` (CLI wrapper บางๆ) + `includes/backup.php` (logic จริง ใช้ร่วมกับหน้าแอดมิน) บีบอัด db-dump.sql (PHP ล้วน) + `uploads/` ด้วย ZipArchive
+- [x] หน้าแอดมิน `backup.php` — ปุ่ม trigger + list + download + delete ทีละไฟล์
+- [x] ป้องกัน `backups/` ด้วย `.htaccess` deny-all — self-provision อัตโนมัติตอนสร้างโฟลเดอร์ครั้งแรก (ไม่พึ่ง git เพราะโฟลเดอร์นี้ถูก ignore ทั้งหมด)
 - [ ] ตั้ง cron job รันอัตโนมัติตามตาราง — **ตั้งใจไม่ติดตั้งให้เอง** (แก้ crontab เป็นการเปลี่ยนค่าระบบถาวร ต้องให้เจ้าของเครื่องสั่งเอง) บรรทัด cron ที่ต้องใช้เขียนไว้เป็นคอมเมนต์บนสุดของ `scripts/backup.php` แล้ว
-- [ ] ส่งไฟล์ backup ไปเก็บนอกเซิร์ฟเวอร์หลัก (คนละดิสก์/cloud storage) — ยังไม่ทำ ต้องรู้ปลายทางจริงก่อน (S3/cloud/ดิสก์อื่น)
+- [ ] ส่งไฟล์ backup ไปเก็บนอกเซิร์ฟเวอร์หลัก (คนละดิสก์/cloud storage) อัตโนมัติ — ยังไม่ทำ ตอนนี้ต้องดาวน์โหลดจากหน้า `backup.php` ไปเก็บเองด้วยมือ ต้องรู้ปลายทางจริงก่อนถึงจะทำอัตโนมัติได้ (S3/cloud/ดิสก์อื่น)
 - [x] ตั้ง retention policy (เก็บกี่ชุดย้อนหลัง) — ลบ backup ที่เก่ากว่า 14 วันอัตโนมัติทุกครั้งที่รัน (แก้ค่าได้ที่ `RETENTION_DAYS` ในสคริปต์)
-- [x] ทดสอบ restore จริงอย่างน้อย 1 ครั้ง — รันจริง, extract แล้ว `diff -rq` เทียบกับต้นฉบับ ไม่มีความต่างเลย
-- [ ] เก็บสำเนา `config.php`/credentials ไว้ที่ปลอดภัยแยกจาก backup ทั่วไป — ยังไม่มี credentials จริงให้เก็บ (รอ MySQL) `scripts/backup.php` ตั้งใจไม่รวม `config.php` เข้าไปในไฟล์ backup ไว้แล้ว
+- [x] ทดสอบ restore จริงอย่างน้อย 1 ครั้ง — import `db-dump.sql` เข้า database ทดสอบจริง เทียบจำนวนแถวกับของจริงตรงกันทุกตาราง ไม่มี error
+- [ ] เก็บสำเนา `config.php`/credentials ไว้ที่ปลอดภัยแยกจาก backup ทั่วไป — มี credentials จริงแล้วแต่ยังไม่ได้เก็บสำเนา `scripts/backup.php`/`includes/backup.php` ตั้งใจไม่รวม `config.php` เข้าไปในไฟล์ backup ไว้แล้ว
 
 ### 12. Error handling และความพร้อมสำหรับ Production — ✅ ทำแล้วทั้งหมด
 Environment flag (`APP_ENV` ใน `config.php`) คุม `display_errors`/`log_errors` ตามโหมด (`includes/error-handling.php`, log ไปที่ `logs/php-error.log`), หน้า error กลาง 404/500 (`error.php` + `renderErrorPage()`, ไม่พึ่ง config/menu อื่นกันพังซ้ำ), `set_error_handler()`/`set_exception_handler()` จับ error/exception ที่ไม่คาดคิดทั้งหมด, เช็ค return value การเขียนไฟล์/DB และ `json_decode() === null` ครบทุกจุดที่โหลดบทความ
@@ -234,7 +237,7 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 ขอบเขต: เฉพาะ**บล็อก + landing page พื้นฐาน** ตามที่ตกลงกันไว้ ยังไม่รวมระบบขาย/หุ้น (ดูหัวข้อ "นอกขอบเขต" ท้ายสุด)
 
 ### Phase 0-2 — โครงสร้างพื้นฐาน + MySQL — ✅ เสร็จสมบูรณ์ทั้งหมด
-ระบบเขียนบทความ WYSIWYG (Quill) เต็มรูปแบบ + mobile responsive + git/GitHub + README ครบตั้งแต่ Phase 0 — Phase 1 ย้ายข้อมูลบทความ/รูปภาพ/หมวดหมู่/เมนูจากไฟล์ JSON เข้า MySQL ทั้งหมด (ออกแบบตารางของทุก Phase ล่วงหน้าทีเดียว, `config.php` รวม credentials จุดเดียว) พิสูจน์หลักการ "แยกข้อมูล-โค้ด" สำเร็จ (สลับ storage แล้วหน้าเว็บไม่ต้องแก้โค้ด render เลย) — Phase 2 ตามมาด้วย partials, CSS แยกไฟล์, SEO พื้นฐาน (หัวข้อ 10), error handling (หัวข้อ 12), และ backup script เบื้องต้น (หัวข้อ 11 — **ยังไม่ dump MySQL ดู "งานค้างที่สำคัญที่สุด" ท้ายเอกสาร**) — ของแถมนอกแผนเดิมทั้งหมด (แก้ slug เอง + 301 redirect, ระบบรูปภาพเต็มรูปแบบ, ค่าตั้งค่าเว็บ) ดูรายละเอียดที่ [BUILT.md](BUILT.md)
+ระบบเขียนบทความ WYSIWYG (Quill) เต็มรูปแบบ + mobile responsive + git/GitHub + README ครบตั้งแต่ Phase 0 — Phase 1 ย้ายข้อมูลบทความ/รูปภาพ/หมวดหมู่/เมนูจากไฟล์ JSON เข้า MySQL ทั้งหมด (ออกแบบตารางของทุก Phase ล่วงหน้าทีเดียว, `config.php` รวม credentials จุดเดียว) พิสูจน์หลักการ "แยกข้อมูล-โค้ด" สำเร็จ (สลับ storage แล้วหน้าเว็บไม่ต้องแก้โค้ด render เลย) — Phase 2 ตามมาด้วย partials, CSS แยกไฟล์, SEO พื้นฐาน (หัวข้อ 10), error handling (หัวข้อ 12), และ backup script เบื้องต้น (หัวข้อ 11 — ทำครบแล้ว 2026-08-01 รวม MySQL dump ด้วย) — ของแถมนอกแผนเดิมทั้งหมด (แก้ slug เอง + 301 redirect, ระบบรูปภาพเต็มรูปแบบ, ค่าตั้งค่าเว็บ) ดูรายละเอียดที่ [BUILT.md](BUILT.md)
 
 ### Phase 3 — ระบบล็อกอิน/สิทธิ์ (ประเด็นที่วนกลับมาซ้ำๆ) — 🔜 ยังไม่ทำ (MySQL พร้อมแล้ว)
 - [x] ตาราง `mblog_users` (email, password_hash, role, + `author_id` บน `mblog_articles`) — สร้างรอไว้แล้ว (`database/phase3_users.sql`) ยังไม่มีโค้ดใช้งาน
@@ -268,7 +271,7 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 
 ### Phase 10 — Production readiness เต็มรูปแบบ (ส่วน 11, 12 + หัวข้ออื่นที่เคยคุย) — 🔜 ยังไม่ทำ
 - [ ] HTTPS (Let's Encrypt) บนโฮสจริง
-- [ ] Backup อัตโนมัติเต็มระบบ: ไฟล์ + `mysqldump`, retention policy, ทดสอบ restore
+- [ ] Backup อัตโนมัติเต็มระบบ: ไฟล์+DB ทำแล้ว (หัวข้อ 11), retention/restore ทดสอบแล้ว — เหลือแค่ตั้ง cron ให้รันเองอัตโนมัติ + ส่ง offsite อัตโนมัติ
 - [ ] เก็บสำเนา `config.php`/credentials แยกที่ปลอดภัย (นอก git, นอก backup ทั่วไป)
 - [ ] Deployment workflow (local → GitHub → เซิร์ฟเวอร์จริง อย่างมีระบบ ไม่ FTP มือ)
 - [ ] หน้ากฎหมาย: Privacy Policy, Terms of Service (จำเป็นก่อนเปิดให้คนทั่วไปใช้จริง โดยเฉพาะถ้าจะขายของในอนาคต)
@@ -345,10 +348,9 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 - **Phase 13 — โครงสร้าง header/sidebar/footer** ✅ เสร็จทั้งหมด — ดูหัวข้อ 15
 - **Phase 11 — ฟีเจอร์บทความเพิ่มเติม** ✅ เสร็จ 4/6 (SEO override, Sticky, Scheduled publishing, Post expiration) เหลือ Private post (ติด auth) และ Hierarchical pages (พักไว้รอ pretty URL) — ดูหัวข้อ 13 สำหรับรายละเอียดที่เบี่ยงจากแผนเดิม (โดยเฉพาะ sticky ที่ดีไซน์เปลี่ยนไปมากหลังคุยกัน 3 รอบ) และบั๊ก 2 ตัวที่เจอ+แก้ระหว่างทำ (settings cache ไม่ sync, PHP/MySQL timezone ไม่ตรงกัน)
 
-**งานค้างที่สำคัญที่สุดตอนนี้:** `scripts/backup.php` ยังไม่ dump MySQL (ดูหัวข้อ 9/Phase 2) — เนื้อหาจริงย้ายออกจากไฟล์หมดแล้ว แปลว่า backup ปัจจุบัน**ไม่ครอบคลุมเนื้อหาบทความเลย** ควรทำก่อนเรื่องอื่น
+**Backup ระบบ (หัวข้อ 9/11, ทำเสร็จ 2026-08-01)** — เดิมเป็นงานค้างที่สำคัญที่สุด (`scripts/backup.php` ไม่เคย dump MySQL แม้เนื้อหาย้ายออกจากไฟล์ไปหมดแล้ว) ตอนนี้ทำครบแล้ว: `includes/backup.php` (dump ทุกตาราง `mblog_*` ยกเว้น `mblog_pageview_log` ด้วย PHP ล้วน ไม่พึ่ง `mysqldump`/`shell_exec` + zip รวม `uploads/`) ใช้ร่วมกันทั้ง `scripts/backup.php` (CLI/cron) และหน้าแอดมินใหม่ `backup.php` (ปุ่ม trigger + list/download/delete, จำเป็นเพราะ `backups/` โดน `.htaccess` deny-all กันไว้) — ทดสอบ restore จริงแล้ว (import เข้า DB ทดสอบ, จำนวนแถวตรงกับของจริงทุกตาราง) รายละเอียดเต็มดูหัวข้อ 11 — เหลือ cron อัตโนมัติ, ส่ง offsite อัตโนมัติ, เก็บสำเนา credentials แยกที่ปลอดภัย (ยังตั้งใจให้เป็นขั้นต่อไปแยกต่างหาก ไม่ใช่ของค้าง)
 
 **ตัวเลือกขั้นต่อไป:**
-- แก้ backup script ให้ครอบคลุม MySQL (ด่วน — ความเสี่ยงข้อมูลหาย)
 - Phase 3 (ระบบล็อกอิน/สิทธิ์) — ตัวบล็อกที่เหลือหลัง Phase 11/13 เสร็จแล้ว: Phase 7 (คอมเมนต์), Private post (หัวข้อ 13), บทความล็อกด้วยรหัสผ่าน (หัวข้อ 14), ความปลอดภัยของระบบร่าง — ตารางพร้อมแล้ว — ยิ่งสำคัญขึ้นหลังเพิ่มช่องใส่ head/body code เองได้ (Phase 9) เพราะตอนนี้ยังไม่มีใครล็อกไม่ให้คนนอกเข้ามาแก้/แทรก script ได้
 - Phase 9 ที่ยังพักไว้: retention/rollup ของ `mblog_pageview_log` (รอข้อมูลเยอะขึ้นก่อนค่อยตัดสินใจระดับความละเอียด), ทบทวน/อัปเดต pattern บอทใน `isBotUserAgent()` เป็นระยะ
 - **Hierarchical pages** (หัวข้อ 13) — ตั้งใจพักไว้จนกว่าจะทำ pretty URL (หัวข้อ 10) เสร็จก่อน เพราะประโยชน์หลักของ WP (URL ซ้อนกัน, sub-nav อัตโนมัติ) ต้องมี pretty URL/breadcrumb รองรับด้วยถึงจะเห็นผลจริง ไม่ใช่แค่เห็นโครงสร้างในหน้าแอดมิน

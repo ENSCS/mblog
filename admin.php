@@ -81,5 +81,8 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
       <div class="dashboard-card-count"><?= $sidebarItemCount ?></div>
       <div class="dashboard-card-label">จัดการ Sidebar</div>
     </a>
+    <a class="dashboard-card" href="backup.php">
+      <div class="dashboard-card-label">Backup</div>
+    </a>
   </div>
 <?php render_sidebar($layout); render_footer(); ?>
