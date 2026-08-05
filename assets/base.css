@@ -1,41 +1,66 @@
 /* ==========================================================================
-   Design tokens — derived from claude-design.md (cream canvas + coral accent
-   + dark-navy surfaces). Two layers, same principle as the rest of this
-   project ("แยกข้อมูลออกจากโค้ดที่แสดงผล" — see PLANNING.md):
-     1. Raw palette   --color-*   the literal swatches from the doc, mode-stable
-     2. Role tokens    --page-bg, --text-primary, --card-bg, etc.
-                        what components actually use, remapped per theme below
-   A component should always reach for a role token, never a raw --color-*
-   value directly — that's what makes swapping the whole site's look (or
-   adding the dark variant) a matter of editing this one block, not hunting
-   through every CSS file.
+   Design tokens — cream canvas + coral accent + dark-navy surfaces (see
+   claude-design.md). Two layers:
+     1. Raw palette   --color-*   the literal swatches
+     2. Role tokens   --page-bg, --text-primary, --card-bg, etc. — what
+                       components actually use
+   Components should always reach for a role token, never a raw --color-*
+   value — that's what makes re-theming a matter of editing this one block.
+
+   Raw palette has 3 groups, light before dark throughout:
+     - theme-independent: same value in both themes (e.g. --color-primary)
+     - theme-aware: light value in :root, dark value (same name) in
+       :root[data-theme="dark"] below
+     - dark constants: -dark suffix twin of a theme-aware name above
+       (--color-canvas → --color-canvas-dark); footer + code blocks
+       (layout.css) use these directly since they never invert
+
+   Role tokens usually just reference a theme-aware raw name once — the
+   cascade updates them automatically when data-theme changes. The exception
+   is one-off colors nothing else reuses (status colors, tag palette,
+   --dropdown-shadow), which hold their own literal value in both blocks.
    ========================================================================== */
 :root {
-  /* --- Raw palette (light) --- */
+  /* --- Raw palette: theme-independent --- */
   --color-primary: #cc785c;
   --color-primary-hover: #a9583e;
   --color-primary-disabled: #e6dfd8;
   --color-accent-teal: #5db8a6;
   --color-accent-amber: #e8a55a;
+  --color-on-primary: #ffffff;
 
+  /* --- Raw palette: theme-aware (dark value in :root[data-theme="dark"]) --- */
   --color-canvas: #efe9de;
   --color-surface-soft: #f5f0e8;
   --color-surface-card: #faf9f5;
-  --color-surface-cream-strong: #e8e0d2;
-  --color-surface-dark: #181715;
-  --color-surface-dark-elevated: #252320;
-  --color-surface-dark-soft: #1f1e1b;
   --color-hairline: #e6dfd8;
-  --color-hairline-soft: #ebe6df;
-
   --color-ink: #141413;
-  --color-body-strong: #252523;
   --color-body: #3d3d3a;
   --color-muted: #6c6a64;
-  --color-muted-soft: #8e8b82;
-  --color-on-primary: #ffffff;
-  --color-on-dark: #faf9f5;
-  --color-on-dark-soft: #a09d96;
+  --color-link: #0645ad;
+  --color-brand-name: #a9583e;
+
+  /* --- Raw palette: dark constants — -dark twin of each theme-aware name
+     above, same order. --color-surface-soft-dark is interpolated (no
+     historical value existed) between canvas-dark and surface-card-dark.
+     --color-link-dark and --color-brand-name-dark aren't a straight
+     dark-mode swap of their light value — both light values drop to ~2:1
+     contrast on the near-black canvas, so dark gets its own distinct value
+     chosen for contrast instead (brand-name stays in the coral family, just
+     lighter). --- */
+  --color-canvas-dark: #181715;
+  --color-surface-soft-dark: #1f1d1b;
+  --color-surface-card-dark: #252320;
+  --color-hairline-dark: #34312b;
+  --color-ink-dark: #faf9f5;
+  --color-body-dark: #cfccc4;
+  --color-muted-dark: #a09d96;
+  --color-link-dark: #58a6ff;
+  --color-brand-name-dark: #e39073;
+
+  /* --- Dark-only, no light counterpart — code blocks (layout.css) are
+     always dark, pinned to match github-dark.min.css syntax highlighting. --- */
+  --color-code-bg-dark: #1f1e1b;
 
   --color-success: #5db872;
   --color-warning: #d4a017;
@@ -56,7 +81,7 @@
   --font-body: "Segoe UI", "Sarabun", Tahoma, sans-serif;
   --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 
-  /* --- Role tokens: light theme --- */
+  /* --- Role tokens: what components actually use --- */
   --page-bg: var(--color-canvas);
   --card-bg: var(--color-surface-card);
   --card-border: var(--color-hairline);
@@ -64,8 +89,9 @@
   --text-primary: var(--color-ink);
   --text-secondary: var(--color-body);
   --text-muted: var(--color-muted);
-  --text-muted-soft: var(--color-muted-soft);
   --text-on-primary: var(--color-on-primary);
+  --link-color: var(--color-link);
+  --brand-name-color: var(--color-brand-name);
 
   --topbar-bg: var(--color-canvas);
   --topbar-text: var(--color-ink);
@@ -84,8 +110,8 @@
 
   /* Footer is dark navy in both themes on purpose — "the footer never
      inverts" per claude-design.md. */
-  --footer-bg: var(--color-surface-dark);
-  --footer-text: var(--color-on-dark-soft);
+  --footer-bg: var(--color-canvas-dark);
+  --footer-text: var(--color-muted-dark);
 
   --success-bg: #e6f2e8;
   --success-text: #2f6b40;
@@ -97,8 +123,8 @@
   /* Category badge palette — warm/muted variants instead of stock SaaS
      blue/green/purple, so the 7-color set reads as part of the cream+coral
      system rather than a 4th unrelated surface tone. */
-  --tag-gray-bg: var(--color-surface-cream-strong);
-  --tag-gray-text: var(--color-muted);
+  --tag-gray-bg: #e8e0d2;
+  --tag-gray-text: #6c6a64;
   --tag-blue-bg: #e3e8ec;
   --tag-blue-text: #3d5568;
   --tag-green-bg: #e3f0e0;
@@ -113,31 +139,22 @@
   --tag-yellow-text: #7a6a1f;
 }
 
-/* --- Role tokens: dark theme --- */
+/* --- Dark-theme overrides. Theme-aware raw names just get a new value here
+   — role tokens referencing them update automatically via the cascade.
+   Status colors, tags, and --dropdown-shadow hold their own literal value
+   here too, since nothing else reuses them. --- */
 :root[data-theme="dark"] {
-  --page-bg: var(--color-surface-dark);
-  --card-bg: var(--color-surface-dark-elevated);
-  --card-border: #34312b;
+  --color-canvas: var(--color-canvas-dark);
+  --color-surface-soft: var(--color-surface-soft-dark);
+  --color-surface-card: var(--color-surface-card-dark);
+  --color-hairline: var(--color-hairline-dark);
+  --color-ink: var(--color-ink-dark);
+  --color-body: var(--color-body-dark);
+  --color-muted: var(--color-muted-dark);
+  --color-link: var(--color-link-dark);
+  --color-brand-name: var(--color-brand-name-dark);
 
-  --text-primary: var(--color-on-dark);
-  --text-secondary: #cfccc4;
-  --text-muted: var(--color-on-dark-soft);
-  --text-muted-soft: #7d7a73;
-
-  --topbar-bg: var(--color-surface-dark);
-  --topbar-text: var(--color-on-dark);
-  --topbar-border: #34312b;
-  --dropdown-bg: var(--color-surface-dark-elevated);
   --dropdown-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-
-  --input-bg: var(--color-surface-dark-soft);
-  --input-border: #3a3730;
-  --input-text: var(--color-on-dark);
-
-  --btn-secondary-bg: var(--color-surface-dark-elevated);
-  --btn-secondary-border: #3a3730;
-  --btn-secondary-text: var(--color-on-dark);
-  --btn-secondary-bg-hover: #302d27;
 
   --success-bg: #1d3324;
   --success-text: #8fd6a2;
@@ -146,7 +163,7 @@
   --error-bg: #3a1e1e;
   --error-text: #e79b9b;
 
-  --tag-gray-bg: #34312b;
+  --tag-gray-bg: var(--color-hairline-dark);
   --tag-gray-text: #b5b2a9;
   --tag-blue-bg: #26313a;
   --tag-blue-text: #9fc3d9;
@@ -160,58 +177,6 @@
   --tag-pink-text: #dba39c;
   --tag-yellow-bg: #3a3318;
   --tag-yellow-text: #d9c877;
-}
-
-/* Same tokens when no explicit choice has been saved yet (see
-   assets/theme.js) — honors the OS-level preference on first visit. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --page-bg: var(--color-surface-dark);
-    --card-bg: var(--color-surface-dark-elevated);
-    --card-border: #34312b;
-
-    --text-primary: var(--color-on-dark);
-    --text-secondary: #cfccc4;
-    --text-muted: var(--color-on-dark-soft);
-    --text-muted-soft: #7d7a73;
-
-    --topbar-bg: var(--color-surface-dark);
-    --topbar-text: var(--color-on-dark);
-    --topbar-border: #34312b;
-    --dropdown-bg: var(--color-surface-dark-elevated);
-    --dropdown-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-
-    --input-bg: var(--color-surface-dark-soft);
-    --input-border: #3a3730;
-    --input-text: var(--color-on-dark);
-
-    --btn-secondary-bg: var(--color-surface-dark-elevated);
-    --btn-secondary-border: #3a3730;
-    --btn-secondary-text: var(--color-on-dark);
-    --btn-secondary-bg-hover: #302d27;
-
-    --success-bg: #1d3324;
-    --success-text: #8fd6a2;
-    --warning-bg: #3a2f10;
-    --warning-text: #e8c466;
-    --error-bg: #3a1e1e;
-    --error-text: #e79b9b;
-
-    --tag-gray-bg: #34312b;
-    --tag-gray-text: #b5b2a9;
-    --tag-blue-bg: #26313a;
-    --tag-blue-text: #9fc3d9;
-    --tag-green-bg: #223a26;
-    --tag-green-text: #9bcf9e;
-    --tag-purple-bg: #362b34;
-    --tag-purple-text: #d3a8c4;
-    --tag-orange-bg: #3d2e18;
-    --tag-orange-text: #e8b978;
-    --tag-pink-bg: #3a2624;
-    --tag-pink-text: #dba39c;
-    --tag-yellow-bg: #3a3318;
-    --tag-yellow-text: #d9c877;
-  }
 }
 
 * { box-sizing: border-box; }

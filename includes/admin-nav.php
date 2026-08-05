@@ -42,6 +42,7 @@ function adminNavGroups(): array
             ['label' => 'จัดการ Sidebar', 'href' => 'sidebar-items.php', 'badge' => count(getAllSidebarItems())],
             ['label' => 'Backup', 'href' => 'backup.php'],
             ['label' => 'ไฟล์กำพร้า', 'href' => 'orphan-files.php'],
+            ['label' => 'ชุดสีของเว็บ', 'href' => 'color-reference.php'],
         ],
     ];
 }

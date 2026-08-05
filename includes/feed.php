@@ -34,8 +34,11 @@ function renderFeedItemHtml(array $item, int $lastSeenId = 0): string
     $isNew = (int) $item['id'] > $lastSeenId;
     $class = 'feed-item' . ($isNew ? ' feed-item-new' : '');
 
+    // ไม่ใช้ nl2br() — .feed-item-content เป็น white-space: pre-line (assets/feed.css) อยู่แล้ว
+    // ซึ่ง render \n เป็นบรรทัดใหม่ให้เองจาก text ตรงๆ ใส่ nl2br() ซ้อนจะได้ทั้ง <br> และ \n ที่ยังไม่ถูก
+    // strip ออก กลายเป็นเว้นบรรทัดสองเท่าทุกจุดขึ้นบรรทัดใหม่
     return '<div class="' . $class . '" data-id="' . (int) $item['id'] . '">'
-        . '<div class="feed-item-content">' . nl2br(htmlspecialchars($item['content'])) . '</div>'
+        . '<div class="feed-item-content">' . htmlspecialchars($item['content']) . '</div>'
         . '<div class="feed-item-time">' . relativeTimeTag($item['created_at']) . '</div>'
         . '</div>';
 }

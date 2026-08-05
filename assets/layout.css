@@ -180,6 +180,12 @@
 .rich-content, .ql-editor {
   overflow: auto; /* clearfix so floated images don't collapse the container */
 }
+.rich-content a, .ql-editor a {
+  color: var(--link-color);
+}
+.rich-content a:hover, .ql-editor a:hover {
+  filter: brightness(0.8);
+}
 .rich-content img, .ql-editor img {
   max-width: 100%;
   height: auto;
@@ -240,8 +246,8 @@
 .rich-content pre.ql-syntax, .rich-content .ql-code-block-container,
 .ql-editor pre.ql-syntax, .ql-editor .ql-code-block-container {
   position: relative;
-  background: var(--color-surface-dark-soft) !important;
-  color: var(--color-on-dark) !important;
+  background: var(--color-code-bg-dark) !important;
+  color: var(--color-ink-dark) !important;
   padding: 14px 16px;
   border: 1px solid #3a3730;
   border-radius: var(--radius-lg);
@@ -266,13 +272,13 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: var(--color-surface-dark-elevated);
+  background: var(--color-surface-card-dark);
   border: 1px solid #3a3730;
   border-radius: var(--radius-sm);
   padding: 4px 8px;
   font-size: 12px;
   line-height: 1.4;
-  color: var(--color-on-dark-soft);
+  color: var(--color-muted-dark);
   cursor: pointer;
 }
 .code-copy-btn:hover {
@@ -419,6 +425,7 @@
 .brand-name {
   font-size: 27px;
   font-weight: 700;
+  color: var(--brand-name-color);
 }
 .brand-tagline {
   font-size: 12px;

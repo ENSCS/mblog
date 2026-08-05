@@ -40,11 +40,15 @@ $sidebarPosition = $showAdminSidebar ? 'left' : siteSetting('sidebar_position', 
   // Applies the saved/system theme before first paint, so switching themes
   // never causes a flash of the wrong one on load — must run before any
   // stylesheet below, since it's the CSS that actually reads [data-theme].
+  // Falls back to the OS-level preference when nothing's been saved yet
+  // (not written back to localStorage, so it keeps following the OS setting
+  // until the reader explicitly picks a theme via the toggle).
   (function () {
     var saved = localStorage.getItem('mblog-theme');
-    if (saved === 'light' || saved === 'dark') {
-      document.documentElement.setAttribute('data-theme', saved);
-    }
+    var theme = (saved === 'light' || saved === 'dark')
+      ? saved
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
   })();
 </script>
 <?php

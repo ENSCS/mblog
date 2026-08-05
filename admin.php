@@ -87,5 +87,8 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
     <a class="dashboard-card" href="orphan-files.php">
       <div class="dashboard-card-label">ไฟล์กำพร้า</div>
     </a>
+    <a class="dashboard-card" href="color-reference.php">
+      <div class="dashboard-card-label">ชุดสีของเว็บ</div>
+    </a>
   </div>
 <?php render_sidebar($layout); render_footer(); ?>
