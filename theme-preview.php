@@ -143,8 +143,21 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
   </div>
 
   <div class="card">
-    <h2 class="admin-section-title" style="margin-top:0;">เมนู Dropdown</h2>
-    <p class="preview-note">พื้นหลัง = <code>--dropdown-bg → --color-surface-card</code>, เงา = <code>--dropdown-shadow</code> — รายการที่ 2 บังคับโชว์สี hover ไว้ (<code>--btn-secondary-bg-hover</code>)</p>
+    <h2 class="admin-section-title" style="margin-top:0;">เมนู (แถบเมนูบนสุด)</h2>
+    <p class="preview-note">พื้น = <code>--color-primary</code> (ค่าเดียวกันทั้ง 2 ธีม), ตัวหนังสือ = <code>--text-on-primary → --color-on-primary</code> — ปกติจาง (opacity 0.75) hover เข้มเต็ม (opacity 1) ไม่ได้เปลี่ยนสี แค่เปลี่ยนความทึบ</p>
+    <div class="topbar">
+      <div class="topbar-nav-row" style="border-radius:var(--radius-md); padding:8px 16px;">
+        <div class="topbar-menu">
+          <a href="#">เมนูปกติ</a>
+          <a href="#" style="opacity:1;">เมนู ตอน hover</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="admin-section-title" style="margin-top:0;">เมนู Dropdown (เมนูย่อย)</h2>
+    <p class="preview-note">พื้นหลัง = <code>--dropdown-bg → --color-surface-card</code>, ตัวหนังสือ = <code>--text-primary → --color-ink</code>, เงา = <code>--dropdown-shadow</code> — รายการที่ 2 บังคับโชว์สี hover ไว้ (<code>--btn-secondary-bg-hover</code>)</p>
     <div class="preview-dropdown-demo">
       <a href="#">รายการเมนูที่ 1</a>
       <a href="#" style="background:var(--btn-secondary-bg-hover);">รายการเมนูที่ 2 (ตอน hover)</a>
