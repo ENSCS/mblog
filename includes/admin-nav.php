@@ -43,6 +43,7 @@ function adminNavGroups(): array
             ['label' => 'Backup', 'href' => 'backup.php'],
             ['label' => 'ไฟล์กำพร้า', 'href' => 'orphan-files.php'],
             ['label' => 'ชุดสีของเว็บ', 'href' => 'color-reference.php'],
+            ['label' => 'พรีวิวองค์ประกอบ', 'href' => 'theme-preview.php'],
         ],
     ];
 }
