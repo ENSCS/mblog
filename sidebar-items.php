@@ -1,11 +1,13 @@
 <?php
 require __DIR__ . '/includes/sidebar.php';
 require __DIR__ . '/includes/admin-nav.php';
+requireCapability('manage_sidebar');
 
 $saved = isset($_GET['saved']);
 $deleted = isset($_GET['deleted']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
     $action = $_POST['action'] ?? '';
 
     if ($action === 'delete') {
@@ -36,9 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $items = getAllSidebarItems();
 
 $pageTitle = 'จัดการ Sidebar';
-$topbarActions = adminTopbarActions(['<a href="sidebar-item-editor.php">+ เพิ่มรายการใหม่</a>']);
 $showAdminSidebar = true;
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">จัดการ Sidebar</h1>
   <div class="card">
@@ -48,7 +49,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
     <?php if (empty($items)): ?>
       <div class="empty-state">ยังไม่มีรายการ sidebar — <a href="sidebar-item-editor.php">เพิ่มรายการแรก</a></div>
     <?php else: ?>
-      <form method="post" id="reorder-form"><input type="hidden" name="action" value="reorder"></form>
+      <form method="post" id="reorder-form"><?= csrfField() ?><input type="hidden" name="action" value="reorder"></form>
       <div class="table-scroll">
         <table class="admin-table">
           <thead>
@@ -71,6 +72,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
                 <td class="row-actions">
                   <a href="sidebar-item-editor.php?id=<?= $item['id'] ?>">แก้ไข</a>
                   <form method="post" style="display:inline" onsubmit="return confirm('ยืนยันลบ &quot;<?= htmlspecialchars($item['title'], ENT_QUOTES) ?>&quot;?');">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" value="<?= $item['id'] ?>">
                     <button type="submit" class="link-danger">ลบ</button>

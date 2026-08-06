@@ -11,6 +11,7 @@
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/admin-nav.php';
 require_once __DIR__ . '/includes/theme-colors.php';
+requireCapability('manage_theme');
 
 $lightPalette = [
     ['--color-brand-name', '#a9583e', 'ตัวอักษรชื่อแบรนด์ "mBlog\'26" บนแถบเมนู'],
@@ -144,9 +145,8 @@ $extraHead = <<<HTML
   .color-ref-token-usage { color: var(--text-secondary); }
 </style>
 HTML;
-$topbarActions = adminTopbarActions();
 $showAdminSidebar = true;
-$layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'extraHead', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">ชุดสีของเว็บ</h1>
   <p style="color:var(--text-muted); margin-top:-8px;">

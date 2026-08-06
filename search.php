@@ -14,9 +14,8 @@ $articles = $result['items'];
 $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
 $pageTitle = $q !== '' ? 'ค้นหา: ' . $qSafe : 'ค้นหาบทความ';
-$topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 $showSidebar = true;
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showSidebar'));
+$layout = render_header(compact('pageTitle', 'showSidebar'));
 ?>
   <h1 class="article-title"><?= $q !== '' ? 'ผลการค้นหา: "' . $qSafe . '"' : 'ค้นหาบทความ' ?></h1>
   <?php if ($q === ''): ?>

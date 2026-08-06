@@ -591,16 +591,78 @@
      tone that reads as distinct from --color-card in both themes. */
   background: var(--card-border);
 }
-.topbar .actions a {
+/* Logged-out state of topbarAccountMenu() (includes/auth.php) — same slot
+   the avatar occupies once logged in, so the topbar's shape doesn't jump
+   between the two states. Selector is ".topbar a.topbar-login-btn" (not
+   just ".topbar-login-btn") to out-specificity ".topbar a" above (class+tag
+   beats a single class) — otherwise that rule's --topbar-text wins and the
+   button silently renders with the page's normal dark link color instead of
+   white-on-solid-background, exactly the .topbar-account-menu fix from
+   earlier repeating itself here. */
+.topbar a.topbar-login-btn {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-left: 8px;
+  padding: 8px 16px;
   background: var(--color-primary);
   color: var(--text-on-primary);
-  padding: 8px 16px;
   border-radius: var(--radius-md);
   font-weight: 500;
+}
+.topbar-login-btn:hover {
+  filter: brightness(0.8);
+}
+/* Logged-in topbar account menu (topbarAccountMenu(), includes/auth.php) —
+   avatar toggle + dropdown, same hover/focus-within-to-open mechanic as
+   .menu-item-has-children/.submenu above (no JS), just anchored to the
+   right edge instead of the left since this sits at the far right of
+   .topbar .actions rather than inside the left-aligned site nav. */
+.topbar-account-menu {
+  /* .actions (the parent) lays children out via normal inline flow, not
+     flex (see .site-search's own comment above) — a plain block-level <div>
+     here would drop to its own line instead of sitting next to the search/
+     theme icons, so this needs the same inline-flex + vertical-align:middle
+     treatment they use. */
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
   margin-left: 8px;
 }
-.topbar .actions a:hover {
-  filter: brightness(0.8);
+.topbar-account-toggle {
+  display: flex;
+}
+.topbar-account-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin: 0;
+  padding: 6px;
+  min-width: 140px;
+  background: var(--dropdown-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--dropdown-shadow);
+  z-index: 20;
+}
+.topbar-account-menu:hover .topbar-account-dropdown,
+.topbar-account-menu:focus-within .topbar-account-dropdown {
+  display: block;
+}
+.topbar-account-dropdown a {
+  display: block;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-weight: 500;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+.topbar-account-dropdown a:hover {
+  opacity: 1;
+  background: var(--card-border);
 }
 
 /* --- Mobile nav: hamburger + full-width accordion (hidden on desktop) ---

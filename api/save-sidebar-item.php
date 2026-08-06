@@ -2,9 +2,11 @@
 header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . '/../includes/sidebar.php';
 require __DIR__ . '/../includes/uploads.php';
+requireApiCapability('manage_sidebar');
 
 $raw = file_get_contents('php://input');
 $data = json_decode($raw, true);
+verifyCsrf($data['csrf_token'] ?? null, true);
 
 $title = isset($data['title']) ? trim($data['title']) : '';
 $type = in_array($data['type'] ?? '', ['article', 'iframe'], true) ? $data['type'] : 'article';

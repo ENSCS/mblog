@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/admin-nav.php';
+requireCapability('edit_articles');
 
 $perPage = max(1, (int) siteSetting('articles_per_page', 10));
 $page = max(1, (int) ($_GET['page'] ?? 1));
@@ -10,9 +11,8 @@ $articles = $result['items'];
 $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
 $pageTitle = 'ร่างบทความ';
-$topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'showAdminSidebar'));
 ?>
   <?php
   $emptyMessage = 'ไม่มีร่างบทความ';

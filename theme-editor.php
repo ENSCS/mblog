@@ -2,9 +2,11 @@
 require __DIR__ . '/config.php';
 require __DIR__ . '/includes/theme-colors.php';
 require __DIR__ . '/includes/admin-nav.php';
+requireCapability('manage_theme');
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
     $action = $_POST['action'] ?? '';
     if ($action === 'reset') {
         resetThemeColors();
@@ -70,9 +72,8 @@ $extraHead = <<<HTML
   .te-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
 </style>
 HTML;
-$topbarActions = adminTopbarActions();
 $showAdminSidebar = true;
-$layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'extraHead', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">ปรับแต่งชุดสี</h1>
   <p style="color:var(--text-muted); margin-top:-8px;">
@@ -148,6 +149,7 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
         </div>
 
         <form method="post" id="te-form">
+          <?= csrfField() ?>
           <input type="hidden" name="action" value="save">
           <input type="hidden" name="colors_json" id="te-colors-json">
           <div class="te-actions">
@@ -158,6 +160,7 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
           </div>
         </form>
         <form method="post" onsubmit="return confirm('คืนค่าชุดสีเริ่มต้น ล้างการปรับแต่งทั้งหมด?');" style="margin-top:8px;">
+          <?= csrfField() ?>
           <input type="hidden" name="action" value="reset">
           <button type="submit" class="btn btn-secondary">คืนค่าเริ่มต้น</button>
         </form>

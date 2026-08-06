@@ -2,6 +2,7 @@
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/admin-nav.php';
 require __DIR__ . '/includes/backup.php';
+requireCapability('manage_backup');
 
 // Streams the zip directly, before any HTML output — same early-exit shape
 // as the POST branch below.
@@ -10,6 +11,7 @@ if (isset($_GET['download'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
     $action = $_POST['action'] ?? '';
 
     if ($action === 'create') {
@@ -31,9 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $backups = listBackupFiles();
 
 $pageTitle = 'Backup';
-$topbarActions = adminTopbarActions();
 $showAdminSidebar = true;
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">Backup</h1>
 
@@ -51,6 +52,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
       เพื่อไม่ให้ backup อยู่บนเซิร์ฟเวอร์เดียวกับเว็บเพียงที่เดียว
     </p>
     <form method="post">
+      <?= csrfField() ?>
       <input type="hidden" name="action" value="create">
       <button type="submit" class="btn">Backup ตอนนี้</button>
     </form>
@@ -73,6 +75,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
                 <td class="row-actions">
                   <a href="backup.php?download=<?= urlencode($backup['filename']) ?>">ดาวน์โหลด</a>
                   <form method="post" style="display:inline" onsubmit="return confirm('ลบ backup นี้?');">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="filename" value="<?= htmlspecialchars($backup['filename']) ?>">
                     <button type="submit" class="link-danger">ลบ</button>

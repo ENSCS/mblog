@@ -31,3 +31,4 @@ define('BACKUP_DIR', __DIR__ . '/backups/');
 define('STATS_HASH_SECRET', 'change-me-to-a-random-64-char-hex-string');
 
 require_once __DIR__ . '/includes/error-handling.php';
+require_once __DIR__ . '/includes/auth.php';

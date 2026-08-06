@@ -2,9 +2,11 @@
 header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . '/../includes/articles.php';
 require __DIR__ . '/../includes/uploads.php';
+requireApiCapability('edit_articles');
 
 $raw = file_get_contents('php://input');
 $data = json_decode($raw, true);
+verifyCsrf($data['csrf_token'] ?? null, true);
 
 $title = isset($data['title']) ? trim($data['title']) : '';
 $content = isset($data['content']) ? $data['content'] : '';
@@ -53,6 +55,17 @@ if ($title === '') {
 // user-editable and can no longer double as a stable identifier.
 $id = isset($data['id']) && $data['id'] !== '' ? (int) $data['id'] : null;
 $existing = $id !== null ? getArticleById($id) : null;
+
+// 'author' role can only ever touch their own articles — enforced here, not
+// just as a UX nicety in editor.php's page load, since a POST straight to
+// this endpoint would otherwise bypass that check entirely. admin/editor
+// (edit_others_articles) are exempt; a brand-new article (no $existing yet)
+// has no owner to conflict with.
+if ($existing && (int) ($existing['author_id'] ?? 0) !== (int) (currentUser()['id'] ?? 0) && !userCan('edit_others_articles')) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'ไม่มีสิทธิ์แก้ไขบทความนี้']);
+    exit;
+}
 
 // Slug the author wants to save. Empty means: for a new article, suggest one
 // from the title; for an existing one, leave the current slug untouched
@@ -119,11 +132,11 @@ if ($existing) {
 } else {
     $stmt = db()->prepare(
         'INSERT INTO mblog_articles
-            (slug, title, content, category_id, featured_image, show_sidebar, status, type, created_at, updated_at, published_at, expires_at,
+            (slug, title, content, category_id, featured_image, show_sidebar, status, type, author_id, created_at, updated_at, published_at, expires_at,
              seo_title, seo_description, seo_noindex)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
-    $stmt->execute([$slug, $title, $content, $categoryId, $featuredImage, $showSidebar, $status, $type, $now, $now, $publishedAt, $expiresAt, $seoTitle, $seoDescription, $seoNoindex]);
+    $stmt->execute([$slug, $title, $content, $categoryId, $featuredImage, $showSidebar, $status, $type, currentUser()['id'], $now, $now, $publishedAt, $expiresAt, $seoTitle, $seoDescription, $seoNoindex]);
     $articleId = (int) db()->lastInsertId();
 }
 

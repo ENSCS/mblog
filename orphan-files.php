@@ -3,8 +3,10 @@ require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/admin-nav.php';
 require_once __DIR__ . '/includes/orphan-files.php';
 require __DIR__ . '/includes/backup.php'; // formatBackupSize() — generic despite the name
+requireCapability('manage_orphan_files');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_selected') {
+    verifyCsrf();
     $paths = $_POST['paths'] ?? [];
     $deleted = deleteOrphanFiles(is_array($paths) ? $paths : []);
 
@@ -15,9 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 $candidates = scanOrphanUploads();
 
 $pageTitle = 'ไฟล์กำพร้า';
-$topbarActions = adminTopbarActions();
 $showAdminSidebar = true;
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">ไฟล์กำพร้า</h1>
 
@@ -34,6 +35,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
       <p style="color:var(--text-muted);">ไม่พบไฟล์กำพร้า</p>
     <?php else: ?>
       <form method="post" onsubmit="return confirm('ลบไฟล์ที่เลือก — กู้คืนไม่ได้อีก ยืนยันลบ?');">
+        <?= csrfField() ?>
         <input type="hidden" name="action" value="delete_selected">
         <div class="table-scroll">
           <table class="admin-table">

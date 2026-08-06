@@ -1,10 +1,12 @@
 <?php
 require __DIR__ . '/includes/markdown-import.php';
 require __DIR__ . '/includes/admin-nav.php';
+requireCapability('edit_articles');
 
 $results = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_FILES['md_files'])) {
+    verifyCsrf();
     $names = $_FILES['md_files']['name'];
     $tmpPaths = $_FILES['md_files']['tmp_name'];
     $errors = $_FILES['md_files']['error'];
@@ -25,9 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_FILES['md_files'])) {
 }
 
 $pageTitle = 'นำเข้าบทความจาก Markdown';
-$topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">นำเข้าบทความจาก Markdown</h1>
   <div class="card">
@@ -37,6 +38,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
       ไฟล์ที่เคยนำเข้าไปแล้วจะถูกข้าม ไม่สร้างซ้ำ
     </p>
     <form method="post" enctype="multipart/form-data">
+      <?= csrfField() ?>
       <div class="field">
         <input type="file" name="md_files[]" accept=".md" multiple required>
       </div>

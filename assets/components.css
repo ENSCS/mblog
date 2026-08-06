@@ -111,6 +111,8 @@
 .field input[type=text],
 .field input[type=number],
 .field input[type=datetime-local],
+.field input[type=email],
+.field input[type=password],
 .field select,
 .field textarea {
   padding: 10px 12px;
@@ -127,6 +129,11 @@
 .field textarea {
   width: 100%;
 }
+.field input[type=email],
+.field input[type=password] {
+  width: 100%;
+  max-width: 280px;
+}
 .field select {
   width: auto;
   max-width: 260px;
@@ -141,6 +148,53 @@
   border-radius: var(--radius-sm);
   border: 1px solid var(--card-border);
   object-fit: cover;
+}
+/* Staff avatar thumbnails — small circle in the users.php table, larger
+   circle in profile.php's current-avatar preview (reuses .site-asset-preview
+   for the border/radius base, this just adds the size + circular crop). The
+   placeholder (no avatar uploaded yet) shows the user's initial, Gmail-style,
+   on one of 10 solid colors picked deterministically by avatarColorClass()
+   (includes/users.php) — white text always, so the --avatar-color-* tokens
+   below must each stay dark/saturated enough on their own (see base.css). */
+.avatar-thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  font-size: 18px;
+  font-weight: 600;
+}
+.avatar-thumb-placeholder {
+  color: #fff;
+}
+.avatar-color-0 { background: var(--avatar-color-0); }
+.avatar-color-1 { background: var(--avatar-color-1); }
+.avatar-color-2 { background: var(--avatar-color-2); }
+.avatar-color-3 { background: var(--avatar-color-3); }
+.avatar-color-4 { background: var(--avatar-color-4); }
+.avatar-color-5 { background: var(--avatar-color-5); }
+.avatar-color-6 { background: var(--avatar-color-6); }
+.avatar-color-7 { background: var(--avatar-color-7); }
+.avatar-color-8 { background: var(--avatar-color-8); }
+.avatar-color-9 { background: var(--avatar-color-9); }
+.avatar-thumb-lg {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  font-size: 45px;
+}
+/* Topbar account toggle (includes/admin-nav.php) — bigger than the 32px
+   table thumb, smaller than profile.php's 64px preview. */
+.avatar-thumb-md {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  font-size: 28px;
 }
 .site-asset-row {
   display: flex;

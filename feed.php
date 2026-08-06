@@ -9,11 +9,10 @@ $items = getFeedItems((int) siteSetting('feed_item_limit', 50));
 $lastId = $items ? (int) $items[0]['id'] : 0;
 
 $pageTitle = 'ฟีดข่าว';
-$topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 $showSidebar = true;
 $extraHead = '<link rel="stylesheet" href="assets/feed.css?v=' . @filemtime(__DIR__ . '/assets/feed.css') . '">';
 $footerScripts = '<script src="assets/feed.js?v=' . @filemtime(__DIR__ . '/assets/feed.js') . '" defer></script>';
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showSidebar', 'extraHead'));
+$layout = render_header(compact('pageTitle', 'showSidebar', 'extraHead'));
 ?>
   <h1 class="article-title">ฟีดข่าว</h1>
   <div id="feed-list" class="feed-list" data-last-id="<?= $lastId ?>">

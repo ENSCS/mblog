@@ -17,6 +17,8 @@ require_once __DIR__ . '/admin-nav.php';
 //                        (default true — posts only; pages don't use categories)
 function renderManageListPage(string $type, array $config): void
 {
+    requireCapability('edit_articles');
+
     $scriptName = $config['scriptName'];
     $showTaxonomyFilters = $config['showTaxonomyFilters'] ?? true;
     $perPage = 20;
@@ -39,6 +41,7 @@ function renderManageListPage(string $type, array $config): void
     $actionTarget = $scriptName . ($currentQuery !== '' ? '?' . $currentQuery : '');
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        verifyCsrf();
         $action = $_POST['action'] ?? '';
         $ids = array_map('intval', $_POST['ids'] ?? (isset($_POST['id']) ? [$_POST['id']] : []));
 
@@ -76,6 +79,7 @@ function renderManageListPage(string $type, array $config): void
         'tag_slug' => $tagSlug,
         'date_from' => $dateFrom,
         'date_to' => $dateTo,
+        'author_id' => articleOwnerFilter(),
     ];
     $result = getArticlesForAdmin($filters, $page, $perPage);
     $articles = $result['items'];
@@ -106,7 +110,6 @@ function renderManageListPage(string $type, array $config): void
     ];
 
     $pageTitle = $config['pageTitle'] . ' — ' . siteSetting('site_name');
-    $topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
     $showAdminSidebar = true;
 
     ob_start();
@@ -115,7 +118,7 @@ function renderManageListPage(string $type, array $config): void
     <?php
     $footerScripts = ob_get_clean();
 
-    $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
+    $layout = render_header(compact('pageTitle', 'showAdminSidebar'));
     ?>
   <h1 class="article-title"><?= htmlspecialchars($config['pageTitle']) ?></h1>
 
@@ -171,6 +174,7 @@ function renderManageListPage(string $type, array $config): void
       // via form="bulk-form" instead of the form wrapping the table.
       ?>
       <form method="post" action="<?= htmlspecialchars($actionTarget) ?>" id="bulk-form">
+        <?= csrfField() ?>
         <input type="hidden" name="action" value="bulk">
         <div class="bulk-bar">
           <select name="bulk_action" id="bulk-action-select">
@@ -232,11 +236,13 @@ function renderManageListPage(string $type, array $config): void
                 <td class="row-actions">
                   <?php if ($status === 'trash'): ?>
                     <form method="post" action="<?= htmlspecialchars($actionTarget) ?>" style="display:inline">
+                      <?= csrfField() ?>
                       <input type="hidden" name="action" value="restore">
                       <input type="hidden" name="id" value="<?= $article['id'] ?>">
                       <button type="submit" class="link-plain">กู้คืน</button>
                     </form>
                     <form method="post" action="<?= htmlspecialchars($actionTarget) ?>" style="display:inline" onsubmit="return confirm('ลบถาวร &quot;<?= htmlspecialchars($article['title'], ENT_QUOTES) ?>&quot; — กู้คืนไม่ได้อีก ยืนยันลบถาวร?');">
+                      <?= csrfField() ?>
                       <input type="hidden" name="action" value="permanently_delete">
                       <input type="hidden" name="id" value="<?= $article['id'] ?>">
                       <button type="submit" class="link-danger">ลบถาวร</button>
@@ -244,6 +250,7 @@ function renderManageListPage(string $type, array $config): void
                   <?php else: ?>
                     <a href="editor.php?slug=<?= urlencode($article['slug']) ?>">แก้ไข</a>
                     <form method="post" action="<?= htmlspecialchars($actionTarget) ?>" style="display:inline" onsubmit="return confirm('ย้าย &quot;<?= htmlspecialchars($article['title'], ENT_QUOTES) ?>&quot; ไปถังขยะ?');">
+                      <?= csrfField() ?>
                       <input type="hidden" name="action" value="trash">
                       <input type="hidden" name="id" value="<?= $article['id'] ?>">
                       <button type="submit" class="link-danger">ลบ</button>

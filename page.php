@@ -48,14 +48,13 @@ if ($imageUrl) {
     $extraHead .= "\n" . '<meta name="twitter:card" content="summary">';
 }
 
-$topbarActions = '<a href="editor.php?slug=' . urlencode($slug) . '">แก้ไข</a><a href="editor.php">+ เขียนบทความใหม่</a>';
 $footerScripts = '<script src="assets/copy-button.js"></script>';
 // Already resolved (site setting vs. this page's own override) — don't let
 // header.php re-check sidebar_enabled on top of that, see
 // articleShowsSidebar()/database/article_sidebar_toggle.sql.
 $showSidebar = articleShowsSidebar($page);
 $sidebarSiteGate = false;
-$layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'showSidebar', 'sidebarSiteGate'));
+$layout = render_header(compact('pageTitle', 'extraHead', 'showSidebar', 'sidebarSiteGate'));
 ?>
     <div class="card">
       <?php if ($manualFeaturedImage): ?>

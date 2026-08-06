@@ -773,6 +773,14 @@ function getArticlesForAdmin(array $filters, int $page, int $perPage): array
         $where[] = 'a.created_at <= ?';
         $params[] = $filters['date_to'] . ' 23:59:59';
     }
+    // 'author' role — manage-articles.php/manage-pages.php pass
+    // articleOwnerFilter() here (includes/auth.php), which is null for
+    // admin/editor (no restriction) and the current user's id for author
+    // (sees only their own articles).
+    if (!empty($filters['author_id'])) {
+        $where[] = 'a.author_id = ?';
+        $params[] = (int) $filters['author_id'];
+    }
 
     $whereSql = implode(' AND ', $where);
     $allParams = array_merge($joinParams, $params);

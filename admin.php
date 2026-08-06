@@ -4,6 +4,7 @@ require __DIR__ . '/includes/menu.php';
 require __DIR__ . '/includes/sidebar.php';
 require __DIR__ . '/includes/feed.php';
 require __DIR__ . '/includes/admin-nav.php';
+requireLogin();
 
 $draftCount = count(getDraftArticles());
 $articleCount = count(getArticles());
@@ -15,9 +16,8 @@ $feedItemCount = countFeedItems();
 $stickyCount = count(getStickyArticleIds());
 
 $pageTitle = 'จัดการเว็บ';
-$topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 $showAdminSidebar = true;
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">จัดการเว็บ</h1>
 

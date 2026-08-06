@@ -7,6 +7,7 @@
 // every org/brand-customizable color actually painted on components.
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/admin-nav.php';
+requireCapability('manage_theme');
 
 $pageTitle = 'พรีวิวองค์ประกอบ';
 $extraHead = <<<HTML
@@ -22,9 +23,8 @@ $extraHead = <<<HTML
   .preview-surface-soft { background: var(--btn-secondary-bg); border-radius: var(--radius-md); padding: 12px; margin-top: 10px; }
 </style>
 HTML;
-$topbarActions = adminTopbarActions();
 $showAdminSidebar = true;
-$layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'extraHead', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">พรีวิวองค์ประกอบ</h1>
   <p style="color:var(--text-muted); margin-top:-8px;">

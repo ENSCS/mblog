@@ -2,6 +2,7 @@
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/stats.php';
 require __DIR__ . '/includes/admin-nav.php';
+requireCapability('view_stats');
 
 $range = $_GET['range'] ?? '7d';
 if (!in_array($range, ['today', '7d', '30d', 'all'], true)) {
@@ -69,10 +70,9 @@ $osLabels = [
 $rangeLabels = ['today' => 'วันนี้', '7d' => '7 วัน', '30d' => '30 วัน', 'all' => 'ทั้งหมด'];
 
 $pageTitle = 'สถิติเว็บ';
-$topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
 $extraHead = '<link rel="stylesheet" href="assets/stats.css?v=' . @filemtime(__DIR__ . '/assets/stats.css') . '">';
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar', 'extraHead'));
+$layout = render_header(compact('pageTitle', 'showAdminSidebar', 'extraHead'));
 ?>
   <h1 class="article-title">สถิติเว็บ</h1>
 

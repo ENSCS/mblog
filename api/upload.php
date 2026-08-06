@@ -1,6 +1,8 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . '/../config.php';
+requireApiCapability('edit_articles');
+verifyCsrf($_POST['csrf_token'] ?? null, true);
 
 $uploadsDir = UPLOADS_DIR;
 $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];

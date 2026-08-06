@@ -1,9 +1,17 @@
 <?php
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/admin-nav.php';
+requireCapability('edit_articles');
 
 $slug = $_GET['slug'] ?? '';
 $article = getArticleForEdit($slug);
+// 'author' role opening someone else's article by URL — the real
+// enforcement is in api/save.php (a raw POST there would otherwise bypass
+// this), this is just so they see a clear 403 instead of a form that fails
+// silently on save.
+if ($article && (int) ($article['author_id'] ?? 0) !== (int) (currentUser()['id'] ?? 0) && !userCan('edit_others_articles')) {
+    renderErrorPage(403, 'ไม่มีสิทธิ์แก้ไขบทความนี้');
+}
 $currentStatus = $article ? articleStatus($article) : 'draft';
 $currentType = $article['type'] ?? 'post';
 $categories = getCategories();
@@ -33,7 +41,6 @@ $pageTitle = $article ? 'แก้ไข: ' . htmlspecialchars($article['title']
 $extraHead = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
     . '<link rel="stylesheet" href="assets/article.css?v=' . @filemtime(__DIR__ . '/assets/article.css') . '">' . "\n"
     . '<link rel="stylesheet" href="assets/editor.css?v=' . @filemtime(__DIR__ . '/assets/editor.css') . '">';
-$topbarActions = adminTopbarActions(['<a href="articles.php">รายการบทความ</a>']);
 $showAdminSidebar = true;
 
 ob_start();
@@ -74,7 +81,7 @@ ob_start();
 <?php
 $footerScripts = ob_get_clean();
 
-$layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'extraHead', 'showAdminSidebar'));
 ?>
   <div class="field">
     <label for="title">ชื่อบทความ</label>
@@ -159,6 +166,7 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
     </div>
   </div>
   <input type="hidden" id="article-id" value="<?= $article['id'] ?? '' ?>">
+  <input type="hidden" id="csrf-token" value="<?= htmlspecialchars(csrfToken()) ?>">
 
   <div id="editor-container"></div>
 

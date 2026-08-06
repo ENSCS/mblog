@@ -1,11 +1,13 @@
 <?php
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/admin-nav.php';
+requireCapability('edit_articles');
 
 $saved = isset($_GET['saved']);
 $search = trim($_GET['search'] ?? '');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
     $action = $_POST['action'] ?? '';
     $id = (int) ($_POST['id'] ?? 0);
 
@@ -54,9 +56,8 @@ $pinnedItems = array_values(array_filter(array_map('getArticleById', $stickyIds)
 $searchResults = $search !== '' ? getArticleList(['status' => 'published', 'search' => $search], 1, 20)['items'] : [];
 
 $pageTitle = 'จัดการปักหมุด';
-$topbarActions = adminTopbarActions();
 $showAdminSidebar = true;
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">จัดการปักหมุด</h1>
 
@@ -87,6 +88,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
                       ปักหมุดแล้ว
                     <?php else: ?>
                       <form method="post" style="display:inline">
+                        <?= csrfField() ?>
                         <input type="hidden" name="action" value="pin">
                         <input type="hidden" name="id" value="<?= $itemId ?>">
                         <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
@@ -108,7 +110,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
     <?php if (empty($pinnedItems)): ?>
       <div class="empty-state">ยังไม่มีบทความ/หน้าที่ปักหมุด — ค้นหาด้านบนแล้วกด "ปักหมุด"</div>
     <?php else: ?>
-      <form method="post" id="reorder-form"><input type="hidden" name="action" value="reorder"></form>
+      <form method="post" id="reorder-form"><?= csrfField() ?><input type="hidden" name="action" value="reorder"></form>
       <div class="table-scroll">
         <table class="admin-table sticky-pinned-table">
           <thead><tr><th>ชื่อ</th><th>ประเภท</th><th>ลำดับ</th><th></th></tr></thead>
@@ -121,6 +123,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
                 <td><input type="number" name="sort_order[<?= $itemId ?>]" value="<?= $order ?>" form="reorder-form" style="max-width:80px;"></td>
                 <td class="row-actions">
                   <form method="post" style="display:inline">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="unpin">
                     <input type="hidden" name="id" value="<?= $itemId ?>">
                     <button type="submit" class="link-danger">ถอดหมุด</button>

@@ -1,3 +1,12 @@
+// Reads the per-session CSRF token editor.php/sidebar-item-editor.php each
+// render into a shared #csrf-token hidden input — every fetch() this file
+// makes to api/save.php / api/save-sidebar-item.php / api/upload.php sends
+// it back, since those endpoints don't get a real <form> submit to attach
+// csrfField() to (the whole editor is JS-driven, not a form post).
+function csrfTokenValue() {
+  return document.getElementById('csrf-token')?.value || '';
+}
+
 // --- custom "divider" (hr) block, registered once when this script loads ---
 (function registerDividerFormat() {
   const BlockEmbed = Quill.import('blots/block/embed');
@@ -46,6 +55,7 @@ function initArticleEditor(existingContent) {
       if (!file) return;
       const formData = new FormData();
       formData.append('image', file);
+      formData.append('csrf_token', csrfTokenValue());
       fetch('api/upload.php', { method: 'POST', body: formData })
         .then(r => r.json())
         .then(data => {
@@ -543,6 +553,7 @@ function setupFeaturedImagePicker() {
     if (!file) return;
     const formData = new FormData();
     formData.append('image', file);
+    formData.append('csrf_token', csrfTokenValue());
     fetch('api/upload.php', { method: 'POST', body: formData })
       .then(r => r.json())
       .then(data => {
@@ -755,6 +766,7 @@ function saveArticle(quill, articleId, slug, status) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      csrf_token: csrfTokenValue(),
       id: articleId || '',
       slug: slug || '',
       title: title,
@@ -828,6 +840,7 @@ function saveSidebarItem(quill, itemId) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      csrf_token: csrfTokenValue(),
       id: itemId || '',
       title: title,
       type: itemType,

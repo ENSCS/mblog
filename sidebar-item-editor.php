@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/includes/sidebar.php';
 require __DIR__ . '/includes/admin-nav.php';
+requireCapability('manage_sidebar');
 
 $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
 // Named $sidebarItem, not $item — partials/header.php's own `foreach
@@ -13,7 +14,6 @@ $pageTitle = $sidebarItem ? 'แก้ไข Sidebar: ' . htmlspecialchars($side
 $extraHead = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">' . "\n"
     . '<link rel="stylesheet" href="assets/article.css?v=' . @filemtime(__DIR__ . '/assets/article.css') . '">' . "\n"
     . '<link rel="stylesheet" href="assets/editor.css?v=' . @filemtime(__DIR__ . '/assets/editor.css') . '">';
-$topbarActions = adminTopbarActions(['<a href="sidebar-items.php">รายการ Sidebar</a>']);
 $showAdminSidebar = true;
 
 ob_start();
@@ -38,7 +38,7 @@ ob_start();
 <?php
 $footerScripts = ob_get_clean();
 
-$layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'extraHead', 'showAdminSidebar'));
 ?>
   <div class="field">
     <label for="title">ชื่อรายการ (ไว้อ้างอิงในหน้าจัดการ — ไม่ได้แสดงบนเว็บ)</label>
@@ -95,6 +95,7 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
     <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="is-active" <?= (!$sidebarItem || $sidebarItem['is_active']) ? 'checked' : '' ?>> แสดงรายการนี้</label>
   </div>
   <input type="hidden" id="item-id" value="<?= $sidebarItem['id'] ?? '' ?>">
+  <input type="hidden" id="csrf-token" value="<?= htmlspecialchars(csrfToken()) ?>">
 
   <div class="toolbar-row">
     <button class="btn" id="save-btn">บันทึก</button>

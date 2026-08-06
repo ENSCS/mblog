@@ -18,9 +18,8 @@ $articles = $result['items'];
 $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
 $pageTitle = 'แท็ก: ' . htmlspecialchars($tag['name']);
-$topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 $showSidebar = true;
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showSidebar'));
+$layout = render_header(compact('pageTitle', 'showSidebar'));
 ?>
   <h1 class="article-title">#<?= htmlspecialchars($tag['name']) ?></h1>
   <?php

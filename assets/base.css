@@ -145,6 +145,24 @@
   --tag-pink-text: #8a4a42;
   --tag-yellow-bg: #f7f0d6;
   --tag-yellow-text: #7a6a1f;
+
+  /* Gmail-style avatar palette — 10 solid, saturated colors (unlike the
+     pastel --tag-* set above, which is tuned for dark text on a light
+     background). White text sits on these instead, so each needs to stay
+     dark/saturated enough on its own for that contrast, in both themes —
+     see includes/users.php's avatarColorClass(), which picks one of the 10
+     deterministically from a user's id (id % 10) so the same person always
+     lands on the same color. */
+  --avatar-color-0: #e53935;
+  --avatar-color-1: #fb8c00;
+  --avatar-color-2: #a67c00;
+  --avatar-color-3: #43a047;
+  --avatar-color-4: #00897b;
+  --avatar-color-5: #1e88e5;
+  --avatar-color-6: #3949ab;
+  --avatar-color-7: #8e24aa;
+  --avatar-color-8: #d81b60;
+  --avatar-color-9: #6d4c41;
 }
 
 /* --- Dark-theme overrides. Theme-aware raw names just get a new value here
@@ -187,6 +205,20 @@
   --tag-pink-text: #dba39c;
   --tag-yellow-bg: #3a3318;
   --tag-yellow-text: #d9c877;
+
+  /* Deeper/less saturated than the light-theme values — keeps the circles
+     from glowing against the dark page background while staying dark enough
+     that white text still passes contrast comfortably. */
+  --avatar-color-0: #c62828;
+  --avatar-color-1: #ef6c00;
+  --avatar-color-2: #8c6d1f;
+  --avatar-color-3: #2e7d32;
+  --avatar-color-4: #00695c;
+  --avatar-color-5: #1565c0;
+  --avatar-color-6: #283593;
+  --avatar-color-7: #6a1b9a;
+  --avatar-color-8: #ad1457;
+  --avatar-color-9: #4e342e;
 }
 
 * { box-sizing: border-box; }

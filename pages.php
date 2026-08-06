@@ -9,9 +9,8 @@ $articles = $result['items'];
 $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
 $pageTitle = 'หน้าทั้งหมด';
-$topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 $showSidebar = true;
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showSidebar'));
+$layout = render_header(compact('pageTitle', 'showSidebar'));
 ?>
   <h1 class="article-title">หน้าทั้งหมด</h1>
   <?php

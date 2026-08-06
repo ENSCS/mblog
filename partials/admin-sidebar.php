@@ -12,8 +12,23 @@
 // instead of duplicating this list.
 $adminNavGroups = adminNavGroups();
 $adminCurrentScript = basename($_SERVER['SCRIPT_NAME']);
+
+// Drop entries the current user would just get a 403 on — same capability
+// string each entry's own page checks via requireCapability() (see
+// adminNavGroups()'s own comment). A group left with nothing visible (e.g.
+// "ตั้งค่าเว็บ" for an author) is skipped entirely so it doesn't show as an
+// empty heading.
+$adminNavGroups = array_filter(array_map(
+    fn($items) => array_values(array_filter($items, fn($item) => !isset($item['capability']) || userCan($item['capability']))),
+    $adminNavGroups
+));
 ?>
 <aside class="sidebar admin-sidebar-shell">
+  <div class="admin-sidebar-group">
+    <a class="admin-sidebar-link<?= $adminCurrentScript === 'admin.php' ? ' admin-sidebar-link-active' : '' ?>" href="admin.php">
+      <span>&larr; จัดการเว็บ</span>
+    </a>
+  </div>
   <?php foreach ($adminNavGroups as $groupLabel => $items): ?>
     <div class="admin-sidebar-group">
       <div class="admin-sidebar-group-label"><?= htmlspecialchars($groupLabel) ?></div>

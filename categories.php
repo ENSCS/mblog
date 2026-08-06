@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/admin-nav.php';
+requireCapability('manage_categories');
 
 // Matches the .category-tag-* classes in assets/components.css — a color
 // picker limited to this fixed set (instead of a free hex input) guarantees
@@ -14,6 +15,7 @@ $saved = isset($_GET['saved']);
 $deleted = isset($_GET['deleted']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    verifyCsrf();
     $id = (int) ($_POST['id'] ?? 0);
     if ($id > 0) {
         deleteCategory($id);
@@ -34,6 +36,7 @@ $form = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save') {
+    verifyCsrf();
     $form['id'] = trim($_POST['id'] ?? '');
     $form['name'] = trim($_POST['name'] ?? '');
     $form['slug'] = trim($_POST['slug'] ?? '');
@@ -70,9 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save'
 $categories = getAllCategories();
 
 $pageTitle = 'จัดการหมวดหมู่';
-$topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">จัดการหมวดหมู่</h1>
 
@@ -106,6 +108,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
                   <form method="post" style="display:inline" onsubmit="return confirm(<?= $articleCount > 0
                       ? "'บทความ {$articleCount} ชิ้นใช้หมวดนี้อยู่ — ลบแล้วจะไม่มีหมวดหมู่ (ไม่ลบบทความ) ยืนยันลบ?'"
                       : "'ยืนยันลบหมวดหมู่นี้?'" ?>);">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" value="<?= $cat['id'] ?>">
                     <button type="submit" class="link-danger">ลบ</button>
@@ -122,6 +125,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
   <div class="card">
     <h2 style="margin-top:0;"><?= $editingCategory ? 'แก้ไขหมวดหมู่' : 'เพิ่มหมวดหมู่ใหม่' ?></h2>
     <form method="post">
+      <?= csrfField() ?>
       <input type="hidden" name="action" value="save">
       <input type="hidden" name="id" value="<?= htmlspecialchars((string) $form['id']) ?>">
       <div class="field">

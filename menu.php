@@ -1,12 +1,14 @@
 <?php
 require __DIR__ . '/includes/menu.php';
 require __DIR__ . '/includes/admin-nav.php';
+requireCapability('manage_menu');
 
 $errors = [];
 $saved = isset($_GET['saved']);
 $deleted = isset($_GET['deleted']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    verifyCsrf();
     $id = (int) ($_POST['id'] ?? 0);
     if ($id > 0) {
         deleteMenuItem($id);
@@ -27,6 +29,7 @@ $form = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save') {
+    verifyCsrf();
     $form['id'] = trim($_POST['id'] ?? '');
     $form['label'] = trim($_POST['label'] ?? '');
     $form['href'] = trim($_POST['href'] ?? '');
@@ -76,9 +79,8 @@ foreach ($allItems as $item) {
 }
 
 $pageTitle = 'จัดการเมนู';
-$topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">จัดการเมนู</h1>
 
@@ -111,6 +113,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
                   <form method="post" style="display:inline" onsubmit="return confirm(<?= $childCount > 0
                       ? "'ลบ " . htmlspecialchars($item['label'], ENT_QUOTES) . " จะลบเมนูย่อยอีก {$childCount} รายการไปด้วย ยืนยันลบ?'"
                       : "'ยืนยันลบเมนูนี้?'" ?>);">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" value="<?= $item['id'] ?>">
                     <button type="submit" class="link-danger">ลบ</button>
@@ -125,6 +128,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
                   <td class="row-actions">
                     <a href="menu.php?edit=<?= $child['id'] ?>">แก้ไข</a>
                     <form method="post" style="display:inline" onsubmit="return confirm('ยืนยันลบเมนูนี้?');">
+                      <?= csrfField() ?>
                       <input type="hidden" name="action" value="delete">
                       <input type="hidden" name="id" value="<?= $child['id'] ?>">
                       <button type="submit" class="link-danger">ลบ</button>
@@ -142,6 +146,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
   <div class="card">
     <h2 style="margin-top:0;"><?= $editingItem ? 'แก้ไขเมนู' : 'เพิ่มเมนูใหม่' ?></h2>
     <form method="post">
+      <?= csrfField() ?>
       <input type="hidden" name="action" value="save">
       <input type="hidden" name="id" value="<?= htmlspecialchars((string) $form['id']) ?>">
       <div class="field">

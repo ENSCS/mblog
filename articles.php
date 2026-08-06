@@ -12,9 +12,8 @@ $articles = $result['items'];
 $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 
 $pageTitle = 'บทความทั้งหมด';
-$topbarActions = '<a href="editor.php">+ เขียนบทความใหม่</a>';
 $showSidebar = true;
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showSidebar'));
+$layout = render_header(compact('pageTitle', 'showSidebar'));
 ?>
   <?php
   $emptyMessage = 'ยังไม่มีบทความ — <a href="editor.php">เริ่มเขียนบทความแรก</a>';

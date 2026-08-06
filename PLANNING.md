@@ -31,10 +31,10 @@
 - เช็คสิทธิ์ด้วยชื่อ capability (`userCan('publish_articles')`) ไม่ใช่ชื่อ role ตรงๆ — เพราะ "ใครมีสิทธิ์อะไร" ก็คือข้อมูลอีกแบบหนึ่งที่เปลี่ยนได้
 
 **ตัวอย่างที่ตัดสินใจแล้วตามหลักนี้:**
-- **เมนู (ทำแล้ว)** — `includes/menu.php` (`getMenuItems()`) ↔ `partials/header.php` (แสดงผล, วน loop จาก array ที่ได้มาเท่านั้น ไม่รู้จักชื่อเมนูตรงๆ) — ข้อมูลอยู่ในตาราง `mblog_menu_items` (MySQL) แล้ว รองรับเมนูย่อยผ่าน `parent_id` (self-reference) ด้วย **มี UI ครบทั้ง desktop (dropdown เปิดตอน hover แบบ WP, ตัวคำหลักเป็นลิงก์จริงคลิกได้) และ mobile (hamburger + accordion เต็มความกว้าง) แล้ว** — ดูรายละเอียดหัวข้อ 1 — **หน้าแอดมินจัดการเมนู (ทำแล้ว)** `menu.php`: เพิ่ม/แก้/ลบเมนู, จำกัด parent dropdown ให้เลือกได้แค่เมนูระดับบนสุด (กันซ้อนเกิน 2 ชั้นที่ header.php รองรับจริง), เตือนก่อนลบเมนูที่มีลูกเพราะ FK ตั้ง `ON DELETE CASCADE` ไว้, เว้นช่องลำดับว่างไว้ให้ต่อท้ายอัตโนมัติ — ยังไม่ล็อกอินก่อนเข้าได้เหมือน settings.php (รอ Phase 3)
+- **เมนู (ทำแล้ว)** — `includes/menu.php` (`getMenuItems()`) ↔ `partials/header.php` (แสดงผล, วน loop จาก array ที่ได้มาเท่านั้น ไม่รู้จักชื่อเมนูตรงๆ) — ข้อมูลอยู่ในตาราง `mblog_menu_items` (MySQL) แล้ว รองรับเมนูย่อยผ่าน `parent_id` (self-reference) ด้วย **มี UI ครบทั้ง desktop (dropdown เปิดตอน hover แบบ WP, ตัวคำหลักเป็นลิงก์จริงคลิกได้) และ mobile (hamburger + accordion เต็มความกว้าง) แล้ว** — ดูรายละเอียดหัวข้อ 1 — **หน้าแอดมินจัดการเมนู (ทำแล้ว)** `menu.php`: เพิ่ม/แก้/ลบเมนู, จำกัด parent dropdown ให้เลือกได้แค่เมนูระดับบนสุด (กันซ้อนเกิน 2 ชั้นที่ header.php รองรับจริง), เตือนก่อนลบเมนูที่มีลูกเพราะ FK ตั้ง `ON DELETE CASCADE` ไว้, เว้นช่องลำดับว่างไว้ให้ต่อท้ายอัตโนมัติ — ล็อกอินก่อนเข้าแล้ว (`requireCapability('manage_menu')` — ดู Phase 3)
 - **บทความ (ทำแล้ว — ย้ายเข้า MySQL สมบูรณ์แล้ว)** — `includes/articles.php` มีฟังก์ชันกลางครบ (`getArticles()`, `getArticle($slug)`, `getArticleById($id)` ฯลฯ) คั่นกลางทุกหน้า อ่าน/เขียนตาราง `mblog_articles` จริง — พิสูจน์หลักการสำเร็จ: ตอนสลับจากไฟล์ json มา MySQL `index.php`/`article.php`/`editor.php` ไม่ต้องแก้โค้ด render เลยสักบรรทัด
 - **หมวดหมู่ (ทำแล้ว)** — เดิมวางแผนเป็นไฟล์ (`config/categories.php`) แต่เปลี่ยนใจทำเป็นตาราง `mblog_categories` ตั้งแต่ต้นเลย เพราะรู้ล่วงหน้าว่าจะมีหน้าแอดมินเพิ่ม/ลบหมวดในอนาคตแน่ๆ — ทำพร้อมกับตอนย้าย MySQL ครั้งเดียว ไม่ต้องย้ายซ้ำสองรอบ — **สีของ badge หมวดหมู่ก็ยึดหลักเดียวกัน**: เก็บเป็น "โทนสี" (`color` column, ไม่ใช่ hex ตรงๆ) ใน DB แทนที่จะ hardcode สีไว้ในโค้ด เพราะเหตุผลเดียวกันเป๊ะ — ดูหัวข้อ 3 — **หน้าแอดมินจัดการหมวดหมู่ (ทำแล้ว)** `categories.php` ตามที่รู้ล่วงหน้าไว้ว่าจะต้องมีสักวัน
-- **ค่าตั้งค่าเว็บ (ทำแล้ว)** — ย้ายจากไฟล์ `config/settings.php` เข้าตาราง `mblog_settings` (key/value) แล้ว พร้อมหน้าแอดมิน `settings.php` จริง (ฟอร์มแก้ `site_name`/`timezone`/`owner_email`/`footer_tagline`, validate, PRG pattern กันฟอร์ม resubmit) — ตรงตามเงื่อนไขเดิมที่บอกว่า "เป็นไฟล์จนกว่าจะมีหน้าแอดมินจริง" ตอนนี้มีแล้วเลยย้าย `includes/settings.php` (`siteSetting($key)`, `updateSiteSettings()`) ไปอ่าน/เขียน DB แทน — **ผลข้างเคียงที่ต้องแก้**: `config.php` ต้อง define ค่า `DB_*` ก่อน require `includes/settings.php` แล้ว (เดิม timezone ถูก set ก่อนมี DB credentials ด้วยซ้ำ เพราะตอนนั้นยังไม่ต้องพึ่ง DB) — ยังไม่ล็อกอินก่อนเข้าหน้านี้ได้ (รอ Phase 3)
+- **ค่าตั้งค่าเว็บ (ทำแล้ว)** — ย้ายจากไฟล์ `config/settings.php` เข้าตาราง `mblog_settings` (key/value) แล้ว พร้อมหน้าแอดมิน `settings.php` จริง (ฟอร์มแก้ `site_name`/`timezone`/`owner_email`/`footer_tagline`, validate, PRG pattern กันฟอร์ม resubmit) — ตรงตามเงื่อนไขเดิมที่บอกว่า "เป็นไฟล์จนกว่าจะมีหน้าแอดมินจริง" ตอนนี้มีแล้วเลยย้าย `includes/settings.php` (`siteSetting($key)`, `updateSiteSettings()`) ไปอ่าน/เขียน DB แทน — **ผลข้างเคียงที่ต้องแก้**: `config.php` ต้อง define ค่า `DB_*` ก่อน require `includes/settings.php` แล้ว (เดิม timezone ถูก set ก่อนมี DB credentials ด้วยซ้ำ เพราะตอนนั้นยังไม่ต้องพึ่ง DB) — ล็อกอินก่อนเข้าหน้านี้แล้ว (`requireCapability('manage_settings')` — ดู Phase 3)
 - **สิทธิ์ผู้ใช้** (แผนงาน) — `userCan()` แบบ capability-based ตามที่คุยไว้ในหัวข้อล็อกอิน (ดูหัวข้อ "ประเด็นที่วนกลับมาซ้ำๆ")
 
 **หลักการรอง (เกิดขึ้นจริงตอนสร้างระบบแอดมิน/สถิติ 2026-07-27) — ใช้ของเดิมต่อยอด อย่าสร้างคู่ขนาน:**
@@ -61,7 +61,7 @@
 - **Layout/CSS/Git** — แยกเสร็จหมดแล้ว: `partials/header.php`/`sidebar.php`/`footer.php` (แยก `sidebar.php` ออกจาก `footer.php` แล้ว — ดูหัวข้อ 15), CSS แยกเป็น `base`/`layout`/`components`/`article`/`editor.css` (`editor.css` โหลดเฉพาะหน้าแก้ไข), git repo มีประวัติเต็มแล้ว
 - **PHP Backend** — `config.php` รวม credentials/path จุดเดียว + data layer (`includes/articles.php` ฯลฯ) ครอบ SQL ไม่ปนหน้าเว็บ ตามหลักการหลักของเอกสารนี้ — **routing ยังไม่ตัดสินใจ** (ดูหัวข้อ "สิ่งที่ยังไม่ตัดสินใจ")
 - **แยกตามโมดูลธุรกิจ** (`/blog` `/course` `/stock`) — ยังไม่ทำ อยู่นอกขอบเขต Roadmap นี้ (ดู "นอกขอบเขต")
-- **Auth/Admin zone** — ยังไม่ทำ รอ Phase 3
+- **Auth/Admin zone** — ✅ ทำแล้ว (Phase 3) — capability-based, ไม่มีโฟลเดอร์ `/admin/` แยกจริงตามแผนเดิม (ใช้ `requireCapability()`/`requireLogin()` ที่หัวไฟล์แต่ละหน้าแทน — ดู Phase 3 สำหรับเหตุผลที่เบี่ยงจากแผน)
 - **Post vs Page — ทำแล้ว**: ตารางเดียวกัน (`mblog_articles.type ENUM('post','page')`) ไม่แยกตาราง `mblog_pages` ใหม่ (field ใช้ร่วมกันเยอะเกินไป เหมือน WP ที่ใช้ `wp_posts` ตารางเดียวแยกด้วย `post_type`) — editor เดียวกัน (Quill) ทั้งคู่ หน้าแสดงผลแยก `page.php`/`article.php`
 - **Menu management — ทำแล้ว**: ย้ายเข้าตาราง `mblog_menu_items` รองรับเมนูย่อยผ่าน `parent_id`, `header.php` วน loop render อย่างเดียวไม่รู้จักชื่อเมนูเอง (พิสูจน์หลักการแยกข้อมูล-โค้ดสำเร็จ)
 
@@ -74,9 +74,9 @@
 - **หมวดหมู่** — 1 บทความ ≤ 1 หมวด ไม่บังคับต้องมี (`category_id` FK, `ON DELETE SET NULL`) — ลบหมวด/ไม่เลือกจะเป็น "ไม่มีหมวดหมู่" (`NULL`) ตรงๆ **ไม่ fallback ไปหมวดแรกแบบเงียบๆ** เหมือนที่เคยตัดสินใจไว้ก่อนหน้า (กันบทความ "เปลี่ยนหมวด" เองโดยไม่มีใครสั่ง)
 - **แท็ก** — many-to-many (`mblog_tags` + `mblog_article_tag`), freeform พิมพ์สร้างเองได้ผ่าน chip input + autocomplete ไม่ต้องมีแอดมินสร้างไว้ก่อน, ระบุตัวตนด้วย slug กันสร้างซ้ำเวลาสะกด/ตัวพิมพ์ต่างกัน
 
-### 4. ระบบคอมเมนต์/รีวิว — 🔜 ยังไม่ทำ (รอ Phase 3 auth)
+### 4. ระบบคอมเมนต์/รีวิว — 🔜 ยังไม่ทำ (auth พร้อมแล้วจาก Phase 3 — เหลือแค่ตัวฟีเจอร์เอง)
 - สร้างเอง (คุมได้เต็มที่) vs ฝังสำเร็จรูป (giscus/Disqus/Cusdis — เร็วกว่ามาก)
-- **จุดที่คนมองข้าม: spam** — ต้องมี honeypot field + moderation queue (**ต้องพึ่งระบบล็อกอิน/สิทธิ์ที่ยังไม่มี**) + rate limit
+- **จุดที่คนมองข้าม: spam** — ต้องมี honeypot field + moderation queue (หน้า moderation ใช้ `requireCapability()` เดียวกับหน้าแอดมินอื่นได้เลย) + rate limit
 - ต้อง sanitize เข้มกว่าเนื้อหาบทความมาก เพราะเป็น input จากคนนอกคนแรกของเว็บ
 - **Comment** (บล็อก) ≠ **Review+rating** (หน้าขายคอร์ส — social proof ช่วยขาย) เป็นคนละฟีเจอร์แม้โครงสร้างคล้ายกัน
 
@@ -174,7 +174,7 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 ไม่ใช่ระบบ login ผู้ใช้ — เป็น "รหัสผ่านร่วม" ต่อบทความ (คนที่รู้รหัสถึงอ่านเนื้อหาได้) ต่างจาก private (หัวข้อ 13) ตรงที่**ชื่อบทความยังโชว์ปกติทุกที่** (list/RSS/search/sitemap) แค่กดเข้าไปอ่านเนื้อหาจริงต้องใส่รหัสก่อน
 
 - **Schema ที่ต้องเพิ่ม** (ยังไม่ได้สร้างไฟล์ — แยกจาก `article_visibility_and_seo.sql` ตั้งใจ เพราะต้องมีกลไก unlock ฝั่งโค้ดเพิ่มด้วย ไม่ใช่แค่ schema เฉยๆ): `mblog_articles.is_locked TINYINT(1) DEFAULT 0` + `access_code_hash VARCHAR(255) NULL` (เก็บด้วย `password_hash()` ไม่เก็บรหัสตรงๆ)
-- **กลไก unlock** — เว็บนี้**ไม่มีระบบ session/login เลยตอนนี้** (`mblog_users`/Phase 3 สร้างตารางรอไว้แต่ยังไม่มีโค้ดใช้งานจริง — ดู "ประเด็นที่วนกลับมาซ้ำๆ") ฟีเจอร์นี้จะเป็นตัวแรกที่ต้องนำ session/cookie เข้ามาใช้ — ยังไม่ตัดสินใจว่าจะใช้ `$_SESSION` (จำแค่จนปิดเบราว์เซอร์) หรือ cookie เซ็นด้วย HMAC (จำได้นานกว่า เช่น 30 วัน)
+- **กลไก unlock** — เว็บนี้มีระบบ session แล้วจาก Phase 3 (`$_SESSION['user_id']` สำหรับ staff login) แต่นั่นคือ session ของ**ทีมงาน** (`mblog_staff`) คนละเรื่องกับการ unlock บทความที่ผู้อ่านทั่วไป (ไม่ต้องมีบัญชี) ต้องทำได้ — ยังไม่ตัดสินใจว่าจะใช้ `$_SESSION` แยก key (จำแค่จนปิดเบราว์เซอร์) หรือ cookie เซ็นด้วย HMAC (จำได้นานกว่า เช่น 30 วัน) แต่กลไก session/cookie ระดับโค้ด (`session_start()`, การตั้งค่า cookie params) มีตัวอย่างที่ใช้งานจริงแล้วจาก `includes/auth.php` ให้อ้างอิงได้
 - **จุดที่ต้องกันเนื้อหารั่ว** — `articleExcerpt()`/`articleContentPreview()` ต้องโชว์ placeholder แทน excerpt จริงถ้าล็อกอยู่ (หน้า list/category/tag/search), `feed.php` (RSS) ใช้ placeholder เดียวกันแทน description จริง — ชื่อเรื่อง/sitemap ไม่กระทบ (ตั้งใจให้เห็น)
 - **ยังต้องตัดสินใจก่อนลงมือ**: รูปแบบรหัส (พิมพ์รหัสเองแชร์ร่วมกัน — เลือกแบบนี้แล้ว), ระยะเวลาจำการ unlock, rate-limit กันเดารหัสมั่ว
 
@@ -212,23 +212,21 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 
 ## ประเด็นที่วนกลับมาซ้ำๆ (dependency สำคัญ)
 
-**ยังไม่มีระบบล็อกอิน/สิทธิ์เลย** — ตอนนี้ใครเข้า `editor.php` ก็เขียน/แก้ได้หมด เรื่องนี้เป็นตัวบล็อกฟีเจอร์ต่อไปนี้ให้สมบูรณ์:
-- คอมเมนต์ (ต้องมีคนอนุมัติก่อนเผยแพร่)
-- ระบบร่าง (ต้องรู้ว่าใครคือเจ้าของถึงจะพรีวิวร่างได้แบบปลอดภัยจริง)
-- **Private post** (หัวข้อ 13) — ต้องรู้ "login แอดมินอยู่ไหม" ก่อนถึงจะปล่อยให้เปิด URL ตรงได้ทั้งที่ไม่โผล่ list สาธารณะ — ฟีเจอร์เดียวในหัวข้อ 13 ที่ยังทำไม่ได้เพราะเหตุนี้ (อีก 4 ตัวทำเสร็จแล้ว 2026-07-30)
-- **บทความล็อกด้วยรหัสผ่าน** (หัวข้อ 14) — ต้องมี session/cookie ก่อน (จะเป็นตัวแรกที่นำกลไก login-like มาใช้จริง แม้จะไม่ใช่ระบบ login แอดมินโดยตรงก็ตาม)
-- ~~YouTube auto-import (ต้องมีคนตรวจสอบก่อนเผยแพร่)~~ — **ไม่บล็อกแล้ว**: ตอนทำจริง (Phase 6) เปลี่ยนใจให้เผยแพร่ทันทีแทนการรอคนตรวจ (แท็ก "สรุปโดย AI" ถือว่าเตือนผู้อ่านเพียงพอแล้ว) เลยไม่ต้องพึ่งระบบล็อกอินอีกต่อไป
-
-→ ควรพิจารณาทำระบบล็อกอินเร็วๆ นี้ เพราะยิ่งเลื่อนยิ่งกระทบหลายฟีเจอร์พร้อมกัน
+**ระบบล็อกอิน/สิทธิ์เสร็จแล้ว (Phase 3, ดู Roadmap)** — ตัวบล็อกเดิมที่เคยกระทบหลายฟีเจอร์พร้อมกันตอนนี้หลุดแล้ว แต่ฟีเจอร์ปลายทางแต่ละตัวยังต้องสร้างเพิ่มเอง (auth เป็นแค่ dependency ที่ปลดล็อก ไม่ได้ทำฟีเจอร์เหล่านี้ให้เสร็จไปด้วย):
+- คอมเมนต์ (หัวข้อ 4/Phase 7) — auth พร้อมแล้ว, ตัวฟีเจอร์เองยังไม่ได้สร้าง
+- ระบบร่าง — ตอนนี้ล็อกอินก่อนเข้าทุกหน้าแล้ว (`requireCapability('edit_articles')`) แต่ `drafts.php` เองยังไม่กรอง "เฉพาะร่างของตัวเอง" (ต่างจาก `manage-articles.php`/`manage-pages.php` ที่กรองผ่าน `articleOwnerFilter()` แล้วจริง — ถ้าจะให้ `drafts.php` ก็กรองด้วยต้องต่อยอดเพิ่ม)
+- **Private post** (หัวข้อ 13) — auth พร้อมแล้ว ยังไม่ได้ต่อยอด (ยังคงเป็นฟีเจอร์เดียวในหัวข้อ 13 ที่ยังไม่ทำ)
+- **บทความล็อกด้วยรหัสผ่าน** (หัวข้อ 14) — session ($_SESSION แบบเดียวกับ staff login) มีกลไกพร้อมใช้แล้วจาก Phase 3 แต่ตัวฟีเจอร์ยังไม่ได้สร้าง schema
+- ~~YouTube auto-import (ต้องมีคนตรวจสอบก่อนเผยแพร่)~~ — **ไม่บล็อกแล้ว**: ตอนทำจริง (Phase 6) เปลี่ยนใจให้เผยแพร่ทันทีแทนการรอคนตรวจ (แท็ก "สรุปโดย AI" ถือว่าเตือนผู้อ่านเพียงพอแล้ว)
 
 ---
 
 ## สิ่งที่ยังไม่ตัดสินใจ (ต้องคุยต่อ)
 
 - โครงสร้างแยกโมดูล `/blog` `/course` `/stock` จะเริ่มทำเมื่อไหร่
-- รูปแบบระบบล็อกอิน (username/password เอง vs OAuth vs อื่นๆ)
+- ระบบยืนยันอีเมล (verify-by-link) สำหรับสมัครสมาชิกผู้อ่านในอนาคต — logic ฝั่ง token/link ไม่ยาก แต่ยังไม่ได้เลือกผู้ให้บริการส่งอีเมล (ESP) ที่จะใช้จริงตอนขึ้น host (ต้องมี SPF/DKIM/DMARC ของโดเมนจริงด้วย — ดูหัวข้อ "ตัดออกเพราะตัดสินใจ" ด้านล่างสำหรับ auth แบบ session/password ที่ตัดสินใจแล้ว)
 
-*(ตัดออกเพราะตัดสินใจ/ทำเสร็จแล้ว: จังหวะย้าย JSON→MySQL — ตัดสินใจย้ายทีเดียวทั้งหมด ไม่ทยอยทำทีละ feature; จังหวะแบ่ง `uploads/` รายเดือน — ทำแล้วพร้อมกับตอนย้าย MySQL; Routing สำหรับ URL สวย — ตัดสินใจแนวทางแล้ว (`.htaccess` rewrite เขียนเอง ไม่ใช่ router กลางไฟล์เดียว) แค่ยังไม่ลงมือทำเพราะไม่มั่นใจ spec โฮสจริง ดูรายละเอียดที่หัวข้อ 10)*
+*(ตัดออกเพราะตัดสินใจ/ทำเสร็จแล้ว: จังหวะย้าย JSON→MySQL — ตัดสินใจย้ายทีเดียวทั้งหมด ไม่ทยอยทำทีละ feature; จังหวะแบ่ง `uploads/` รายเดือน — ทำแล้วพร้อมกับตอนย้าย MySQL; Routing สำหรับ URL สวย — ตัดสินใจแนวทางแล้ว (`.htaccess` rewrite เขียนเอง ไม่ใช่ router กลางไฟล์เดียว) แค่ยังไม่ลงมือทำเพราะไม่มั่นใจ spec โฮสจริง ดูรายละเอียดที่หัวข้อ 10; รูปแบบระบบล็อกอิน — ตัดสินใจแล้ว username/password เอง + `$_SESSION` (ไม่ใช้ OAuth/HMAC cookie) ดู Phase 3)*
 
 ---
 
@@ -241,12 +239,14 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 ### Phase 0-2 — โครงสร้างพื้นฐาน + MySQL — ✅ เสร็จสมบูรณ์ทั้งหมด
 ระบบเขียนบทความ WYSIWYG (Quill) เต็มรูปแบบ + mobile responsive + git/GitHub + README ครบตั้งแต่ Phase 0 — Phase 1 ย้ายข้อมูลบทความ/รูปภาพ/หมวดหมู่/เมนูจากไฟล์ JSON เข้า MySQL ทั้งหมด (ออกแบบตารางของทุก Phase ล่วงหน้าทีเดียว, `config.php` รวม credentials จุดเดียว) พิสูจน์หลักการ "แยกข้อมูล-โค้ด" สำเร็จ (สลับ storage แล้วหน้าเว็บไม่ต้องแก้โค้ด render เลย) — Phase 2 ตามมาด้วย partials, CSS แยกไฟล์, SEO พื้นฐาน (หัวข้อ 10), error handling (หัวข้อ 12), และ backup script เบื้องต้น (หัวข้อ 11 — ทำครบแล้ว 2026-08-01 รวม MySQL dump ด้วย) — ของแถมนอกแผนเดิมทั้งหมด (แก้ slug เอง + 301 redirect, ระบบรูปภาพเต็มรูปแบบ, ค่าตั้งค่าเว็บ) ดูรายละเอียดที่ [BUILT.md](BUILT.md)
 
-### Phase 3 — ระบบล็อกอิน/สิทธิ์ (ประเด็นที่วนกลับมาซ้ำๆ) — 🔜 ยังไม่ทำ (MySQL พร้อมแล้ว)
-- [x] ตาราง `mblog_users` (email, password_hash, role, + `author_id` บน `mblog_articles`) — สร้างรอไว้แล้ว (`database/phase3_users.sql`) ยังไม่มีโค้ดใช้งาน
-- [ ] 2 roles เริ่มต้น: Admin, Editor — เช็คแบบ capability-based (`userCan('publish_articles')` ฯลฯ) ไม่เช็คชื่อ role ตรงๆ
-- [ ] `includes/auth.php` bootstrap (session, `requireLogin()`, `requireCapability()`) + ย้ายหน้าที่ต้องล็อกอินเข้าโฟลเดอร์ `/admin/`
-- [ ] CSRF token บนฟอร์มที่ทำงานหลังล็อกอิน
-- [ ] อัปเกรดความปลอดภัยของ draft — ให้เจ้าของพรีวิวร่างได้จริงแบบปลอดภัย (ไม่ใช่แค่อาศัย slug เดายาก)
+### Phase 3 — ระบบล็อกอิน/สิทธิ์ (ประเด็นที่วนกลับมาซ้ำๆ) — ✅ เสร็จแล้ว (เบี่ยงจากแผนเดิมหลายจุด — รายละเอียดเต็มดู [BUILT.md](BUILT.md))
+- [x] ตาราง `mblog_staff` (email, username, password_hash, role, first_name/last_name/phone/line_id/avatar_path, + `author_id` บน `mblog_articles`) — ชื่อเดิมตอนสร้างคือ `mblog_users` (`database/phase3_users.sql`) สลับชื่อกับ `mblog_readers` ทีหลัง (ดู Phase 15) ให้ `mblog_staff` = ทีมงาน, `mblog_users` = ผู้ชมทั่วไป
+- [x] 3 roles ไม่ใช่ 2 ตามแผนเดิม: **Admin, Editor, Author** (เพิ่ม Author เพราะงานจริงต้องแยก "เขียนได้ทุกคน" ออกจาก "เขียนได้แค่ของตัวเอง") — เช็คแบบ capability-based ทั้งหมดผ่าน `ROLE_CAPABILITIES` array เดียวใน `includes/auth.php` (`userCan('edit_articles')` ฯลฯ) ไม่มีหน้าไหนเช็คชื่อ role ตรงๆ เพื่อกันสิทธิ์เลย ยกเว้น 2 จุดที่เป็นข้อยกเว้นตั้งใจ (กันลบ/ลดสิทธิ์ admin คนสุดท้าย — มีคอมเมนต์อธิบายไว้ในโค้ดทั้งคู่)
+- [x] `includes/auth.php` bootstrap (session, `requireLogin()`, `requireCapability()`, `requireApiLogin()`/`requireApiCapability()` สำหรับ API) — **ไม่ได้ย้ายเข้าโฟลเดอร์ `/admin/` ตามแผนเดิม** เพราะหน้าเว็บมีอยู่แล้วจำนวนมากตอนถึง Phase นี้ ย้ายทั้งหมดเสี่ยงพังลิงก์/bookmark เดิม เลือกให้แต่ละหน้าเรียก `requireCapability('...')` ที่บรรทัดแรกแทน — จุดเดียวที่ต้องแก้ถ้าจะเปลี่ยนสิทธิ์คือ `ROLE_CAPABILITIES`
+- [x] CSRF token บนฟอร์มที่ทำงานหลังล็อกอิน (`csrfToken()`/`csrfField()`/`verifyCsrf()`)
+- [ ] อัปเกรดความปลอดภัยของ draft — ยังไม่ทำ (`drafts.php` ล็อกอินก่อนเข้าแล้วแต่ยังไม่กรอง "เฉพาะของตัวเอง" ต่างจาก `manage-articles.php` ที่มี `articleOwnerFilter()` แล้วจริง)
+- [x] เข้าสู่ระบบด้วยอีเมล**หรือ**username ก็ได้ (`login.php`, นอกแผนเดิม) — query เดียว `WHERE email = ? OR username = ?`
+- [x] หน้าโปรไฟล์ตัวเอง + จัดการทีมงาน (นอกแผนเดิม, ดู Phase 15) — `profile.php`/`users.php`
 
 ### Phase 4 — แท็ก (tag) เต็มรูปแบบ (ส่วน 3) — ✅ เสร็จแล้ว
 `mblog_tags` + `mblog_article_tag` (many-to-many), data layer ครบ (`findOrCreateTagIds()`/`syncArticleTags()` แบบ upsert กันแท็กซ้ำ), chip input + autocomplete ใน editor, `category.php`/`tag.php` ครบพร้อม sitemap — รายละเอียดดูหัวข้อ 3
@@ -254,7 +254,7 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 ### Phase 5/6 — นำเข้า Markdown + ระบบออโต้นำเข้า (ส่วน 6/7) — ✅ เสร็จแล้ว (2026-07-27, เบี่ยงจากแผนเดิมหลายจุด)
 รายละเอียดเต็มดูหัวข้อ 6/7 ด้านบน — สรุปสั้น: `import-markdown.php` (อัปโหลดมือ) + `api/import-markdown.php` (รับอัตโนมัติจาก stock-live-pipeline ด้วย token) ใช้แกนร่วม `importMarkdownArticle()`, **เผยแพร่ทันทีแทนการรอร่าง** (เปลี่ยนใจจากแผนเดิม), แท็ก "สรุปโดย AI" + ชื่อสำนักอัตโนมัติ, เก็บ+โชว์เครดิต YouTube ต้นฉบับ + ตั้ง featured image จาก YouTube thumbnail อัตโนมัติ, `published_at` ใช้เวลาโพสต์จริงจาก front matter
 
-### Phase 7 — คอมเมนต์/รีวิว (ส่วน 4) — 🔜 ยังไม่ทำ (ตารางพร้อมแล้ว, รอ Phase 3)
+### Phase 7 — คอมเมนต์/รีวิว (ส่วน 4) — 🔜 ยังไม่ทำ (ตารางพร้อมแล้ว, auth พร้อมแล้วหลัง Phase 3 — เหลือแค่ตัวฟีเจอร์เอง)
 - [x] ตาราง `mblog_comments` (article_id, parent_id เผื่ออนาคต, สถานะรอตรวจ/อนุมัติ/สแปม) — สร้างรอไว้แล้ว (`database/phase7_comments.sql`) ยังไม่มีโค้ดใช้งาน
 - [ ] Honeypot field + rate limit ต่อ IP
 - [ ] หน้า moderation ในโซน `/admin/`
@@ -281,7 +281,7 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 
 ### Phase 11 — ฟีเจอร์บทความเพิ่มเติม: การมองเห็น/จัดระเบียบ/SEO (ส่วน 13) — ✅ ทำแล้ว 4/6 (2026-07-30)
 - [x] Schema รวมไฟล์เดียว `database/article_visibility_and_seo.sql` (private/scheduled status, `expires_at`, SEO override 3 คอลัมน์, `parent_id` hierarchical pages, `sticky_article_ids` ใน `mblog_settings`) — **รันเข้า DB จริงแล้ว**
-- [x] แก้ query ทุกจุดที่เช็ค `status='published'` ตรงๆ ใน `includes/articles.php` ให้กรอง `published_at <= NOW()` ด้วย (รองรับ scheduled) และกัน `expired` ไม่ให้หลุดเข้าหน้า list/RSS/search/sitemap สาธารณะ — รวมไว้ที่ฟังก์ชันเดียว `publicVisibilitySql()` (ยังไม่รวม `private` เพราะติด Phase 3 auth)
+- [x] แก้ query ทุกจุดที่เช็ค `status='published'` ตรงๆ ใน `includes/articles.php` ให้กรอง `published_at <= NOW()` ด้วย (รองรับ scheduled) และกัน `expired` ไม่ให้หลุดเข้าหน้า list/RSS/search/sitemap สาธารณะ — รวมไว้ที่ฟังก์ชันเดียว `publicVisibilitySql()` (ยังไม่รวม `private` — Phase 3 auth เสร็จแล้ว แต่ private post เองยังไม่ได้ต่อยอด)
 - [x] UI แอดมิน: ตัวเลือกสถานะ scheduled ใน `editor.php` (ปุ่ม "ตั้งเวลาเผยแพร่" แยกจาก "เผยแพร่"), ปักหมุดผ่านหน้าแยก `sticky-items.php` (ไม่ใช่ใน `manage-articles.php` ตามที่ร่างไว้ทีแรก — ดูหัวข้อ 13), ช่อง SEO override ใน `editor.php` — เหลือ private (ติด auth) และ dropdown เลือก parent page (พักไว้รอ pretty URL)
 - [ ] Cron/logic auto-flip เมื่อ `expires_at` ถึงเวลา — **ตัดสินใจไม่ต้องมี** เช่นเดียวกับ scheduled publishing (query-time comparison ใน `publicVisibilitySql()` พอแล้ว ไม่ต้องมีอะไรมา flip สถานะจริง)
 - [ ] กัน parent_id วนเป็นวงฝั่งโค้ด (validate ตอนบันทึกหน้า) — รอทำพร้อม hierarchical pages
@@ -305,6 +305,17 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 - [x] หน้าแสดงผลรายการ candidate ไฟล์กำพร้า (thumbnail/path/วันที่สร้าง/ขนาด) ให้แอดมินติ๊กเลือกก่อนลบจริง — `orphan-files.php` (bulk checkbox + confirm, ห้าม auto-delete)
 - [x] ตัดสินใจ: แยกหน้าแอดมินใหม่ต่างหาก ไม่รวมเข้า `scripts/backup.php`
 
+### Phase 15 — สลับชื่อตาราง staff/users + โปรไฟล์ทีมงานเต็มรูปแบบ + topbar account menu ทั้งเว็บ (นอกแผนเดิม, ทำเสร็จ 2026-08-06)
+- [x] `RENAME TABLE mblog_users TO mblog_staff, mblog_readers TO mblog_users` (atomic เดียว, FK ตามอัตโนมัติ) — ให้ `mblog_staff` = ทีมงาน, `mblog_users` = ผู้ชมทั่วไป (สื่อความหมายตรงกับเว็บอื่นทั่วไปที่ "users" มักหมายถึงผู้ชมวงกว้าง) — backup DB ก่อนรันทุกครั้ง (`mysqldump`), migrate โค้ดตามทั้งหมด (query string ในไฟล์ `.php`/`.sql`) ไม่ได้ rename ไฟล์ตาม (ลดความเสี่ยง/จุดที่ต้องแก้)
+- [x] เพิ่มคอลัมน์โปรไฟล์ (`username`, `first_name`, `last_name`, `phone`, `line_id`, `avatar_path`) ให้ `mblog_staff` (backfill `username` จาก local-part ของอีเมล + บังคับ `NOT NULL UNIQUE` ทีหลัง เพราะมีแถวเก่าอยู่แล้ว) และ mirror schema เดียวกันไปที่ `mblog_users` ด้วยล่วงหน้า (ตารางว่าง ทำ `NOT NULL` ได้ตั้งแต่แรก) แม้ยังไม่มีหน้าเว็บฝั่งผู้ชมใช้งานจริง
+- [x] เข้าสู่ระบบด้วย username **หรือ** อีเมลก็ได้ (`login.php`: `WHERE email = ? OR username = ?`) — username auto-generate จาก local-part อีเมลตอนสร้างบัญชีใหม่ (ชนกันต่อท้าย `-2`/`-3` แบบเดียวกับ `sanitizeUploadFilename()`) แก้เองทีหลังได้จากหน้าโปรไฟล์
+- [x] **แยกหน้าแก้โปรไฟล์ออกจากหน้า list** ตามที่ตัดสินใจกัน — `users.php` เหลือแค่ list + ฟอร์มเพิ่มผู้ใช้แบบง่าย (อีเมล+รหัสผ่านเท่านั้น, role default `author`), `profile.php` แยกต่างหากรับทั้งแก้ตัวเอง (`requireLogin()` เฉยๆ) และแอดมินแก้คนอื่น (`?id=`, ต้อง `manage_users`) — ช่องสิทธิ์โชว์เฉพาะคนมี `manage_users` เท่านั้น ใช้ซ้ำเป็น pattern ที่ขยายไปหน้าโปรไฟล์ผู้ชมได้ในอนาคต
+- [x] Avatar อัปโหลดได้ (`uploads/staff/{id}.{ext}`, 1 ไฟล์ต่อคนแบบเดียวกับโลโก้เว็บ) — ยังไม่มีรูปแสดง placeholder ตัวอักษรแรกของชื่อบนพื้นสีคงที่ต่อคนแบบ Gmail (`avatarColorClass()`: `id % 10` เข้า 10 สี `--avatar-color-0..9` ใน `base.css`, มีชุดสีแยกทั้งธีมสว่าง/มืด) — เพิ่มเช็คใน `uploadPathInUse()` กัน `orphan-files.php` เข้าใจผิดว่า avatar เป็นไฟล์กำพร้า
+- [x] **Topbar account menu เป็นค่าเริ่มต้นทั้งเว็บ** — ย้าย logic จาก `includes/admin-nav.php` (โหลดแค่หน้าแอดมิน) ไปเป็น `topbarAccountMenu()` ใน `includes/auth.php` แทน (โหลดทุกหน้าผ่าน `config.php` อยู่แล้ว) ให้ `partials/header.php` เรียกตรงๆ ไม่ต้องรอแต่ละหน้า set `$topbarActions` — ผลคือปุ่ม "+ เขียนบทความใหม่"/"แก้ไข" ที่เคยโชว์แบบไม่เช็คสิทธิ์เลยบนหน้า public (`articles.php`/`category.php`/`tag.php`/`search.php`/`feed.php`/`page.php`/`pages.php`/`article.php`) ถูกตัดออก แทนที่ด้วย avatar เดียวกันทั้งเว็บ — dropdown (hover/focus-within ล้วน ไม่ใช้ JS ใหม่ ใช้กลไกเดียวกับ `.menu-item-has-children`/`.submenu` เดิม) มี "เขียนบทความ" (เช็ค `edit_articles`), "จัดการเว็บ" (เช็ค `manage_settings` แทนการเทียบ role ตรงๆ — เผื่อ admin เท่านั้น), "โปรไฟล์", "ออกจากระบบ" — ยังไม่ได้ล็อกอินเห็นปุ่ม "เข้าสู่ระบบ" แทน (redirect กลับหน้าเดิมหลัง login สำเร็จ)
+- [x] "← จัดการเว็บ" เดิมที่เคยอยู่ทุก topbar ย้ายไปอยู่บนสุดของ sidebar แอดมินถาวรแทน (จุดเดียว ไม่ซ้ำทุกหน้า) — `adminTopbarActions(array $extraLinks = [])` เดิมถูกลบทิ้งทั้งฟังก์ชัน พร้อมล้าง `$topbarActions`/argument ที่เคยส่งเข้ามาออกจากทุกไฟล์ที่เคยเรียก (ทั้งหน้าแอดมินและหน้า public)
+- [x] **บั๊ก CSS specificity 2 ตัวที่เจอและแก้ระหว่างทำ** — (1) `.topbar .actions` เป็น inline flow ธรรมดา ไม่ใช่ flex, `<div>` ของ account menu เลยตกบรรทัดใหม่จนกว่าจะเติม `display: inline-flex; vertical-align: middle` แบบเดียวกับ `.site-search`/`.theme-toggle` (2) ปุ่ม "เข้าสู่ระบบ" ตัวอักษรเป็นสีเข้มผิดที่ทุกธีม เพราะ `.topbar a` (class+tag) จำเพาะกว่า `.topbar-login-btn` (class เดียว) ชนะ `color` — แก้เป็น `.topbar a.topbar-login-btn` ให้จำเพาะกว่า
+- [x] เพิ่มคอมเมนต์กันลืมที่ 2 จุดในโค้ดที่เช็ค `$user['role'] === 'admin'` ตรงๆ (กันลบ/ลดสิทธิ์ admin คนสุดท้าย — `users.php`/`profile.php`) อธิบายว่าทำไมถึงเป็นข้อยกเว้นของกฎ capability-based
+
 ---
 
 ## นอกขอบเขต Roadmap นี้ (ตกลงไว้ว่ายังไม่นับตอนนี้ — วางแผนแยกภายหลัง)
@@ -316,7 +327,7 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 
 ---
 
-## สถานะล่าสุด — Phase 1 เสร็จสมบูรณ์ ✅ + ระบบ Page/หมวดหมู่/เมนูขยายเพิ่มเติมมาก + Phase 5/6 นำเข้า Markdown เสร็จแล้ว + Phase 11/13 ส่วนใหญ่เสร็จแล้ว (2026-07-30)
+## สถานะล่าสุด — Phase 1 เสร็จสมบูรณ์ ✅ + ระบบ Page/หมวดหมู่/เมนูขยายเพิ่มเติมมาก + Phase 5/6 นำเข้า Markdown เสร็จแล้ว + Phase 11/13 ส่วนใหญ่เสร็จแล้ว + **Phase 3 ระบบล็อกอิน/สิทธิ์เสร็จแล้ว + Phase 15 โปรไฟล์ทีมงาน/topbar ทั้งเว็บเสร็จแล้ว (2026-08-06)**
 
 บทความ/รูปภาพ/หมวดหมู่/เมนู ย้ายเข้า MySQL ครบทั้งหมดแล้ว (ดูรายละเอียดใน [BUILT.md](BUILT.md)) พร้อมของแถมนอกแผนเดิม (แก้ slug เองได้ + 301 redirect, ระบบค่าตั้งค่าเว็บ, ชื่อไฟล์อัปโหลดแบบ SEO-friendly) ตารางของทุก Phase ถัดไปก็สร้างรอไว้ล่วงหน้าหมดแล้วด้วย (`database/phase3_users.sql` ถึง `phase9_stats.sql`)
 
@@ -359,7 +370,9 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 - **ของแถมนอกแผน**: `youtube-embed.php`/`feed-embed.php` (หน้าเปล่าไม่มี header/nav/footer ของเว็บเลย มีแค่เนื้อหาที่ต้องการ) สร้างไว้คู่กับฟีเจอร์นี้โดยเฉพาะ ให้ใช้เป็น `iframe_src` ของ sidebar item แบบ iframe ได้ทันที — `feed-embed.php` ใช้ `api/feed-poll.php`/`assets/feed.js` เดิมได้ตรงๆ ไม่ต้องแก้อะไรเลย (สองไฟล์นั้น scope อยู่กับ `#feed-list` เท่านั้นอยู่แล้ว ไม่ผูกกับ chrome ของหน้า)
 - **`assets/feed.css`'s font-size ปรับแยกต่อหน้าได้แล้ว** — `.feed-item-content`/`.feed-item-time` เปลี่ยนจากค่าตายตัวเป็น `var(--feed-item-font-size, 18px)`/`var(--feed-item-time-font-size, 13px)` (ค่า default เท่าเดิมเป๊ะ `feed.php` ไม่กระทบ) แล้ว `feed-embed.php` override เป็นค่าเล็กลง (14px/11px) เฉพาะหน้าตัวเอง ผ่าน scope `<style>` ของตัวเอง — ตัวอย่างการใช้ pattern "CSS custom property + default + override เฉพาะจุด" (เหมือน `--sidebar-width`) รอบล่าสุด
 
+**ระบบล็อกอิน/สิทธิ์ + โปรไฟล์ทีมงาน (Phase 3 + Phase 15, ทำเสร็จ 2026-08-06)** — ปิดตัวบล็อกที่ค้างมานานที่สุด: 3 roles (admin/editor/author) capability-based ทั้งหมดผ่าน `ROLE_CAPABILITIES` จุดเดียวใน `includes/auth.php`, เข้าสู่ระบบด้วยอีเมลหรือ username, ทุกหน้าแอดมิน/API ที่เคยเปิดโล่งตอนนี้ล็อกอินก่อนเข้าหมดแล้ว (แก้ความเสี่ยง arbitrary script injection ผ่านช่องใส่ head/body code ที่เคยกังวลไว้ตั้งแต่ Phase 9 ไปด้วย) — ตามด้วยงานนอกแผนเดิม (Phase 15): สลับชื่อตาราง `mblog_users`→`mblog_staff`/`mblog_readers`→`mblog_users`, เพิ่มโปรไฟล์เต็มรูปแบบ (username/ชื่อ-นามสกุล/เบอร์โทร/LINE ID/avatar พร้อม placeholder สีแบบ Gmail), แยกหน้าแก้โปรไฟล์ (`profile.php`) ออกจากหน้า list (`users.php`), และย้าย account menu ขึ้นเป็นค่าเริ่มต้นของ topbar ทั้งเว็บ (ไม่ใช่แค่โซนแอดมิน) รายละเอียดเต็มดู Phase 3/15 ด้านบนหรือ [BUILT.md](BUILT.md)
+
 **ตัวเลือกขั้นต่อไป:**
-- Phase 3 (ระบบล็อกอิน/สิทธิ์) — ตัวบล็อกที่เหลือหลัง Phase 11/13 เสร็จแล้ว: Phase 7 (คอมเมนต์), Private post (หัวข้อ 13), บทความล็อกด้วยรหัสผ่าน (หัวข้อ 14), ความปลอดภัยของระบบร่าง — ตารางพร้อมแล้ว — ยิ่งสำคัญขึ้นหลังเพิ่มช่องใส่ head/body code เองได้ (Phase 9) เพราะตอนนี้ยังไม่มีใครล็อกไม่ให้คนนอกเข้ามาแก้/แทรก script ได้
+- Phase 7 (คอมเมนต์), Private post (หัวข้อ 13), บทความล็อกด้วยรหัสผ่าน (หัวข้อ 14) — auth (Phase 3) พร้อมใช้แล้วทั้ง 3 ตัว เหลือแค่สร้างตัวฟีเจอร์เอง, ความปลอดภัยของระบบร่าง (กรอง `drafts.php` ให้เห็นแค่ของตัวเอง — ตารางพร้อมแล้วทุกตัว)
 - Phase 9 ที่ยังพักไว้: retention/rollup ของ `mblog_pageview_log` (รอข้อมูลเยอะขึ้นก่อนค่อยตัดสินใจระดับความละเอียด), ทบทวน/อัปเดต pattern บอทใน `isBotUserAgent()` เป็นระยะ
 - **Hierarchical pages** (หัวข้อ 13) — ตั้งใจพักไว้จนกว่าจะทำ pretty URL (หัวข้อ 10) เสร็จก่อน เพราะประโยชน์หลักของ WP (URL ซ้อนกัน, sub-nav อัตโนมัติ) ต้องมี pretty URL/breadcrumb รองรับด้วยถึงจะเห็นผลจริง ไม่ใช่แค่เห็นโครงสร้างในหน้าแอดมิน

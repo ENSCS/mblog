@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/config.php';
 require __DIR__ . '/includes/admin-nav.php';
+requireCapability('manage_settings');
 
 // Curated to what this single-owner Thai blog actually needs — not a full
 // 400-entry IANA timezone picker nobody here would use.
@@ -81,6 +82,7 @@ $errors = [];
 $saved = isset($_GET['saved']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
     $values['site_name'] = trim($_POST['site_name'] ?? '');
     $values['timezone'] = trim($_POST['timezone'] ?? '');
     $values['owner_email'] = trim($_POST['owner_email'] ?? '');
@@ -155,9 +157,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'ตั้งค่าเว็บ';
-$topbarActions = adminTopbarActions(['<a href="editor.php">+ เขียนบทความใหม่</a>']);
 $showAdminSidebar = true;
-$layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
+$layout = render_header(compact('pageTitle', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">ตั้งค่าเว็บ</h1>
   <div class="card">
@@ -172,6 +173,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
       </div>
     <?php endif; ?>
     <form method="post" enctype="multipart/form-data">
+      <?= csrfField() ?>
       <div class="field">
         <label for="site_name">ชื่อเว็บ</label>
         <input type="text" id="site_name" name="site_name" value="<?= htmlspecialchars($values['site_name']) ?>">
