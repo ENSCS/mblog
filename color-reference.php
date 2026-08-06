@@ -1,9 +1,9 @@
 <?php
 // Reference page for the color system in assets/base.css — shows only the
 // colors an organization would actually want to customize for their brand:
-// 1) theme-independent raw palette, 2) light-theme colors, 3) their dark
-// twins, then how those propagate into role tokens (what components use).
-// Everything else in base.css (status colors, tag badges, --dropdown-shadow,
+// 1) light-theme colors, 2) their dark twins, then how those propagate into
+// role tokens (what components use). Everything else in base.css (status
+// colors, tag badges, --dropdown-shadow, --color-accent-teal/-amber,
 // --color-code-bg-dark) is intentionally left out — those are fixed system
 // colors nothing here should change. Hex values are transcribed snapshots
 // of base.css, not live CSS variables — deliberate: this page shows light
@@ -11,37 +11,32 @@
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/admin-nav.php';
 
-$rawPalette = [
-    ['--color-primary', '#cc785c', 'ปุ่มหลัก (.btn), ลิงก์/เมนูแอดมินที่ active, แถบ pagination ปัจจุบัน'],
-    ['--color-primary-hover', '#a9583e', 'สีตอน hover ของปุ่มหลัก/เมนูแอดมิน active + สีชื่อแบรนด์โหมดสว่าง'],
-    ['--color-primary-disabled', '#e6dfd8', 'สำรองไว้ ยังไม่มีจุดใช้งานจริง'],
-    ['--color-accent-teal', '#5db8a6', 'สีไฮไลต์ตอนมีข้อความฟีดใหม่เข้ามา (feed.css)'],
-    ['--color-accent-amber', '#e8a55a', 'สำรองไว้ ยังไม่มีจุดใช้งานจริง'],
-    ['--color-on-primary', '#ffffff', 'ตัวหนังสือบนพื้นสีหลัก (ในปุ่ม .btn)'],
-];
-
 $lightPalette = [
+    ['--color-brand-name', '#a9583e', 'ตัวอักษรชื่อแบรนด์ "mBlog\'26" บนแถบเมนู'],
+    ['--color-primary', '#cc785c', 'ปุ่มหลัก (.btn), ลิงก์/เมนูแอดมินที่ active, แถบ pagination ปัจจุบัน — hover คำนวณจากค่านี้ (filter: brightness), ไม่มี token แยก'],
+    ['--color-on-primary', '#ffffff', 'ตัวหนังสือบนพื้นสีหลัก (ในปุ่ม .btn)'],
     ['--color-canvas', '#efe9de', 'พื้นหลังทั้งหน้า + แถบเมนูบนสุด'],
-    ['--color-surface-soft', '#f5f0e8', 'พื้นหลังปุ่มรอง (btn-secondary)'],
-    ['--color-surface-card', '#faf9f5', 'พื้นหลังการ์ด/dropdown/input'],
+    ['--color-card', '#faf9f5', 'พื้นหลังการ์ด/dropdown/input'],
     ['--color-hairline', '#e6dfd8', 'เส้นขอบการ์ด/ตาราง/input ทั้งหมด'],
     ['--color-ink', '#141413', 'ตัวอักษรหลัก (หัวข้อ)'],
     ['--color-body', '#3d3d3a', 'ตัวอักษรรอง (คำอธิบาย/label ฟอร์ม)'],
     ['--color-muted', '#6c6a64', 'ตัวอักษรจาง (วันที่/meta/empty state)'],
+    ['--color-secondary', '#f5f0e8', 'พื้นหลังปุ่มรอง, badge เมนูแอดมิน, แถบกราฟสถิติ'],
     ['--color-link', '#0645ad', 'สีลิงก์ในเนื้อหาบทความ'],
-    ['--color-brand-name', '#a9583e', 'ตัวอักษรชื่อแบรนด์ "mBlog\'26" บนแถบเมนู'],
 ];
 
 $darkPalette = [
+    ['--color-brand-name-dark', '#e39073', 'ตัวอักษรชื่อแบรนด์ — คนละเฉดจากโหมดสว่าง เพื่อคอนทราสต์บนพื้นเข้ม'],
+    ['--color-primary-dark', '#d98a68', 'ปุ่มหลัก, ลิงก์/เมนูแอดมินที่ active — สว่างขึ้นจากโหมดสว่าง เพื่อคอนทราสต์กับพื้นเข้ม'],
+    ['--color-on-primary-dark', '#141413', 'ตัวหนังสือบนพื้นสีหลัก — เปลี่ยนเป็นตัวเข้มแทนขาว เพราะขาวบน primary-dark คอนทราสต์เหลือแค่ ~2.7:1'],
     ['--color-canvas-dark', '#181715', 'พื้นหลังทั้งหน้า + แถบเมนูบนสุด + footer (ใช้ค่านี้ทั้ง 2 โหมด)'],
-    ['--color-surface-soft-dark', '#1f1d1b', 'พื้นหลังปุ่มรอง (btn-secondary)'],
-    ['--color-surface-card-dark', '#252320', 'พื้นหลังการ์ด/dropdown/input'],
+    ['--color-card-dark', '#252320', 'พื้นหลังการ์ด/dropdown/input'],
     ['--color-hairline-dark', '#34312b', 'เส้นขอบการ์ด/ตาราง/input ทั้งหมด'],
     ['--color-ink-dark', '#faf9f5', 'ตัวอักษรหลัก (หัวข้อ)'],
     ['--color-body-dark', '#cfccc4', 'ตัวอักษรรอง (คำอธิบาย/label ฟอร์ม)'],
     ['--color-muted-dark', '#a09d96', 'ตัวอักษรจาง (วันที่/meta) + ตัวอักษร footer (ใช้ค่านี้ทั้ง 2 โหมด)'],
+    ['--color-secondary-dark', '#1f1d1b', 'พื้นหลังปุ่มรอง, badge เมนูแอดมิน, แถบกราฟสถิติ'],
     ['--color-link-dark', '#58a6ff', 'สีลิงก์ในเนื้อหาบทความ — คนละเฉดจากโหมดสว่าง เพื่อคอนทราสต์บนพื้นเข้ม'],
-    ['--color-brand-name-dark', '#e39073', 'ตัวอักษรชื่อแบรนด์ — คนละเฉดจากโหมดสว่าง เพื่อคอนทราสต์บนพื้นเข้ม'],
 ];
 
 $roleTokens = [
@@ -54,9 +49,9 @@ $roleTokens = [
         ['--footer-text', '--color-muted-dark', 'ตัวอักษร footer — ล็อกใช้ค่า dark เสมอ ไม่สลับตามธีม'],
     ],
     'การ์ด / กล่องเนื้อหา' => [
-        ['--card-bg', '--color-surface-card', 'พื้นหลังการ์ด, sidebar item, ฟองข้อความฟีด, tab ที่เลือกอยู่, tooltip'],
+        ['--card-bg', '--color-card', 'พื้นหลังการ์ด, sidebar item, ฟองข้อความฟีด, tab ที่เลือกอยู่, tooltip'],
         ['--card-border', '--color-hairline', 'เส้นขอบการ์ด, ตารางแอดมิน, blockquote, เส้นคั่น (hr)'],
-        ['--dropdown-bg', '--color-surface-card', 'พื้นหลังเมนู dropdown'],
+        ['--dropdown-bg', '--color-card', 'พื้นหลังเมนู dropdown'],
     ],
     'ตัวอักษร' => [
         ['--text-primary', '--color-ink', 'หัวข้อบทความ, ยอดตัวเลขใน dashboard card'],
@@ -67,13 +62,13 @@ $roleTokens = [
         ['--brand-name-color', '--color-brand-name', 'ชื่อแบรนด์ "mBlog\'26" บนแถบเมนู'],
     ],
     'ฟอร์ม / ปุ่มรอง' => [
-        ['--input-bg', '--color-surface-card', 'พื้นหลังกล่องกรอกข้อมูล'],
+        ['--input-bg', '--color-card', 'พื้นหลังกล่องกรอกข้อมูล'],
         ['--input-border', '--color-hairline', 'เส้นขอบกล่องกรอกข้อมูล'],
         ['--input-text', '--color-ink', 'ตัวหนังสือในกล่องกรอกข้อมูล'],
-        ['--btn-secondary-bg', '--color-surface-soft', 'พื้นหลังปุ่มรอง (.btn-secondary)'],
+        ['--btn-secondary-bg', '--color-secondary', 'พื้นหลังปุ่มรอง (.btn-secondary), badge เมนูแอดมิน, แถบกราฟสถิติ'],
         ['--btn-secondary-border', '--color-hairline', 'เส้นขอบปุ่มรอง'],
         ['--btn-secondary-text', '--color-ink', 'ตัวหนังสือปุ่มรอง'],
-        ['--btn-secondary-bg-hover', '--color-surface-card', 'พื้นหลังปุ่มรอง/tab/ปุ่ม pagination ตอน hover'],
+        ['--btn-secondary-bg-hover', '--color-card', 'พื้นหลังปุ่มรอง/tab/ปุ่ม pagination ตอน hover'],
     ],
 ];
 
@@ -132,34 +127,29 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
 ?>
   <h1 class="article-title">ชุดสีของเว็บ</h1>
   <p style="color:var(--text-muted); margin-top:-8px;">
-    เฉพาะสีที่ควรปรับตามแบรนด์/องค์กร แบ่งเป็น 3 กลุ่ม (สีดิบ theme-independent, ธีมสว่าง, ธีมมืด)
+    เฉพาะสีที่ควรปรับตามแบรนด์/องค์กร แบ่งเป็น 2 กลุ่ม (ธีมสว่าง, ธีมมืด)
     ตามด้วย Role Token ที่บอกว่าแต่ละสีถูกเอาไปใช้กับส่วนไหนของเว็บบ้าง — สีระบบอื่นๆ นอกเหนือจากนี้
-    (badge หมวดหมู่, สีสถานะสำเร็จ/เตือน/ผิดพลาด, เงา dropdown, พื้นหลังโค้ดบล็อก) ล็อกไว้ตายตัว
-    ไม่จำเป็นต้องปรับตามแบรนด์ จึงไม่แสดงในหน้านี้
+    (badge หมวดหมู่, สีสถานะสำเร็จ/เตือน/ผิดพลาด, เงา dropdown, พื้นหลังโค้ดบล็อก, สีเน้นสำรอง teal/amber)
+    ล็อกไว้ตายตัว ไม่จำเป็นต้องปรับตามแบรนด์ จึงไม่แสดงในหน้านี้
   </p>
 
   <div class="card">
-    <h2 class="admin-section-title" style="margin-top:0;">1. สีดิบ (Raw Palette) — ค่าเดียวกันทั้ง 2 ธีม</h2>
-    <?php renderSwatchGrid($rawPalette); ?>
-  </div>
-
-  <div class="card">
-    <h2 class="admin-section-title" style="margin-top:0;">2. ธีมสว่าง (Light)</h2>
+    <h2 class="admin-section-title" style="margin-top:0;">1. ธีมสว่าง (Light)</h2>
     <?php renderSwatchGrid($lightPalette); ?>
   </div>
 
   <div class="card">
-    <h2 class="admin-section-title" style="margin-top:0;">3. ธีมมืด (Dark)</h2>
+    <h2 class="admin-section-title" style="margin-top:0;">2. ธีมมืด (Dark)</h2>
     <p style="color:var(--text-muted); font-size:13px; margin-top:-4px;">
-      คู่ <code>-dark</code> ของแต่ละสีในกลุ่มที่ 2 ชื่อเดียวกันบวก <code>-dark</code> ต่อท้าย
+      คู่ <code>-dark</code> ของแต่ละสีในกลุ่มที่ 1 ชื่อเดียวกันบวก <code>-dark</code> ต่อท้าย
     </p>
     <?php renderSwatchGrid($darkPalette); ?>
   </div>
 
   <div class="card">
-    <h2 class="admin-section-title" style="margin-top:0;">Role Token — เอาสีทั้ง 3 กลุ่มไปใช้ตรงไหนบ้าง</h2>
+    <h2 class="admin-section-title" style="margin-top:0;">Role Token — เอาสีทั้ง 2 กลุ่มไปใช้ตรงไหนบ้าง</h2>
     <p style="color:var(--text-muted); font-size:13px; margin-top:-4px;">
-      แก้สีในกลุ่ม 1-3 ด้านบน แล้ว role token พวกนี้จะเปลี่ยนตามอัตโนมัติ (ไม่ต้องแก้ที่นี่)
+      แก้สีในกลุ่ม 1-2 ด้านบน แล้ว role token พวกนี้จะเปลี่ยนตามอัตโนมัติ (ไม่ต้องแก้ที่นี่)
     </p>
     <?php renderRoleTokenTable($roleTokens); ?>
   </div>

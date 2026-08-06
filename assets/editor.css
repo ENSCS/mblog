@@ -139,7 +139,9 @@
 }
 .tag-suggestion-item:hover,
 .tag-suggestion-item.active {
-  background: var(--btn-secondary-bg-hover);
+  /* Not --btn-secondary-bg-hover — that equals --dropdown-bg (both
+     --color-card), so the highlight would be invisible against the panel. */
+  background: var(--card-border);
 }
 
 /* --- Mobile --- */

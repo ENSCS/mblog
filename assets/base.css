@@ -7,13 +7,16 @@
    Components should always reach for a role token, never a raw --color-*
    value — that's what makes re-theming a matter of editing this one block.
 
-   Raw palette has 3 groups, light before dark throughout:
-     - theme-independent: same value in both themes (e.g. --color-primary)
+   Raw palette, light before dark throughout:
      - theme-aware: light value in :root, dark value (same name) in
-       :root[data-theme="dark"] below
+       :root[data-theme="dark"] below — every one of these is org/brand-
+       customizable, see color-reference.php
      - dark constants: -dark suffix twin of a theme-aware name above
        (--color-canvas → --color-canvas-dark); footer + code blocks
        (layout.css) use these directly since they never invert
+     - system colors: same value in both themes but NOT customizable
+       (--color-accent-teal, status colors, tag palette, ...) — grouped near
+       the bottom of :root, kept out of color-reference.php on purpose
 
    Role tokens usually just reference a theme-aware raw name once — the
    cascade updates them automatically when data-theme changes. The exception
@@ -21,42 +24,47 @@
    --dropdown-shadow), which hold their own literal value in both blocks.
    ========================================================================== */
 :root {
-  /* --- Raw palette: theme-independent --- */
-  --color-primary: #cc785c;
-  --color-primary-hover: #a9583e;
-  --color-primary-disabled: #e6dfd8;
-  --color-accent-teal: #5db8a6;
-  --color-accent-amber: #e8a55a;
-  --color-on-primary: #ffffff;
-
   /* --- Raw palette: theme-aware (dark value in :root[data-theme="dark"]) --- */
+  --color-brand-name: #a9583e;
+  --color-primary: #cc785c;
+  --color-on-primary: #ffffff;
   --color-canvas: #efe9de;
-  --color-surface-soft: #f5f0e8;
-  --color-surface-card: #faf9f5;
+  --color-card: #faf9f5;
   --color-hairline: #e6dfd8;
   --color-ink: #141413;
   --color-body: #3d3d3a;
   --color-muted: #6c6a64;
+  --color-secondary: #f5f0e8;
   --color-link: #0645ad;
-  --color-brand-name: #a9583e;
 
   /* --- Raw palette: dark constants — -dark twin of each theme-aware name
-     above, same order. --color-surface-soft-dark is interpolated (no
-     historical value existed) between canvas-dark and surface-card-dark.
-     --color-link-dark and --color-brand-name-dark aren't a straight
-     dark-mode swap of their light value — both light values drop to ~2:1
-     contrast on the near-black canvas, so dark gets its own distinct value
-     chosen for contrast instead (brand-name stays in the coral family, just
-     lighter). --- */
+     above, same order. --color-secondary-dark is interpolated (no
+     historical value existed) between canvas-dark and card-dark.
+     --color-primary-dark, --color-link-dark and --color-brand-name-dark
+     aren't a straight dark-mode swap of their light value — the light
+     values drop to weak contrast on the near-black canvas (or against white
+     button text, for primary), so dark gets its own distinct value chosen
+     for contrast instead (primary/brand-name stay in the coral family, just
+     lighter). --color-on-primary-dark switches to dark ink instead of white
+     — white on --color-primary-dark only hits ~2.7:1 contrast, dark ink
+     hits ~6.8:1. --- */
+  --color-brand-name-dark: #e39073;
+  --color-primary-dark: #d98a68;
+  --color-on-primary-dark: #141413;
   --color-canvas-dark: #181715;
-  --color-surface-soft-dark: #1f1d1b;
-  --color-surface-card-dark: #252320;
+  --color-card-dark: #252320;
   --color-hairline-dark: #34312b;
   --color-ink-dark: #faf9f5;
   --color-body-dark: #cfccc4;
   --color-muted-dark: #a09d96;
+  --color-secondary-dark: #1f1d1b;
   --color-link-dark: #58a6ff;
-  --color-brand-name-dark: #e39073;
+
+  /* --- System colors — not org/brand-customizable (see color-reference.php,
+     which only shows the theme-aware + dark-constant groups above), kept as
+     one value regardless of theme. --- */
+  --color-accent-teal: #5db8a6;
+  --color-accent-amber: #e8a55a;
 
   /* --- Dark-only, no light counterpart — code blocks (layout.css) are
      always dark, pinned to match github-dark.min.css syntax highlighting. --- */
@@ -83,7 +91,7 @@
 
   /* --- Role tokens: what components actually use --- */
   --page-bg: var(--color-canvas);
-  --card-bg: var(--color-surface-card);
+  --card-bg: var(--color-card);
   --card-border: var(--color-hairline);
 
   --text-primary: var(--color-ink);
@@ -96,17 +104,17 @@
   --topbar-bg: var(--color-canvas);
   --topbar-text: var(--color-ink);
   --topbar-border: var(--color-hairline);
-  --dropdown-bg: var(--color-surface-card);
+  --dropdown-bg: var(--color-card);
   --dropdown-shadow: 0 4px 16px rgba(20, 20, 19, 0.10);
 
-  --input-bg: var(--color-surface-card);
+  --input-bg: var(--color-card);
   --input-border: var(--color-hairline);
   --input-text: var(--color-ink);
 
-  --btn-secondary-bg: var(--color-surface-soft);
+  --btn-secondary-bg: var(--color-secondary);
   --btn-secondary-border: var(--color-hairline);
   --btn-secondary-text: var(--color-ink);
-  --btn-secondary-bg-hover: var(--color-surface-card);
+  --btn-secondary-bg-hover: var(--color-card);
 
   /* Footer is dark navy in both themes on purpose — "the footer never
      inverts" per claude-design.md. */
@@ -144,15 +152,17 @@
    Status colors, tags, and --dropdown-shadow hold their own literal value
    here too, since nothing else reuses them. --- */
 :root[data-theme="dark"] {
+  --color-brand-name: var(--color-brand-name-dark);
+  --color-primary: var(--color-primary-dark);
+  --color-on-primary: var(--color-on-primary-dark);
   --color-canvas: var(--color-canvas-dark);
-  --color-surface-soft: var(--color-surface-soft-dark);
-  --color-surface-card: var(--color-surface-card-dark);
+  --color-card: var(--color-card-dark);
   --color-hairline: var(--color-hairline-dark);
   --color-ink: var(--color-ink-dark);
   --color-body: var(--color-body-dark);
   --color-muted: var(--color-muted-dark);
+  --color-secondary: var(--color-secondary-dark);
   --color-link: var(--color-link-dark);
-  --color-brand-name: var(--color-brand-name-dark);
 
   --dropdown-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 
@@ -199,4 +209,19 @@ body {
 }
 h1, h2, h3 {
   color: var(--text-primary);
+}
+/* Global default color for any plain, unstyled <a> — every existing link
+   style in the codebase (topbar, buttons, cards, tags, pagination, sidebar,
+   ...) already qualifies its selector with at least one class, so it always
+   outranks this bare-element rule and is unaffected. This is the single
+   place that controls default link color site-wide now — previously only
+   .rich-content/.ql-editor had it, so links outside article content (e.g.
+   plain <a> tags in admin page copy) silently fell back to the browser
+   default instead of --link-color. Hover is intentionally NOT global here —
+   add filter/background per-selector only where a hover effect is actually
+   wanted (see .rich-content a:hover in layout.css for the article-link
+   case), since a blanket a:hover filter also darkened things like the admin
+   sidebar's existing hover background with no way to opt out per element. */
+a {
+  color: var(--link-color);
 }

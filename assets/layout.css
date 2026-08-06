@@ -104,8 +104,9 @@
    comes after .admin-sidebar-link:hover in source order and re-asserts both
    properties together so they can never separate again. */
 .admin-sidebar-link-active:hover {
-  background: var(--color-primary-hover);
+  background: var(--color-primary);
   color: var(--text-on-primary);
+  filter: brightness(0.8);
 }
 .admin-sidebar-badge {
   font-size: 12px;
@@ -179,9 +180,6 @@
 }
 .rich-content, .ql-editor {
   overflow: auto; /* clearfix so floated images don't collapse the container */
-}
-.rich-content a, .ql-editor a {
-  color: var(--link-color);
 }
 .rich-content a:hover, .ql-editor a:hover {
   filter: brightness(0.8);
@@ -272,7 +270,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: var(--color-surface-card-dark);
+  background: var(--color-card-dark);
   border: 1px solid #3a3730;
   border-radius: var(--radius-sm);
   padding: 4px 8px;
@@ -587,7 +585,11 @@
 }
 .submenu li a:hover {
   opacity: 1;
-  background: var(--btn-secondary-bg-hover);
+  /* Not --btn-secondary-bg-hover here — that equals --dropdown-bg (both
+     --color-card), so the hover fill would be invisible against the panel
+     it sits on. --card-border already exists for this exact purpose: a
+     tone that reads as distinct from --color-card in both themes. */
+  background: var(--card-border);
 }
 .topbar .actions a {
   background: var(--color-primary);
@@ -598,7 +600,7 @@
   margin-left: 8px;
 }
 .topbar .actions a:hover {
-  background: var(--color-primary-hover);
+  filter: brightness(0.8);
 }
 
 /* --- Mobile nav: hamburger + full-width accordion (hidden on desktop) ---

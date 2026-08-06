@@ -4,36 +4,22 @@
 // colors in assets/base.css can be checked for overall look in one place
 // instead of hunting through real pages. Complements color-reference.php
 // (which lists hex values + usage in table form) with a page that shows
-// every raw palette color and role token actually painted on components.
+// every org/brand-customizable color actually painted on components.
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/admin-nav.php';
-
-$rawAccents = [
-    ['--color-primary', '#cc785c'],
-    ['--color-primary-hover', '#a9583e'],
-    ['--color-primary-disabled', '#e6dfd8'],
-    ['--color-accent-teal', '#5db8a6'],
-    ['--color-accent-amber', '#e8a55a'],
-    ['--color-on-primary', '#ffffff'],
-];
 
 $pageTitle = 'พรีวิวองค์ประกอบ';
 $extraHead = <<<HTML
 <style>
-  .preview-swatch-strip { display: flex; flex-wrap: wrap; gap: 10px; }
-  .preview-swatch { width: 96px; }
-  .preview-swatch-color { height: 40px; border-radius: var(--radius-sm); border: 1px solid var(--card-border); }
-  .preview-swatch-name { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); margin-top: 4px; word-break: break-all; }
   .preview-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
   .preview-alert { padding: 12px 16px; border-radius: var(--radius-md); font-size: 14px; }
   .preview-dropdown-demo { display: inline-block; min-width: 200px; padding: 14px 6px 6px; background: var(--dropdown-bg); border: 1px solid var(--card-border); border-radius: var(--radius-md); box-shadow: var(--dropdown-shadow); }
   .preview-dropdown-demo a { display: block; padding: 8px 10px; border-radius: var(--radius-sm); color: var(--text-primary); font-weight: 500; text-decoration: none; }
-  .preview-dropdown-demo a:hover { background: var(--btn-secondary-bg-hover); }
+  .preview-dropdown-demo a:hover { background: var(--card-border); }
   .preview-note { color: var(--text-muted); font-size: 13px; margin-top: -4px; }
   .preview-surface-canvas { background: var(--page-bg); border: 1px dashed var(--card-border); border-radius: var(--radius-md); padding: 16px; }
   .preview-surface-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-md); padding: 14px; margin-top: 10px; }
   .preview-surface-soft { background: var(--btn-secondary-bg); border-radius: var(--radius-md); padding: 12px; margin-top: 10px; }
-  .preview-hover-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; text-align: center; }
 </style>
 HTML;
 $topbarActions = adminTopbarActions();
@@ -48,29 +34,31 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
   </p>
 
   <div class="card">
-    <h2 class="admin-section-title" style="margin-top:0;">พื้นหลัง (Surfaces)</h2>
-    <p class="preview-note">พื้นหลังทั้งหน้านี้ (นอกกล่องเส้นประด้านล่าง) มาจาก <code>--page-bg → --color-canvas</code> อยู่แล้ว — ไล่ระดับต่อจากนี้ทีละชั้น:</p>
-    <div class="preview-surface-canvas">
-      <div class="preview-note" style="margin-top:0;">กล่องนี้ = <code>--page-bg → --color-canvas</code> (เส้นประ = <code>--card-border → --color-hairline</code>)</div>
-      <div class="preview-surface-card">
-        <div class="preview-note" style="margin-top:0;">กล่องนี้ = <code>--card-bg → --color-surface-card</code> (เส้นขอบ = <code>--card-border → --color-hairline</code>)</div>
-        <div class="preview-surface-soft">
-          <div class="preview-note" style="margin-top:0;">กล่องนี้ = <code>--btn-secondary-bg → --color-surface-soft</code></div>
+    <h2 class="admin-section-title" style="margin-top:0;">เมนู (แถบเมนูบนสุด)</h2>
+    <p class="preview-note">ชื่อแบรนด์ = <code>--brand-name-color → --color-brand-name</code> — ขนาดจริงเท่าของจริง (27px, .brand-name):</p>
+    <span class="brand-name">Brand Name</span>
+    <p class="preview-note" style="margin-top:14px;">พื้น = <code>--color-primary</code> (ค่าเดียวกันทั้ง 2 ธีม), ตัวหนังสือ = <code>--text-on-primary → --color-on-primary</code> — ปกติจาง (opacity 0.75) hover เข้มเต็ม (opacity 1) ไม่ได้เปลี่ยนสี แค่เปลี่ยนความทึบ</p>
+    <div class="topbar">
+      <div class="topbar-nav-row" style="border-radius:var(--radius-md); padding:8px 16px;">
+        <div class="topbar-menu">
+          <a href="#">เมนูปกติ</a>
+          <a href="#" style="opacity:1;">เมนู ตอน hover</a>
         </div>
       </div>
     </div>
   </div>
 
   <div class="card">
-    <h2 class="admin-section-title" style="margin-top:0;">สีเน้น (Raw Palette accent)</h2>
-    <p class="preview-note">ไม่มีคู่ dark แยก — ค่าเดียวกันทั้ง 2 ธีมอยู่แล้ว</p>
-    <div class="preview-swatch-strip">
-      <?php foreach ($rawAccents as [$name, $hex]): ?>
-        <div class="preview-swatch">
-          <div class="preview-swatch-color" style="background:<?= htmlspecialchars($hex) ?>"></div>
-          <div class="preview-swatch-name"><?= htmlspecialchars($name) ?></div>
+    <h2 class="admin-section-title" style="margin-top:0;">พื้นหลัง (Surfaces)</h2>
+    <p class="preview-note">พื้นหลังทั้งหน้านี้ (นอกกล่องเส้นประด้านล่าง) มาจาก <code>--page-bg → --color-canvas</code> อยู่แล้ว — ไล่ระดับต่อจากนี้ทีละชั้น:</p>
+    <div class="preview-surface-canvas">
+      <div class="preview-note" style="margin-top:0;">กล่องนี้ = <code>--page-bg → --color-canvas</code> (เส้นประ = <code>--card-border → --color-hairline</code>)</div>
+      <div class="preview-surface-card">
+        <div class="preview-note" style="margin-top:0;">กล่องนี้ = <code>--card-bg → --color-card</code> (เส้นขอบ = <code>--card-border → --color-hairline</code>)</div>
+        <div class="preview-surface-soft">
+          <div class="preview-note" style="margin-top:0;">กล่องนี้ = <code>--btn-secondary-bg → --color-secondary</code></div>
         </div>
-      <?php endforeach; ?>
+      </div>
     </div>
   </div>
 
@@ -95,7 +83,7 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
       <button type="button" class="btn btn-secondary">ปุ่มรอง (.btn-secondary) — btn-secondary-bg</button>
     </div>
     <div class="preview-row" style="margin-top:10px;">
-      <button type="button" class="btn" style="background:var(--color-primary-hover);">ปุ่มหลัก ตอน hover — color-primary-hover</button>
+      <button type="button" class="btn" style="filter:brightness(0.8);">ปุ่มหลัก ตอน hover — filter: brightness(0.8) จาก color-primary</button>
       <button type="button" class="btn btn-secondary" style="background:var(--btn-secondary-bg-hover);">ปุ่มรอง ตอน hover — btn-secondary-bg-hover</button>
     </div>
   </div>
@@ -143,24 +131,11 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
   </div>
 
   <div class="card">
-    <h2 class="admin-section-title" style="margin-top:0;">เมนู (แถบเมนูบนสุด)</h2>
-    <p class="preview-note">พื้น = <code>--color-primary</code> (ค่าเดียวกันทั้ง 2 ธีม), ตัวหนังสือ = <code>--text-on-primary → --color-on-primary</code> — ปกติจาง (opacity 0.75) hover เข้มเต็ม (opacity 1) ไม่ได้เปลี่ยนสี แค่เปลี่ยนความทึบ</p>
-    <div class="topbar">
-      <div class="topbar-nav-row" style="border-radius:var(--radius-md); padding:8px 16px;">
-        <div class="topbar-menu">
-          <a href="#">เมนูปกติ</a>
-          <a href="#" style="opacity:1;">เมนู ตอน hover</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
     <h2 class="admin-section-title" style="margin-top:0;">เมนู Dropdown (เมนูย่อย)</h2>
-    <p class="preview-note">พื้นหลัง = <code>--dropdown-bg → --color-surface-card</code>, ตัวหนังสือ = <code>--text-primary → --color-ink</code>, เงา = <code>--dropdown-shadow</code> — รายการที่ 2 บังคับโชว์สี hover ไว้ (<code>--btn-secondary-bg-hover</code>)</p>
+    <p class="preview-note">พื้นหลัง = <code>--dropdown-bg → --color-card</code>, ตัวหนังสือ = <code>--text-primary → --color-ink</code>, เงา = <code>--dropdown-shadow</code> — รายการที่ 2 บังคับโชว์สี hover ไว้ (<code>--card-border → --color-hairline</code> ไม่ใช่ <code>--btn-secondary-bg-hover</code> เพราะตัวนั้นเท่ากับสีพื้นหลัง dropdown เอง จะมองไม่เห็นตอน hover จริง)</p>
     <div class="preview-dropdown-demo">
       <a href="#">รายการเมนูที่ 1</a>
-      <a href="#" style="background:var(--btn-secondary-bg-hover);">รายการเมนูที่ 2 (ตอน hover)</a>
+      <a href="#" style="background:var(--card-border);">รายการเมนูที่ 2 (ตอน hover)</a>
       <a href="#">รายการเมนูที่ 3</a>
     </div>
   </div>
