@@ -648,6 +648,21 @@ a.tag-badge:hover {
   border-radius: var(--radius-md);
   background: var(--input-bg);
 }
+/* Puts a .filter-bar and a .bulk-bar side by side on one row (manage-
+   readers.php) instead of stacked — two independent <form>s (GET search,
+   POST bulk action) sharing a row purely for layout. Margins reset to 0 here
+   since the wrapper's own gap/margin-bottom takes over spacing duty. */
+.toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.toolbar-row .filter-bar,
+.toolbar-row .bulk-bar {
+  margin-bottom: 0;
+}
 .pagination {
   display: flex;
   flex-wrap: wrap;

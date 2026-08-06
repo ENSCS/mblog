@@ -1,18 +1,27 @@
 <?php
 require __DIR__ . '/config.php';
 
-// Already logged in — no reason to see the form again.
-if (currentUser() !== null) {
+// One shared login form for both staff (mblog_staff) and general users
+// (mblog_users) — already logged in as either = no reason to see the form
+// again. Staff takes priority if somehow both sessions exist at once.
+if (currentStaff() !== null) {
     header('Location: admin.php');
+    exit;
+} elseif (currentUser() !== null) {
+    header('Location: index.php');
     exit;
 }
 
-$redirectTarget = $_GET['redirect'] ?? $_POST['redirect'] ?? 'admin.php';
+$requestedRedirect = $_GET['redirect'] ?? $_POST['redirect'] ?? '';
 // Only ever follow a same-site relative path — an open redirect via ?redirect=
 // would otherwise let a phishing link bounce a successful login to any host.
-if (!preg_match('#^/?[a-zA-Z0-9_\-./]+\.php(\?.*)?$#', $redirectTarget)) {
-    $redirectTarget = 'admin.php';
-}
+$requestedRedirect = preg_match('#^/?[a-zA-Z0-9_\-./]+\.php(\?.*)?$#', $requestedRedirect) ? $requestedRedirect : '';
+// Same explicit ?redirect= wins for either account type (e.g. bounced back
+// here from a comment box) — only the *fallback* differs, since admin.php
+// means nothing to a general user and index.php is a downgrade for staff
+// muscle memory landing on their dashboard.
+$staffRedirectTarget = $requestedRedirect !== '' ? $requestedRedirect : 'admin.php';
+$userRedirectTarget = $requestedRedirect !== '' ? $requestedRedirect : 'index.php';
 
 $error = '';
 
@@ -22,24 +31,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
 
     // Accepts either — the same field doubles as email or username so
-    // people can log in with whichever they remember.
+    // people can log in with whichever they remember. Staff table checked
+    // first (mblog_staff is the smaller, privileged namespace) — if the
+    // identifier matches a staff account, only that account's password is
+    // ever checked, never falling through to try it as a general user too,
+    // even if the same identifier also happens to exist in mblog_users (the
+    // two tables enforce uniqueness independently, see database/phase3b_readers.sql).
     $stmt = db()->prepare('SELECT id, password_hash FROM mblog_staff WHERE email = ? OR username = ?');
     $stmt->execute([$identifier, $identifier]);
-    $row = $stmt->fetch();
+    $staffRow = $stmt->fetch();
 
-    // Same error message whether the account doesn't exist or the password
-    // is wrong — a distinct "no such account" message would let an attacker
-    // enumerate which emails/usernames have staff accounts.
-    if (!$row || !password_verify($password, $row['password_hash'])) {
+    if ($staffRow) {
+        if (password_verify($password, $staffRow['password_hash'])) {
+            // New session id on privilege change (login) — closes the
+            // session-fixation window where an attacker who fixed a
+            // visitor's session id before login could reuse the same id to
+            // hijack it after.
+            session_regenerate_id(true);
+            $_SESSION['staff_id'] = (int) $staffRow['id'];
+            header('Location: ' . $staffRedirectTarget);
+            exit;
+        }
+        // Same error message in every failure branch below — a distinct
+        // "no such account" message would let an attacker enumerate which
+        // emails/usernames have accounts, staff or general user.
         $error = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
     } else {
-        // New session id on privilege change (login) — closes the session-
-        // fixation window where an attacker who fixed a visitor's session id
-        // before login could reuse the same id to hijack it after.
-        session_regenerate_id(true);
-        $_SESSION['user_id'] = (int) $row['id'];
-        header('Location: ' . $redirectTarget);
-        exit;
+        $stmt = db()->prepare('SELECT id, password_hash FROM mblog_users WHERE email = ? OR username = ?');
+        $stmt->execute([$identifier, $identifier]);
+        $userRow = $stmt->fetch();
+
+        if ($userRow && password_verify($password, $userRow['password_hash'])) {
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = (int) $userRow['id'];
+            header('Location: ' . $userRedirectTarget);
+            exit;
+        }
+        $error = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
     }
 }
 
@@ -53,7 +81,7 @@ $layout = render_header(compact('pageTitle'));
     <?php endif; ?>
     <form method="post">
       <?= csrfField() ?>
-      <input type="hidden" name="redirect" value="<?= htmlspecialchars($redirectTarget) ?>">
+      <input type="hidden" name="redirect" value="<?= htmlspecialchars($requestedRedirect) ?>">
       <div class="field">
         <label for="identifier">อีเมล หรือ Username</label>
         <input type="text" id="identifier" name="identifier" required autofocus autocomplete="username" value="<?= htmlspecialchars($_POST['identifier'] ?? '') ?>">

@@ -12,9 +12,10 @@ require_once __DIR__ . '/settings.php';
 
 // True if $path (an "uploads/..." relative path) is still referenced by any
 // article's featured_image/content, any sidebar item's image/content, the
-// site logo/favicon in mblog_settings, or a staff avatar — articles, sidebar
-// items, site branding, and staff avatars all share the same uploads/ pool,
-// so all four need checking regardless of which caller is doing the deleting.
+// site logo/favicon in mblog_settings, a staff avatar, or a user avatar —
+// articles, sidebar items, site branding, and both avatar tables all share
+// the same uploads/ pool, so all five need checking regardless of which
+// caller is doing the deleting.
 function uploadPathInUse(string $path): bool
 {
     $stmt = db()->prepare('SELECT COUNT(*) FROM mblog_articles WHERE deleted_at IS NULL AND (featured_image = ? OR content LIKE ?)');
@@ -30,6 +31,12 @@ function uploadPathInUse(string $path): bool
     }
 
     $stmt = db()->prepare('SELECT COUNT(*) FROM mblog_staff WHERE avatar_path = ?');
+    $stmt->execute([$path]);
+    if ((int) $stmt->fetchColumn() > 0) {
+        return true;
+    }
+
+    $stmt = db()->prepare('SELECT COUNT(*) FROM mblog_users WHERE avatar_path = ?');
     $stmt->execute([$path]);
     if ((int) $stmt->fetchColumn() > 0) {
         return true;

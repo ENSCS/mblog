@@ -1,6 +1,6 @@
 <?php
 // สร้างบัญชีทีมงาน (mblog_staff) จาก command line — ใช้สร้าง admin คนแรกตอนตั้งเว็บใหม่
-// (ไม่มีหน้าเว็บสมัครเองได้ ตั้งใจ — ต้องมี admin อยู่แล้วถึงจะสร้าง user อื่นผ่าน users.php ได้
+// (ไม่มีหน้าเว็บสมัครเองได้ ตั้งใจ — ต้องมี admin อยู่แล้วถึงจะสร้างทีมงานอื่นผ่าน staff.php ได้
 // ตัวแรกสุดเลยต้องมาจาก CLI นี้เท่านั้น) ใช้ต่อได้ด้วยถ้าลืมรหัสผ่าน admin คนเดียวที่มี
 // (ลบแถวแล้วสร้างใหม่ ยังไม่มีฟีเจอร์ "ลืมรหัสผ่าน" ผ่านหน้าเว็บ)
 //
@@ -10,7 +10,7 @@
 // database/phase4_staff_profile.sql)
 
 require __DIR__ . '/../config.php';
-require __DIR__ . '/../includes/users.php';
+require __DIR__ . '/../includes/staff.php';
 
 $email = trim($argv[1] ?? '');
 $password = $argv[2] ?? '';
@@ -34,19 +34,19 @@ if (!in_array($role, ['admin', 'editor', 'author'], true)) {
     exit(1);
 }
 
-if (userEmailExists($email)) {
-    fwrite(STDERR, "A user with that email already exists.\n");
+if (staffEmailExists($email)) {
+    fwrite(STDERR, "A staff member with that email already exists.\n");
     exit(1);
 }
-if ($username !== null && userUsernameExists($username)) {
-    fwrite(STDERR, "A user with that username already exists — pass a different one as the 4th argument.\n");
+if ($username !== null && staffUsernameExists($username)) {
+    fwrite(STDERR, "A staff member with that username already exists — pass a different one as the 4th argument.\n");
     exit(1);
 }
 // No explicit username = derive from the email's local part, same
-// collision-safe (-2, -3, ...) logic users.php's "add new user" and
+// collision-safe (-2, -3, ...) logic staff.php's "add new user" and
 // setup.php's first-admin form both rely on.
-$username = $username ?? generateUsernameFromEmail($email);
+$username = $username ?? generateStaffUsernameFromEmail($email);
 
-createUser($email, $username, $password, $role);
+createStaff($email, $username, $password, $role);
 
 echo "Created {$role} user: {$email} (username: {$username})\n";

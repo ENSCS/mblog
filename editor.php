@@ -9,7 +9,7 @@ $article = getArticleForEdit($slug);
 // enforcement is in api/save.php (a raw POST there would otherwise bypass
 // this), this is just so they see a clear 403 instead of a form that fails
 // silently on save.
-if ($article && (int) ($article['author_id'] ?? 0) !== (int) (currentUser()['id'] ?? 0) && !userCan('edit_others_articles')) {
+if ($article && (int) ($article['author_id'] ?? 0) !== (int) (currentStaff()['id'] ?? 0) && !staffCan('edit_others_articles')) {
     renderErrorPage(403, 'ไม่มีสิทธิ์แก้ไขบทความนี้');
 }
 $currentStatus = $article ? articleStatus($article) : 'draft';

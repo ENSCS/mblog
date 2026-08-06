@@ -4,6 +4,7 @@ require_once __DIR__ . '/menu.php';
 require_once __DIR__ . '/sidebar.php';
 require_once __DIR__ . '/feed.php';
 require_once __DIR__ . '/orphan-files.php';
+require_once __DIR__ . '/staff.php';
 require_once __DIR__ . '/users.php';
 
 // The topbar account menu (avatar → โปรไฟล์/ออกจากระบบ) used to be built
@@ -18,7 +19,7 @@ require_once __DIR__ . '/users.php';
 // dashboard cards either, so the sidebar doesn't invent numbers that weren't
 // there before. 'capability' is the same string requireCapability() checks
 // at the top of that entry's own page — partials/admin-sidebar.php filters
-// on it via userCan() so an author/editor never sees a link to a page
+// on it via staffCan() so an author/editor never sees a link to a page
 // they'd immediately get a 403 on.
 function adminNavGroups(): array
 {
@@ -49,7 +50,8 @@ function adminNavGroups(): array
             ['label' => 'ไฟล์กำพร้า', 'href' => 'orphan-files.php', 'badge' => count(scanOrphanUploads()), 'capability' => 'manage_orphan_files'],
             ['label' => 'ชุดสีของเว็บ', 'href' => 'color-reference.php', 'capability' => 'manage_theme'],
             ['label' => 'ปรับแต่งชุดสี', 'href' => 'theme-editor.php', 'capability' => 'manage_theme'],
-            ['label' => 'จัดการผู้ใช้ทีมงาน', 'href' => 'users.php', 'badge' => count(getAllUsers()), 'capability' => 'manage_users'],
+            ['label' => 'จัดการทีมงาน', 'href' => 'staff.php', 'badge' => count(getAllStaff()), 'capability' => 'manage_users'],
+            ['label' => 'จัดการผู้ใช้', 'href' => 'users.php', 'badge' => count(getAllUsers()), 'capability' => 'manage_users'],
         ],
     ];
 }

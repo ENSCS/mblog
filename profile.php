@@ -1,22 +1,22 @@
 <?php
 require __DIR__ . '/includes/articles.php';
-require __DIR__ . '/includes/users.php';
+require __DIR__ . '/includes/staff.php';
 require __DIR__ . '/includes/admin-nav.php';
 requireLogin();
 
 // No ?id= (or your own id) = editing yourself, open to any logged-in staff
-// member. Anyone else's id needs manage_users — same capability users.php's
+// member. Anyone else's id needs manage_users — same capability staff.php's
 // whole list page already requires — so an editor/author can't just type
 // ?id=<someone else> in the URL and edit a colleague's account.
-$targetId = isset($_GET['id']) ? (int) $_GET['id'] : (int) currentUser()['id'];
-$isSelf = $targetId === (int) currentUser()['id'];
+$targetId = isset($_GET['id']) ? (int) $_GET['id'] : (int) currentStaff()['id'];
+$isSelf = $targetId === (int) currentStaff()['id'];
 if (!$isSelf) {
     requireCapability('manage_users');
 }
 
-$target = getUserById($targetId);
+$target = getStaffById($targetId);
 if (!$target) {
-    renderErrorPage(404, 'ไม่พบผู้ใช้นี้');
+    renderErrorPage(404, 'ไม่พบทีมงานนี้');
 }
 
 $roleLabels = ['admin' => 'Admin', 'editor' => 'Editor', 'author' => 'Author'];
@@ -24,7 +24,7 @@ $roleLabels = ['admin' => 'Admin', 'editor' => 'Editor', 'author' => 'Author'];
 // editing your own profile without that capability (editor/author) never
 // shows it, since role is an access-control decision, not personal profile
 // data self-service should touch.
-$canEditRole = userCan('manage_users');
+$canEditRole = staffCan('manage_users');
 
 $errors = [];
 $saved = isset($_GET['saved']);
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($form['email'] === '' || !filter_var($form['email'], FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'กรุณาใส่อีเมลที่ถูกต้อง';
-    } elseif (userEmailExists($form['email'], $targetId)) {
+    } elseif (staffEmailExists($form['email'], $targetId)) {
         $errors[] = 'อีเมลนี้มีผู้ใช้อยู่แล้ว';
     }
     // Same charset as slugs elsewhere on the site — letters/digits/underscore/
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // (see login.php) sitting next to email in the same lookup query.
     if ($form['username'] === '' || !preg_match('/^[a-zA-Z0-9_.-]{3,50}$/', $form['username'])) {
         $errors[] = 'Username ต้องมีอย่างน้อย 3 ตัวอักษร ใช้ได้แค่ a-z, 0-9, . _ - เท่านั้น';
-    } elseif (userUsernameExists($form['username'], $targetId)) {
+    } elseif (staffUsernameExists($form['username'], $targetId)) {
         $errors[] = 'Username นี้มีผู้ใช้อยู่แล้ว';
     }
     if ($canEditRole && !array_key_exists($form['role'], $roleLabels)) {
@@ -72,14 +72,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     // Demoting yourself away from admin would strand you off the only page
     // that could ever undo it (manage_users needs admin) — same guard
-    // users.php used to enforce inline, now lives here instead.
+    // staff.php used to enforce inline, now lives here instead.
     // Intentional exception to the capability-based rule (ROLE_CAPABILITIES,
     // includes/auth.php) — checks the literal 'admin' string on purpose,
-    // same reasoning as the last-admin delete guard in users.php: this asks
+    // same reasoning as the last-admin delete guard in staff.php: this asks
     // "would this leave admin's capabilities unreachable", not "can this
-    // user do X", so userCan() has no way to express it. If the role
-    // structure ever changes (renamed, or '*' moved to a different role),
-    // this needs a manual update too.
+    // staff member do X", so staffCan() has no way to express it. If the
+    // role structure ever changes (renamed, or '*' moved to a different
+    // role), this needs a manual update too.
     if ($isSelf && $target['role'] === 'admin' && $canEditRole && $form['role'] !== 'admin') {
         $errors[] = 'เปลี่ยนสิทธิ์ตัวเองออกจาก admin ไม่ได้';
     }
@@ -93,14 +93,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$errors) {
         try {
-            updateUser($targetId, $form['email'], $form['username'], $form['role'], $profile);
+            updateStaff($targetId, $form['email'], $form['username'], $form['role'], $profile);
             if ($password !== '') {
-                updateUserPassword($targetId, $password);
+                updateStaffPassword($targetId, $password);
             }
             if ($removeAvatar) {
-                removeUserAvatar($targetId);
+                removeStaffAvatar($targetId);
             }
-            saveUserAvatar($targetId);
+            saveStaffAvatar($targetId);
             $redirect = 'profile.php?saved=1' . ($isSelf ? '' : '&id=' . $targetId);
             header('Location: ' . $redirect);
             exit;
@@ -116,7 +116,7 @@ $layout = render_header(compact('pageTitle', 'showAdminSidebar'));
 ?>
   <h1 class="article-title"><?= htmlspecialchars($pageTitle) ?></h1>
   <?php if (!$isSelf): ?>
-    <p style="color:var(--text-muted); margin-top:-8px;"><a href="users.php">&larr; กลับไปหน้าจัดการผู้ใช้ทีมงาน</a></p>
+    <p style="color:var(--text-muted); margin-top:-8px;"><a href="staff.php">&larr; กลับไปหน้าจัดการทีมงาน</a></p>
   <?php endif; ?>
 
   <div class="card">

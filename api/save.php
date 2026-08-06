@@ -61,7 +61,7 @@ $existing = $id !== null ? getArticleById($id) : null;
 // this endpoint would otherwise bypass that check entirely. admin/editor
 // (edit_others_articles) are exempt; a brand-new article (no $existing yet)
 // has no owner to conflict with.
-if ($existing && (int) ($existing['author_id'] ?? 0) !== (int) (currentUser()['id'] ?? 0) && !userCan('edit_others_articles')) {
+if ($existing && (int) ($existing['author_id'] ?? 0) !== (int) (currentStaff()['id'] ?? 0) && !staffCan('edit_others_articles')) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'ไม่มีสิทธิ์แก้ไขบทความนี้']);
     exit;
@@ -136,7 +136,7 @@ if ($existing) {
              seo_title, seo_description, seo_noindex)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
-    $stmt->execute([$slug, $title, $content, $categoryId, $featuredImage, $showSidebar, $status, $type, currentUser()['id'], $now, $now, $publishedAt, $expiresAt, $seoTitle, $seoDescription, $seoNoindex]);
+    $stmt->execute([$slug, $title, $content, $categoryId, $featuredImage, $showSidebar, $status, $type, currentStaff()['id'], $now, $now, $publishedAt, $expiresAt, $seoTitle, $seoDescription, $seoNoindex]);
     $articleId = (int) db()->lastInsertId();
 }
 

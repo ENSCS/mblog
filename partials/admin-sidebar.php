@@ -19,7 +19,7 @@ $adminCurrentScript = basename($_SERVER['SCRIPT_NAME']);
 // "ตั้งค่าเว็บ" for an author) is skipped entirely so it doesn't show as an
 // empty heading.
 $adminNavGroups = array_filter(array_map(
-    fn($items) => array_values(array_filter($items, fn($item) => !isset($item['capability']) || userCan($item['capability']))),
+    fn($items) => array_values(array_filter($items, fn($item) => !isset($item['capability']) || staffCan($item['capability']))),
     $adminNavGroups
 ));
 ?>

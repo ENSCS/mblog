@@ -1,17 +1,17 @@
 <?php
 require __DIR__ . '/config.php';
-require __DIR__ . '/includes/users.php';
+require __DIR__ . '/includes/staff.php';
 
 // The entire safety of this page rests on this one check running first,
 // before anything else — works only while mblog_staff is completely empty
 // (fresh install, before scripts/create-admin.php or this page has ever
-// created anyone). The instant one user exists, this always renders a plain
-// 404 no matter what, permanently and with no way to re-open it short of
-// deleting every row in mblog_staff directly in the database — same "only
-// works once, then closes itself forever" pattern WordPress's own
-// wp-admin/install.php uses. 404 (not 403) on purpose: doesn't even hint
-// that a setup flow ever existed here.
-if (countUsers() > 0) {
+// created anyone). The instant one staff account exists, this always
+// renders a plain 404 no matter what, permanently and with no way to
+// re-open it short of deleting every row in mblog_staff directly in the
+// database — same "only works once, then closes itself forever" pattern
+// WordPress's own wp-admin/install.php uses. 404 (not 403) on purpose:
+// doesn't even hint that a setup flow ever existed here.
+if (countStaff() > 0) {
     renderErrorPage(404, 'ไม่พบหน้านี้');
 }
 
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร';
     } elseif ($password !== $passwordConfirm) {
         $error = 'รหัสผ่านทั้งสองช่องไม่ตรงกัน';
-    } elseif (countUsers() > 0) {
+    } elseif (countStaff() > 0) {
         // Re-checked at submit time, not just page-load time — closes the
         // narrow race where someone else (e.g. scripts/create-admin.php run
         // over SSH in another terminal) created the first account in the
@@ -38,11 +38,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Username picked automatically from the email's local part — a
         // proper one can always be set later from profile.php.
-        $id = createUser($email, generateUsernameFromEmail($email), $password, 'admin');
+        $id = createStaff($email, generateStaffUsernameFromEmail($email), $password, 'admin');
         // Log them straight in — they just proved they can write to this
         // exact database, no separate login step needed after.
         session_regenerate_id(true);
-        $_SESSION['user_id'] = $id;
+        $_SESSION['staff_id'] = $id;
         header('Location: admin.php');
         exit;
     }
