@@ -249,6 +249,12 @@ input[type=file]::file-selector-button:hover {
   background: var(--tag-blue-bg);
   color: var(--tag-blue-text);
 }
+.status-pinned {
+  background: var(--tag-yellow-bg);
+  color: var(--tag-yellow-text);
+  margin-left: 0;
+  margin-right: 8px;
+}
 .category-tag {
   display: inline-block;
   font-size: 12px;

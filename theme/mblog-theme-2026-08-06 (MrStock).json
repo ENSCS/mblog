@@ -1,0 +1,28 @@
+{
+  "light": {
+    "brand-name": "#1f2f51",
+    "primary": "#395693",
+    "on-primary": "#ffffff",
+    "canvas": "#eeeae2",
+    "card": "#f8f8f6",
+    "hairline": "#e6e0d6",
+    "ink": "#171511",
+    "body": "#453f36",
+    "muted": "#797163",
+    "secondary": "#e8e5de",
+    "link": "#0645ad"
+  },
+  "dark": {
+    "brand-name": "#3f5ea2",
+    "primary": "#4f71bb",
+    "on-primary": "#ffffff",
+    "canvas": "#161513",
+    "card": "#292724",
+    "hairline": "#363430",
+    "ink": "#f8f8f7",
+    "body": "#d4d2ce",
+    "muted": "#aaa7a1",
+    "secondary": "#201f1d",
+    "link": "#2c79f8"
+  }
+}

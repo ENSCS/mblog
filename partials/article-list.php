@@ -37,7 +37,11 @@ $pageUrl = $pageUrl ?? null;
         </a>
       <?php endif; ?>
       <div class="article-list-body">
-      <h2><a href="<?= htmlspecialchars($titleHref) ?>"><?= htmlspecialchars($a['title']) ?></a>
+      <h2>
+        <?php if (isStickyArticle((int) $a['id'])): ?>
+          <span class="status-badge status-pinned" title="ปักหมุด">📌</span>
+        <?php endif; ?>
+        <a href="<?= htmlspecialchars($titleHref) ?>"><?= htmlspecialchars($a['title']) ?></a>
         <?php if ($showStatusBadge): ?>
           <span class="status-badge status-draft">ร่าง</span>
         <?php endif; ?>

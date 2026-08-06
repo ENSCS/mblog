@@ -5,6 +5,7 @@
 // page). Made for use as a sidebar item's iframe_src (sidebar-item-
 // editor.php's "iframe embed" type) — same idea as youtube-embed.php.
 require __DIR__ . '/includes/feed.php';
+require_once __DIR__ . '/includes/theme-colors.php';
 
 $items = getFeedItems((int) siteSetting('feed_item_limit', 50));
 $lastId = $items ? (int) $items[0]['id'] : 0;
@@ -41,6 +42,7 @@ $lastId = $items ? (int) $items[0]['id'] : 0;
 </script>
 <link rel="stylesheet" href="assets/base.css?v=<?= @filemtime(__DIR__ . '/assets/base.css') ?>">
 <link rel="stylesheet" href="assets/feed.css?v=<?= @filemtime(__DIR__ . '/assets/feed.css') ?>">
+<?= renderThemeColorStyle() ?>
 <style>
   body {
     margin: 0;

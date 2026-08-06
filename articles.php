@@ -16,7 +16,6 @@ $topbarActions = '<a href="editor.php">+ เขียนบทความให
 $showSidebar = true;
 $layout = render_header(compact('pageTitle', 'topbarActions', 'showSidebar'));
 ?>
-  <h1 class="article-title">บทความทั้งหมด</h1>
   <?php
   $emptyMessage = 'ยังไม่มีบทความ — <a href="editor.php">เริ่มเขียนบทความแรก</a>';
   $showCategoryBadge = true;
