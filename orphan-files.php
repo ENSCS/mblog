@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/admin-nav.php';
-require __DIR__ . '/includes/orphan-files.php';
+require_once __DIR__ . '/includes/orphan-files.php';
 require __DIR__ . '/includes/backup.php'; // formatBackupSize() — generic despite the name
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_selected') {

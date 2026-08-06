@@ -74,7 +74,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
         <div class="empty-state" style="margin-top:12px;">ไม่พบบทความ/หน้าที่ตรงกับ "<?= htmlspecialchars($search) ?>"</div>
       <?php else: ?>
         <div class="table-scroll" style="margin-top:12px;">
-          <table class="admin-table">
+          <table class="admin-table sticky-search-table">
             <thead><tr><th>ชื่อ</th><th>ประเภท</th><th></th></tr></thead>
             <tbody>
               <?php foreach ($searchResults as $item): ?>
@@ -110,7 +110,7 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
     <?php else: ?>
       <form method="post" id="reorder-form"><input type="hidden" name="action" value="reorder"></form>
       <div class="table-scroll">
-        <table class="admin-table">
+        <table class="admin-table sticky-pinned-table">
           <thead><tr><th>ชื่อ</th><th>ประเภท</th><th>ลำดับ</th><th></th></tr></thead>
           <tbody>
             <?php foreach ($pinnedItems as $item): ?>

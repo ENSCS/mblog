@@ -111,6 +111,16 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
             </select>
           </div>
           <div class="te-field">
+            <label for="s-dark-tone">โทนพื้นหลัง (ธีมมืด)</label>
+            <select id="s-dark-tone">
+              <option value="black">ดำ (เดิม)</option>
+              <option value="blue">ออกสีน้ำเงิน</option>
+              <option value="green">ออกสีเขียว</option>
+              <option value="red">ออกสีแดง</option>
+              <option value="purple">ออกสีม่วง</option>
+            </select>
+          </div>
+          <div class="te-field">
             <label for="s-link-hex">สีลิงก์</label>
             <div class="te-color-pair">
               <input type="color" id="s-link" value="<?= htmlspecialchars($current['light']['link']) ?>">
@@ -151,6 +161,7 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
           <input type="hidden" name="action" value="reset">
           <button type="submit" class="btn btn-secondary">คืนค่าเริ่มต้น</button>
         </form>
+        <p style="margin-top:16px;"><a href="theme-preview.php">ดูตัวอย่างองค์ประกอบทั้งหมด &rarr;</a></p>
       </div>
 
       <div>
@@ -253,10 +264,29 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
     return lum > 0.4 ? '#141413' : '#ffffff';
   }
 
-  // Simple-mode derivation: 3 seed inputs -> full 11-key light+dark set.
-  // Heuristic, not exact science — Advanced mode exists precisely so a
-  // result that looks slightly off can still be hand-tuned per key.
-  function deriveFromSimple(primary, toneHsl, link) {
+  // Dark-mode background tone presets for #s-dark-tone. "black" keeps the
+  // original behavior exactly (hue inherited from the light tone, kept very
+  // desaturated so it reads as near-black) — the rest override the hue
+  // outright and raise saturation on the background tokens only
+  // (canvas/card/secondary/hairline); text tokens (ink/body/muted) stay
+  // barely tinted like "black" does, since lightness (not hue/saturation)
+  // is what carries their contrast against the dark background.
+  // Hue picks: 230 blue, 150 green, 355 red (wine, not alert-red — pure 0
+  // reads as an error state elsewhere in the UI), 275 purple (violet, not
+  // magenta — stays clearly distinct from the red preset).
+  var DARK_TONE_PRESETS = {
+    black: { h: null, s: { canvas: 8, card: 6, secondary: 6, hairline: 6, ink: 10, body: 6, muted: 5 } },
+    blue: { h: 230, s: { canvas: 32, card: 24, secondary: 22, hairline: 26, ink: 10, body: 8, muted: 6 } },
+    green: { h: 150, s: { canvas: 28, card: 20, secondary: 18, hairline: 22, ink: 8, body: 6, muted: 5 } },
+    red: { h: 355, s: { canvas: 30, card: 22, secondary: 20, hairline: 24, ink: 10, body: 8, muted: 6 } },
+    purple: { h: 275, s: { canvas: 30, card: 22, secondary: 20, hairline: 24, ink: 10, body: 8, muted: 6 } },
+  };
+
+  // Simple-mode derivation: 3 seed inputs (+ dark-tone style) -> full
+  // 11-key light+dark set. Heuristic, not exact science — Advanced mode
+  // exists precisely so a result that looks slightly off can still be
+  // hand-tuned per key.
+  function deriveFromSimple(primary, toneHsl, link, darkStyle) {
     var h = toneHsl[0], s = toneHsl[1], l = toneHsl[2];
     var light = {
       canvas: hslToHex(h, s, l),
@@ -271,14 +301,17 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
       'brand-name': shiftL(primary, -18),
       link: link,
     };
+    var preset = DARK_TONE_PRESETS[darkStyle] || DARK_TONE_PRESETS.black;
+    var dh = preset.h === null ? h : preset.h;
+    var ds = preset.s;
     var dark = {
-      canvas: hslToHex(h, 8, 8),
-      card: hslToHex(h, 6, 15),
-      secondary: hslToHex(h, 6, 12),
-      hairline: hslToHex(h, 6, 20),
-      ink: hslToHex(h, 10, 97),
-      body: hslToHex(h, 6, 82),
-      muted: hslToHex(h, 5, 65),
+      canvas: hslToHex(dh, ds.canvas, 8),
+      card: hslToHex(dh, ds.card, 15),
+      secondary: hslToHex(dh, ds.secondary, 12),
+      hairline: hslToHex(dh, ds.hairline, 20),
+      ink: hslToHex(dh, ds.ink, 97),
+      body: hslToHex(dh, ds.body, 82),
+      muted: hslToHex(dh, ds.muted, 65),
       primary: shiftL(primary, 12),
       link: shiftL(link, 22),
     };
@@ -417,7 +450,8 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
     var colors;
     if (activePanel() === 'simple') {
       var toneHsl = document.getElementById('s-tone').value.split(',').map(Number);
-      colors = deriveFromSimple(document.getElementById('s-primary').value, toneHsl, document.getElementById('s-link').value);
+      var darkStyle = document.getElementById('s-dark-tone').value;
+      colors = deriveFromSimple(document.getElementById('s-primary').value, toneHsl, document.getElementById('s-link').value, darkStyle);
       writeAdvanced(colors);
     } else {
       colors = readAdvanced();
@@ -446,6 +480,7 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
   wirePair(document.getElementById('s-primary'), document.getElementById('s-primary-hex'), recompute);
   wirePair(document.getElementById('s-link'), document.getElementById('s-link-hex'), recompute);
   document.getElementById('s-tone').addEventListener('input', recompute);
+  document.getElementById('s-dark-tone').addEventListener('input', recompute);
 
   KEYS.forEach(function (key) {
     wirePair(advColorInput('light', key), advTextInput('light', key), recompute);
@@ -500,6 +535,37 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
   // touches a simple-mode input or an advanced field.
   document.getElementById('te-colors-json').value = JSON.stringify(current);
   applyToPreview(current);
+
+  // Pre-select "โทนพื้นหลัง" to whichever preset's computed canvas hex
+  // matches the current saved canvas, instead of always defaulting to the
+  // first option ("ครีมอุ่น") regardless of what's actually active — same
+  // "reflect saved state" reasoning as the block above. Leaves the browser
+  // default (first option) untouched if no preset matches (e.g. a canvas
+  // color hand-edited in โหมดขั้นสูง).
+  var toneSelect = document.getElementById('s-tone');
+  var currentCanvas = (current.light.canvas || '').toLowerCase();
+  Array.from(toneSelect.options).forEach(function (opt) {
+    var hsl = opt.value.split(',').map(Number);
+    if (hslToHex(hsl[0], hsl[1], hsl[2]).toLowerCase() === currentCanvas) {
+      toneSelect.value = opt.value;
+    }
+  });
+
+  // Same reasoning, for #s-dark-tone — "black" reuses whichever light hue
+  // toneSelect just matched above (falls back to the first option's hue if
+  // the light tone itself didn't match a preset, which is still a
+  // reasonable guess since "black" only reads as different at hues far
+  // enough apart to matter).
+  var darkToneSelect = document.getElementById('s-dark-tone');
+  var currentDarkCanvas = (current.dark.canvas || '').toLowerCase();
+  var blackHue = toneSelect.value.split(',').map(Number)[0];
+  Object.keys(DARK_TONE_PRESETS).forEach(function (styleKey) {
+    var preset = DARK_TONE_PRESETS[styleKey];
+    var dh = preset.h === null ? blackHue : preset.h;
+    if (hslToHex(dh, preset.s.canvas, 8).toLowerCase() === currentDarkCanvas) {
+      darkToneSelect.value = styleKey;
+    }
+  });
 })();
 </script>
 <?php render_sidebar($layout); render_footer(); ?>

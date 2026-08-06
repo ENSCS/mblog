@@ -50,6 +50,20 @@ function countFeedItems(): int
     return (int) db()->query('SELECT COUNT(*) FROM mblog_feed_items')->fetchColumn();
 }
 
+// Paginated variant for manage-feed.php's admin table — getFeedItems()
+// itself stays a plain "latest N" (no offset) since feed.php/feed-embed.php/
+// api/feed-poll.php all want exactly that, unpaginated.
+function getFeedItemsForAdmin(int $page, int $perPage): array
+{
+    $perPage = max(1, $perPage);
+    $offset = max(0, (max(1, $page) - 1) * $perPage);
+
+    $stmt = db()->prepare('SELECT id, content, created_at FROM mblog_feed_items ORDER BY id DESC LIMIT ' . $perPage . ' OFFSET ' . $offset);
+    $stmt->execute();
+
+    return ['items' => $stmt->fetchAll(), 'total' => countFeedItems()];
+}
+
 function createFeedItem(string $content): int
 {
     $stmt = db()->prepare('INSERT INTO mblog_feed_items (content, created_at) VALUES (?, ?)');
@@ -80,4 +94,17 @@ function deleteFeedItem(int $id): void
 {
     $stmt = db()->prepare('DELETE FROM mblog_feed_items WHERE id = ?');
     $stmt->execute([$id]);
+}
+
+// manage-feed.php's bulk-action checkbox row — same "loop a prepared
+// statement" shape as includes/articles.php's bulk* functions.
+function bulkDeleteFeedItems(array $ids): void
+{
+    if (!$ids) {
+        return;
+    }
+    $stmt = db()->prepare('DELETE FROM mblog_feed_items WHERE id = ?');
+    foreach ($ids as $id) {
+        $stmt->execute([(int) $id]);
+    }
 }

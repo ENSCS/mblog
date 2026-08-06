@@ -3,6 +3,7 @@ require_once __DIR__ . '/articles.php';
 require_once __DIR__ . '/menu.php';
 require_once __DIR__ . '/sidebar.php';
 require_once __DIR__ . '/feed.php';
+require_once __DIR__ . '/orphan-files.php';
 
 // Shared "back to admin" link for every admin/management page's
 // $topbarActions — one place to change the label/destination (see
@@ -41,9 +42,13 @@ function adminNavGroups(): array
             ['label' => 'จัดการหมวดหมู่', 'href' => 'categories.php', 'badge' => count(getAllCategories())],
             ['label' => 'จัดการ Sidebar', 'href' => 'sidebar-items.php', 'badge' => count(getAllSidebarItems())],
             ['label' => 'Backup', 'href' => 'backup.php'],
-            ['label' => 'ไฟล์กำพร้า', 'href' => 'orphan-files.php'],
+            // scanOrphanUploads() walks uploads/ and runs 2 LIKE-scan queries
+            // per file (see includes/uploads.php's uploadPathInUse()) — heavier
+            // than every other badge here, which is a single COUNT(*). Fine at
+            // this site's upload-folder scale; worth revisiting with a cached
+            // count if uploads/ ever grows into the thousands.
+            ['label' => 'ไฟล์กำพร้า', 'href' => 'orphan-files.php', 'badge' => count(scanOrphanUploads())],
             ['label' => 'ชุดสีของเว็บ', 'href' => 'color-reference.php'],
-            ['label' => 'พรีวิวองค์ประกอบ', 'href' => 'theme-preview.php'],
             ['label' => 'ปรับแต่งชุดสี', 'href' => 'theme-editor.php'],
         ],
     ];

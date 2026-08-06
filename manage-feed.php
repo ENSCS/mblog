@@ -18,13 +18,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($action === 'delete') {
         deleteFeedItem((int) ($_POST['id'] ?? 0));
+    } elseif ($action === 'bulk') {
+        $ids = array_map('intval', $_POST['ids'] ?? []);
+        if (($_POST['bulk_action'] ?? '') === 'delete') {
+            bulkDeleteFeedItems($ids);
+        }
     }
 
     header('Location: manage-feed.php?done=1');
     exit;
 }
 
-$items = getFeedItems((int) siteSetting('feed_item_limit', 50));
+$perPage = 60;
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$result = getFeedItemsForAdmin($page, $perPage);
+$items = $result['items'];
+$totalPages = max(1, (int) ceil($result['total'] / $perPage));
 $editId = (int) ($_GET['edit_id'] ?? 0);
 // The same textarea at the top serves both "post new" and "edit existing" —
 // clicking "แก้ไข" on a row just reloads this page with ?edit_id=, which
@@ -35,6 +44,7 @@ $editItem = $editId ? getFeedItemById($editId) : null;
 $pageTitle = 'จัดการฟีดข่าว';
 $topbarActions = adminTopbarActions();
 $showAdminSidebar = true;
+$footerScripts = '<script src="assets/manage-list.js?v=' . @filemtime(__DIR__ . '/assets/manage-list.js') . '" defer></script>';
 $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'));
 ?>
   <h1 class="article-title">จัดการฟีดข่าว</h1>
@@ -65,13 +75,29 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
     <?php if (!$items): ?>
       <p style="color:var(--text-muted);">ยังไม่มีข้อความ</p>
     <?php else: ?>
-      <div class="table-scroll">
-        <table class="admin-table">
-          <thead><tr><th>ข้อความ</th><th>เวลา</th><th></th></tr></thead>
+      <?php
+      // Same "sibling forms, checkboxes attach via form=" split as
+      // includes/manage-list.php — a <form> can't nest inside another.
+      ?>
+      <form method="post" id="bulk-form">
+        <input type="hidden" name="action" value="bulk">
+        <div class="bulk-bar">
+          <select name="bulk_action" id="bulk-action-select">
+            <option value="">การดำเนินการเป็นชุด</option>
+            <option value="delete">ลบ</option>
+          </select>
+          <button type="submit" class="btn btn-secondary">นำไปใช้</button>
+        </div>
+      </form>
+
+      <div class="table-scroll feed-table-scroll">
+        <table class="admin-table feed-table">
+          <thead><tr><th><input type="checkbox" id="select-all"></th><th>ข้อความ</th><th>เวลา</th><th></th></tr></thead>
           <tbody>
             <?php foreach ($items as $item): ?>
               <tr>
-                <td style="white-space:normal; max-width:500px;"><?= nl2br(htmlspecialchars($item['content'])) ?></td>
+                <td><input type="checkbox" name="ids[]" value="<?= (int) $item['id'] ?>" class="row-select" form="bulk-form"></td>
+                <td><?= nl2br(htmlspecialchars($item['content'])) ?></td>
                 <td><?= relativeTimeTag($item['created_at']) ?></td>
                 <td class="row-actions">
                   <a href="manage-feed.php?edit_id=<?= (int) $item['id'] ?>">แก้ไข</a>
@@ -87,5 +113,13 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
         </table>
       </div>
     <?php endif; ?>
+
+    <?php if ($totalPages > 1): ?>
+      <div class="pagination">
+        <?php if ($page > 1): ?><a href="manage-feed.php?page=<?= $page - 1 ?>">&laquo; ก่อนหน้า</a><?php endif; ?>
+        <span>หน้า <?= $page ?> จาก <?= $totalPages ?></span>
+        <?php if ($page < $totalPages): ?><a href="manage-feed.php?page=<?= $page + 1 ?>">ถัดไป &raquo;</a><?php endif; ?>
+      </div>
+    <?php endif; ?>
   </div>
-<?php render_sidebar($layout); render_footer(); ?>
+<?php render_sidebar($layout); render_footer(compact('footerScripts')); ?>

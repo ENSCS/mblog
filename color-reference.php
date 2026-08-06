@@ -10,6 +10,7 @@
 // AND dark values side by side, which a real var(--token) can't do.
 require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/admin-nav.php';
+require_once __DIR__ . '/includes/theme-colors.php';
 
 $lightPalette = [
     ['--color-brand-name', '#a9583e', 'ตัวอักษรชื่อแบรนด์ "mBlog\'26" บนแถบเมนู'],
@@ -72,6 +73,21 @@ $roleTokens = [
     ],
 ];
 
+// Swaps each entry's hardcoded default hex for the actual value currently
+// applied (custom, if theme-editor.php has any saved — otherwise identical
+// to the default). $palette entries are ['--color-x' or '--color-x-dark',
+// hex, usage]; $currentValues is getThemeColors()['light'|'dark'], keyed by
+// CUSTOM_THEME_KEYS (e.g. 'brand-name', no --color-/-dark affixes).
+function withCurrentValues(array $palette, array $currentValues): array
+{
+    return array_map(function (array $entry) use ($currentValues) {
+        [$name, $defaultHex, $usage] = $entry;
+        $key = preg_replace('/^--color-/', '', $name);
+        $key = preg_replace('/-dark$/', '', $key);
+        return [$name, $currentValues[$key] ?? $defaultHex, $usage];
+    }, $palette);
+}
+
 function renderSwatchGrid(array $items): void
 {
     echo '<div class="color-ref-grid">';
@@ -101,6 +117,13 @@ function renderRoleTokenTable(array $groups): void
     echo '</div>';
 }
 
+$view = ($_GET['view'] ?? 'current') === 'default' ? 'default' : 'current';
+if ($view === 'current') {
+    $currentColors = getThemeColors();
+    $lightPalette = withCurrentValues($lightPalette, $currentColors['light']);
+    $darkPalette = withCurrentValues($darkPalette, $currentColors['dark']);
+}
+
 $pageTitle = 'ชุดสีของเว็บ';
 $extraHead = <<<HTML
 <style>
@@ -127,11 +150,17 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'topbarActions', 'show
 ?>
   <h1 class="article-title">ชุดสีของเว็บ</h1>
   <p style="color:var(--text-muted); margin-top:-8px;">
-    เฉพาะสีที่ควรปรับตามแบรนด์/องค์กร แบ่งเป็น 2 กลุ่ม (ธีมสว่าง, ธีมมืด)
-    ตามด้วย Role Token ที่บอกว่าแต่ละสีถูกเอาไปใช้กับส่วนไหนของเว็บบ้าง — สีระบบอื่นๆ นอกเหนือจากนี้
-    (badge หมวดหมู่, สีสถานะสำเร็จ/เตือน/ผิดพลาด, เงา dropdown, พื้นหลังโค้ดบล็อก, สีเน้นสำรอง teal/amber)
-    ล็อกไว้ตายตัว ไม่จำเป็นต้องปรับตามแบรนด์ จึงไม่แสดงในหน้านี้
+    สีที่ปรับตามแบรนด์ได้ 2 กลุ่ม (สว่าง/มืด) พร้อม Role Token บอกจุดที่นำไปใช้ —
+    สีระบบอื่นๆ (badge, สถานะ, เงา ฯลฯ) ล็อกไว้ตายตัว ไม่แสดงที่นี่
   </p>
+
+  <div class="status-tabs">
+    <a href="color-reference.php" class="status-tab <?= $view === 'current' ? 'status-tab-active' : '' ?>">ค่าที่ใช้ตอนนี้</a>
+    <a href="color-reference.php?view=default" class="status-tab <?= $view === 'default' ? 'status-tab-active' : '' ?>">ค่าเริ่มต้น</a>
+  </div>
+  <?php if ($view === 'current' && !hasCustomThemeColors()): ?>
+    <p style="color:var(--text-muted); font-size:13px; margin-top:-10px;">ยังไม่เคยปรับแต่งชุดสี — ค่าที่ใช้ตอนนี้เหมือนค่าเริ่มต้นทุกจุด</p>
+  <?php endif; ?>
 
   <div class="card">
     <h2 class="admin-section-title" style="margin-top:0;">1. ธีมสว่าง (Light)</h2>

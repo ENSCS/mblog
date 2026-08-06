@@ -413,6 +413,19 @@ a.tag-badge:hover {
   border-bottom: 1px solid var(--card-border);
   white-space: nowrap;
 }
+/* Reorder inputs (sticky-items.php, sidebar-items.php) sit bare in a <td>,
+   not wrapped in a .field div like every other input on the site — without
+   this they fall back to the plain browser-default number input instead of
+   the site's styled one. */
+.admin-table td input[type=number] {
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--input-text);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-md);
+  background: var(--input-bg);
+}
 .admin-table th {
   color: var(--text-muted);
   font-weight: 600;
@@ -425,6 +438,72 @@ a.tag-badge:hover {
 .admin-table-child {
   padding-left: 28px !important;
   color: var(--text-secondary);
+}
+/* sticky-items.php's two tables — the "ชื่อ" column holds full article
+   titles with no cap, same overflow shape as .feed-table below, fixed the
+   same way: table-layout: fixed + explicit widths on every column except
+   the title one, which then absorbs the remaining space and wraps. */
+.sticky-search-table,
+.sticky-pinned-table {
+  table-layout: fixed;
+}
+.sticky-search-table th,
+.sticky-search-table td,
+.sticky-pinned-table th,
+.sticky-pinned-table td {
+  white-space: normal;
+  word-break: break-word;
+}
+.sticky-search-table th:nth-child(2),
+.sticky-search-table td:nth-child(2),
+.sticky-pinned-table th:nth-child(2),
+.sticky-pinned-table td:nth-child(2) {
+  width: 90px;
+}
+.sticky-pinned-table th:nth-child(3),
+.sticky-pinned-table td:nth-child(3) {
+  width: 90px;
+}
+.sticky-search-table th:last-child,
+.sticky-search-table td:last-child,
+.sticky-pinned-table th:last-child,
+.sticky-pinned-table td:last-child {
+  width: 100px;
+  white-space: nowrap;
+}
+
+/* manage-feed.php's table — the message column has no natural wrap point
+   short enough to fit, unlike article titles, so it needs table-layout:
+   fixed + explicit column widths instead of .admin-table's default
+   content-sized (nowrap) columns, or it pushes .table-scroll into a
+   horizontal scrollbar. */
+.feed-table {
+  table-layout: fixed;
+}
+.feed-table th,
+.feed-table td {
+  white-space: normal;
+  word-break: break-word;
+}
+.feed-table th:first-child,
+.feed-table td:first-child {
+  width: 32px;
+}
+.feed-table th:nth-child(3),
+.feed-table td:nth-child(3) {
+  width: 110px;
+}
+.feed-table th:last-child,
+.feed-table td:last-child {
+  width: 90px;
+  white-space: nowrap;
+}
+/* The เวลา column's hover-tooltip pseudo-element (relativeTimeTag()'s
+   data-tooltip — full "28 กรกฎาคม เวลา 00:20 น." date) is wider than the
+   110px column and would otherwise push .table-scroll into a horizontal
+   scrollbar even though nothing visible actually needs it. */
+.feed-table-scroll {
+  overflow-x: hidden;
 }
 .row-actions button.link-danger {
   background: none;

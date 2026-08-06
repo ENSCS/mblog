@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
     } else if (action === 'permanently_delete' && !confirm(`ลบถาวร ${checked.length} รายการ — กู้คืนไม่ได้อีก ยืนยันลบถาวร?`)) {
       e.preventDefault();
+    } else if (action === 'delete' && !confirm(`ลบ ${checked.length} รายการ — กู้คืนไม่ได้อีก ยืนยันลบ?`)) {
+      e.preventDefault();
     }
   });
 });
