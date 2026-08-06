@@ -93,5 +93,8 @@ $layout = render_header(compact('pageTitle', 'topbarActions', 'showAdminSidebar'
     <a class="dashboard-card" href="theme-preview.php">
       <div class="dashboard-card-label">พรีวิวองค์ประกอบ</div>
     </a>
+    <a class="dashboard-card" href="theme-editor.php">
+      <div class="dashboard-card-label">ปรับแต่งชุดสี</div>
+    </a>
   </div>
 <?php render_sidebar($layout); render_footer(); ?>

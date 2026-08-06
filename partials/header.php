@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/menu.php';
 require_once __DIR__ . '/../includes/sidebar.php';
+require_once __DIR__ . '/../includes/theme-colors.php';
 $menuItems = getMenuItems();
 
 // Only pages that opt in ($showSidebar = true, set before including this
@@ -81,6 +82,7 @@ $faviconMime = ['ico' => 'image/x-icon', 'png' => 'image/png', 'svg' => 'image/s
 <link rel="stylesheet" href="assets/base.css<?= $assetVer('assets/base.css') ?>">
 <link rel="stylesheet" href="assets/layout.css<?= $assetVer('assets/layout.css') ?>">
 <link rel="stylesheet" href="assets/components.css<?= $assetVer('assets/components.css') ?>">
+<?= renderThemeColorStyle() ?>
 <script src="assets/menu.js<?= $assetVer('assets/menu.js') ?>" defer></script>
 <script src="assets/toast.js<?= $assetVer('assets/toast.js') ?>" defer></script>
 <script src="assets/theme.js<?= $assetVer('assets/theme.js') ?>" defer></script>
