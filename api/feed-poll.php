@@ -15,6 +15,11 @@
 header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . '/../includes/feed.php';
 
+// feed.php itself is gated behind requireAnyLogin() — without the same check
+// here, this poll endpoint would let anyone read the "login-required" feed
+// content directly, bypassing that gate entirely.
+requireApiAnyLogin();
+
 $lastSeenId = (int) ($_GET['last_seen_id'] ?? 0);
 // ?limit= lets a caller (feed-embed.php) poll for a fixed window instead of
 // the site-wide feed_item_limit setting feed.php's own poll relies on —

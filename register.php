@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/config.php';
 require __DIR__ . '/includes/users.php';
+require __DIR__ . '/includes/staff.php';
 
 $errors = [];
 $registered = isset($_GET['registered']);
@@ -33,14 +34,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     // Same charset/length rule as staff usernames (includes/staff.php,
     // profile.php) — letters/digits/underscore/hyphen/dot only, no spaces.
+    // Checked against BOTH mblog_users and mblog_staff — login.php always
+    // checks mblog_staff first and never falls through to mblog_users, so a
+    // reader who self-registered a username colliding with an existing
+    // staff member's would never be able to log in with it at all.
     if ($form['username'] === '' || !preg_match('/^[a-zA-Z0-9_.-]{3,50}$/', $form['username'])) {
         $errors[] = 'Username ต้องมีอย่างน้อย 3 ตัวอักษร ใช้ได้แค่ a-z, 0-9, . _ - เท่านั้น';
-    } elseif (userUsernameExists($form['username'])) {
+    } elseif (userUsernameExists($form['username']) || staffUsernameExists($form['username'])) {
         $errors[] = 'Username นี้มีผู้ใช้อยู่แล้ว';
     }
     if ($form['email'] === '' || !filter_var($form['email'], FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'กรุณาใส่อีเมลที่ถูกต้อง';
-    } elseif (userEmailExists($form['email'])) {
+    } elseif (userEmailExists($form['email']) || staffEmailExists($form['email'])) {
         $errors[] = 'อีเมลนี้มีผู้ใช้อยู่แล้ว';
     }
     if ($form['phone'] === '') {

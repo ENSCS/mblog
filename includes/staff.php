@@ -16,6 +16,7 @@
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/uploads.php';
 
 const STAFF_PROFILE_COLUMNS = 'id, email, username, first_name, last_name, phone, line_id, avatar_path, role, created_at';
 
@@ -158,6 +159,7 @@ function saveStaffAvatar(int $id, string $fieldName = 'avatar_file'): ?string
         throw new RuntimeException('ไฟล์นี้ไม่ใช่รูปภาพที่ถูกต้อง');
     }
 
+    ensureUploadsHtaccess();
     $dir = UPLOADS_DIR . 'staff/';
     if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
         throw new RuntimeException('สร้างโฟลเดอร์อัปโหลดไม่สำเร็จ');

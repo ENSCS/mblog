@@ -10,6 +10,22 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/settings.php';
 
+// Self-provisions uploads/.htaccess denying script execution — same reasoning
+// as ensureBackupDir()'s .htaccess (includes/backup.php): uploads/ is
+// git-ignored (see .gitignore) so nothing ships one on deploy. Every upload
+// entry point (api/upload.php, staff/user avatar upload, site logo/favicon)
+// calls this. Pure defense-in-depth — every current upload path already
+// whitelists image extensions, but this stops a future weaker check (or a
+// misconfigured host serving .php as CGI from anywhere) from turning an
+// upload into script execution.
+function ensureUploadsHtaccess(): void
+{
+    $htaccessPath = UPLOADS_DIR . '.htaccess';
+    if (!file_exists($htaccessPath)) {
+        file_put_contents($htaccessPath, "<FilesMatch \"\\.(php\\d*|phtml|phar)$\">\n    <IfModule mod_authz_core.c>\n        Require all denied\n    </IfModule>\n    <IfModule !mod_authz_core.c>\n        Deny from all\n    </IfModule>\n</FilesMatch>\n");
+    }
+}
+
 // True if $path (an "uploads/..." relative path) is still referenced by any
 // article's featured_image/content, any sidebar item's image/content, the
 // site logo/favicon in mblog_settings, a staff avatar, or a user avatar —
@@ -67,14 +83,22 @@ function sanitizeFeaturedImagePath(string $raw): string
 // api/save.php / api/save-sidebar-item.php before $path is trusted at all).
 function deleteUploadIfUnused(string $path): void
 {
-    if ($path === '' || !preg_match('#^uploads/[\p{L}\p{N}\p{M}_./-]+\.(jpg|jpeg|png|gif|webp)$#iu', $path)) {
+    if ($path === '' || strpos($path, '..') !== false || !preg_match('#^uploads/[\p{L}\p{N}\p{M}_./-]+\.(jpg|jpeg|png|gif|webp)$#iu', $path)) {
         return;
     }
     if (uploadPathInUse($path)) {
         return;
     }
     $filePath = UPLOADS_DIR . substr($path, strlen('uploads/'));
-    if (is_file($filePath)) {
-        @unlink($filePath);
+    // Belt-and-suspenders on top of the ".." rejection above: canonicalize
+    // and confirm the resolved path still lands inside UPLOADS_DIR before
+    // ever calling unlink() — the character class above allows "/" (for
+    // uploads/YYYY/MM/ subfolders), so path-traversal segments alone were
+    // the only thing standing between this and deleting arbitrary files.
+    $realFile = realpath($filePath);
+    $realUploadsDir = realpath(UPLOADS_DIR);
+    if ($realFile === false || $realUploadsDir === false || strpos($realFile, $realUploadsDir . DIRECTORY_SEPARATOR) !== 0) {
+        return;
     }
+    @unlink($realFile);
 }

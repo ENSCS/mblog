@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/config.php';
 require __DIR__ . '/includes/admin-nav.php';
+require __DIR__ . '/includes/uploads.php';
 requireCapability('manage_settings');
 
 // Curated to what this single-owner Thai blog actually needs — not a full
@@ -36,6 +37,7 @@ function saveSiteAsset(string $fieldName, string $slotName, array $allowedExt, i
         throw new RuntimeException('ไฟล์นี้ไม่ใช่รูปภาพที่ถูกต้อง');
     }
 
+    ensureUploadsHtaccess();
     $dir = UPLOADS_DIR . 'site/';
     if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
         throw new RuntimeException('สร้างโฟลเดอร์อัปโหลดไม่สำเร็จ');

@@ -15,7 +15,12 @@ if (currentStaff() !== null) {
 $requestedRedirect = $_GET['redirect'] ?? $_POST['redirect'] ?? '';
 // Only ever follow a same-site relative path — an open redirect via ?redirect=
 // would otherwise let a phishing link bounce a successful login to any host.
-$requestedRedirect = preg_match('#^/?[a-zA-Z0-9_\-./]+\.php(\?.*)?$#', $requestedRedirect) ? $requestedRedirect : '';
+// The (?!/) after the optional leading slash rejects a *second* leading
+// slash (e.g. "//evil.com/x.php") — browsers treat "//host/path" as
+// protocol-relative, so without this a value starting with "//" would pass
+// the character-class check below (it only allows letters/digits/./-/_)
+// while still redirecting off-site.
+$requestedRedirect = preg_match('#^/?(?!/)[a-zA-Z0-9_\-./]+\.php(\?.*)?$#', $requestedRedirect) ? $requestedRedirect : '';
 // Same explicit ?redirect= wins for either account type (e.g. bounced back
 // here from a comment box) — only the *fallback* differs, since admin.php
 // means nothing to a general user and index.php is a downgrade for staff

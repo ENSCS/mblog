@@ -73,7 +73,13 @@ $extraHead .= "\n" . '<script type="application/ld+json">' . json_encode([
     'description' => $seoDescription,
     'image' => $imageUrl ? [$imageUrl] : [],
     'url' => $canonicalUrl,
-], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . '</script>';
+// JSON_UNESCAPED_SLASHES deliberately dropped here (unlike other json_encode
+// calls in this codebase) — $seoTitle/$seoDescription are free-text fields
+// authors can set (seo_title/seo_description columns), and an unescaped "/"
+// would let a value containing "</script>" close this tag early and inject
+// arbitrary markup into every visitor's page. Keeping the default "\/"
+// escaping is what stops that regardless of what the text contains.
+], JSON_UNESCAPED_UNICODE) . '</script>';
 
 $footerScripts = '<script src="assets/copy-button.js"></script>';
 // Already resolved (site setting vs. this article's own override) — don't

@@ -49,21 +49,37 @@ function renderManageListPage(string $type, array $config): void
             $action = $_POST['bulk_action'] ?? '';
         }
 
+        // 'author' role only ever acts on their own articles via the GET-side
+        // list filter above — but the POST body's id list was previously
+        // trusted as-is, so a hand-crafted request with someone else's
+        // article ids could bypass that scoping entirely. Re-check here too.
+        $ownerId = articleOwnerFilter();
+        if ($ownerId !== null) {
+            $ids = filterArticleIdsByOwner($ids, $ownerId);
+        }
+
         switch ($action) {
             case 'trash':
-                bulkTrashArticles($ids);
-                break;
             case 'restore':
-                bulkRestoreArticles($ids);
-                break;
             case 'permanently_delete':
-                bulkPermanentlyDeleteArticles($ids);
+                // Deleting/restoring is an editor+/admin-only capability —
+                // 'author' can publish/draft their own work but has no
+                // delete_articles capability at all (see ROLE_CAPABILITIES
+                // in includes/auth.php), so it must be re-checked here
+                // rather than relying on the page-level edit_articles gate.
+                if (staffCan('delete_articles')) {
+                    if ($action === 'trash') {
+                        bulkTrashArticles($ids);
+                    } elseif ($action === 'restore') {
+                        bulkRestoreArticles($ids);
+                    } else {
+                        bulkPermanentlyDeleteArticles($ids);
+                    }
+                }
                 break;
             case 'publish':
-                bulkUpdateArticleStatus($ids, 'published');
-                break;
             case 'draft':
-                bulkUpdateArticleStatus($ids, 'draft');
+                bulkUpdateArticleStatus($ids, $action === 'publish' ? 'published' : 'draft');
                 break;
         }
 

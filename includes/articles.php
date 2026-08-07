@@ -40,6 +40,17 @@ function publicVisibilitySql(string $alias = 'a'): string
     return "$alias.status IN ('published', 'scheduled') AND $alias.published_at <= NOW() AND ($alias.expires_at IS NULL OR $alias.expires_at > NOW())";
 }
 
+// Escapes LIKE's own metacharacters (% and _) plus the escape character
+// itself in free-text search input before it gets wrapped in %...% —
+// without this, a search for e.g. "50%" or "a_b" matches far more than the
+// literal text because % / _ are wildcards to LIKE, not just to the caller's
+// leading/trailing %. Not a security issue (results stay scoped by
+// publicVisibilitySql()/type filters either way), just correctness.
+function escapeLikeValue(string $value): string
+{
+    return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+}
+
 function getCategories(): array
 {
     $rows = db()->query('SELECT name FROM mblog_categories ORDER BY sort_order')->fetchAll();
@@ -484,7 +495,7 @@ function getArticleList(array $filters, int $page = 1, int $perPage = 0, bool $s
     }
     if (($filters['search'] ?? '') !== '') {
         $where[] = 'a.title LIKE ?';
-        $params[] = '%' . $filters['search'] . '%';
+        $params[] = '%' . escapeLikeValue($filters['search']) . '%';
     }
     // 'author' role — same articleOwnerFilter() filter getArticlesForAdmin()
     // uses, opt-in per caller (drafts.php passes it, others don't).
@@ -570,7 +581,7 @@ function getArticleList(array $filters, int $page = 1, int $perPage = 0, bool $s
 // Returns ['items' => [...], 'total' => N] so the caller can paginate.
 function searchArticles(string $query, int $page, int $perPage): array
 {
-    $like = '%' . $query . '%';
+    $like = '%' . escapeLikeValue($query) . '%';
     $tagMatchSql = "EXISTS (
         SELECT 1 FROM mblog_article_tag mat
         JOIN mblog_tags t ON t.id = mat.tag_id
@@ -664,12 +675,17 @@ function getPages(): array
 }
 
 // Draft list — for the "ร่าง" screen so drafts stay findable now that they're
-// hidden from the public list, and for admin.php's count. No ownership check
-// yet (no login system exists yet — see PLANNING.md), so this is visible to
-// anyone for now.
+// hidden from the public list, and for admin.php's/admin-nav's count. Scoped
+// by articleOwnerFilter() same as drafts.php itself — an 'author' role only
+// ever sees their own drafts, admin/editor see everyone's.
 function getDraftArticles(): array
 {
-    return getArticleList(['status' => 'draft'])['items'];
+    $filters = ['status' => 'draft'];
+    $ownerId = articleOwnerFilter();
+    if ($ownerId !== null) {
+        $filters['author_id'] = $ownerId;
+    }
+    return getArticleList($filters)['items'];
 }
 
 // Public single-article lookup — published posts only (a draft's URL is not
@@ -773,7 +789,7 @@ function getArticlesForAdmin(array $filters, int $page, int $perPage): array
 
     if (($filters['search'] ?? '') !== '') {
         $where[] = 'a.title LIKE ?';
-        $params[] = '%' . $filters['search'] . '%';
+        $params[] = '%' . escapeLikeValue($filters['search']) . '%';
     }
     if (($filters['category_id'] ?? '') === 'none') {
         // 'none' is a UI-level sentinel (see manage-articles.php's filter
@@ -886,6 +902,24 @@ function unstickArticles(array $ids): void
 {
     $remaining = array_values(array_diff(getStickyArticleIds(), array_map('intval', $ids)));
     updateSiteSettings(['sticky_article_ids' => json_encode($remaining)]);
+}
+
+// Restricts a caller-supplied id list to only the ones actually owned by
+// $authorId — used by includes/manage-list.php's bulk-action POST handler so
+// an 'author'-role staff member can't act on another author's article ids
+// just by including them in the POST body (the GET-side list is scoped via
+// articleOwnerFilter(), but the id list itself needs the same check applied
+// server-side, since it comes straight from the request).
+function filterArticleIdsByOwner(array $ids, int $authorId): array
+{
+    $ids = array_values(array_unique(array_map('intval', $ids)));
+    if (!$ids) {
+        return [];
+    }
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $stmt = db()->prepare("SELECT id FROM mblog_articles WHERE author_id = ? AND id IN ($placeholders)");
+    $stmt->execute(array_merge([$authorId], $ids));
+    return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
 }
 
 // Moves articles to the trash — sets deleted_at instead of touching status,

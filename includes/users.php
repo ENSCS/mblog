@@ -11,6 +11,7 @@
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/uploads.php';
 
 const USER_PROFILE_COLUMNS = 'id, email, username, first_name, last_name, phone, line_id, avatar_path, tier, created_at';
 
@@ -188,6 +189,7 @@ function saveUserAvatar(int $id, string $fieldName = 'avatar_file'): ?string
         throw new RuntimeException('ไฟล์นี้ไม่ใช่รูปภาพที่ถูกต้อง');
     }
 
+    ensureUploadsHtaccess();
     $dir = UPLOADS_DIR . 'users/';
     if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
         throw new RuntimeException('สร้างโฟลเดอร์อัปโหลดไม่สำเร็จ');

@@ -31,10 +31,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
         $adminCount = count(array_filter(getAllStaff(), fn($s) => $s['role'] === 'admin'));
         if ($target && $target['role'] === 'admin' && $adminCount <= 1) {
             $errors[] = 'ลบไม่ได้ — ต้องมี admin เหลืออย่างน้อย 1 คนเสมอ';
-        } elseif ($id > 0) {
+        } elseif ($id > 0 && $target) {
             deleteStaff($id);
             header('Location: staff.php?deleted=1');
             exit;
+        } else {
+            $errors[] = 'ไม่พบบัญชีที่ต้องการลบ';
         }
     }
 }

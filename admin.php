@@ -9,11 +9,16 @@ requireLogin();
 $draftCount = count(getDraftArticles());
 $articleCount = count(getArticles());
 $pageCount = count(getPages());
-$categoryCount = count(getAllCategories());
-$menuCount = count(getAllMenuItems());
-$sidebarItemCount = count(getAllSidebarItems());
-$feedItemCount = countFeedItems();
 $stickyCount = count(getStickyArticleIds());
+$feedItemCount = countFeedItems();
+// Same capability-gated visibility as includes/admin-nav.php's sidebar links
+// below — an 'author' has edit_articles/publish_articles only, so the
+// menu/category/sidebar/stats/settings counts (each behind its own
+// manage_*/view_stats capability) shouldn't leak on the dashboard even as
+// just a number, since the linked page itself 403s for that role anyway.
+$categoryCount = staffCan('manage_categories') ? count(getAllCategories()) : null;
+$menuCount = staffCan('manage_menu') ? count(getAllMenuItems()) : null;
+$sidebarItemCount = staffCan('manage_sidebar') ? count(getAllSidebarItems()) : null;
 
 $pageTitle = 'จัดการเว็บ';
 $showAdminSidebar = true;
@@ -57,36 +62,52 @@ $layout = render_header(compact('pageTitle', 'showAdminSidebar'));
     </a>
   </div>
 
+  <?php if (staffCan('view_stats')): ?>
   <h2 class="admin-section-title">สถิติ</h2>
   <div class="dashboard-grid">
     <a class="dashboard-card" href="stats.php">
       <div class="dashboard-card-label">ดูสถิติเว็บ</div>
     </a>
   </div>
+  <?php endif; ?>
 
+  <?php if (staffCan('manage_settings') || staffCan('manage_menu') || staffCan('manage_categories') || staffCan('manage_sidebar') || staffCan('manage_backup') || staffCan('manage_orphan_files') || staffCan('manage_theme')): ?>
   <h2 class="admin-section-title">ตั้งค่าเว็บ</h2>
   <div class="dashboard-grid">
+    <?php if (staffCan('manage_settings')): ?>
     <a class="dashboard-card" href="settings.php">
       <div class="dashboard-card-label">ตั้งค่าเว็บ</div>
     </a>
+    <?php endif; ?>
+    <?php if (staffCan('manage_menu')): ?>
     <a class="dashboard-card" href="menu.php">
       <div class="dashboard-card-count"><?= $menuCount ?></div>
       <div class="dashboard-card-label">จัดการเมนู</div>
     </a>
+    <?php endif; ?>
+    <?php if (staffCan('manage_categories')): ?>
     <a class="dashboard-card" href="categories.php">
       <div class="dashboard-card-count"><?= $categoryCount ?></div>
       <div class="dashboard-card-label">จัดการหมวดหมู่</div>
     </a>
+    <?php endif; ?>
+    <?php if (staffCan('manage_sidebar')): ?>
     <a class="dashboard-card" href="sidebar-items.php">
       <div class="dashboard-card-count"><?= $sidebarItemCount ?></div>
       <div class="dashboard-card-label">จัดการ Sidebar</div>
     </a>
+    <?php endif; ?>
+    <?php if (staffCan('manage_backup')): ?>
     <a class="dashboard-card" href="backup.php">
       <div class="dashboard-card-label">Backup</div>
     </a>
+    <?php endif; ?>
+    <?php if (staffCan('manage_orphan_files')): ?>
     <a class="dashboard-card" href="orphan-files.php">
       <div class="dashboard-card-label">ไฟล์กำพร้า</div>
     </a>
+    <?php endif; ?>
+    <?php if (staffCan('manage_theme')): ?>
     <a class="dashboard-card" href="color-reference.php">
       <div class="dashboard-card-label">ชุดสีของเว็บ</div>
     </a>
@@ -96,5 +117,7 @@ $layout = render_header(compact('pageTitle', 'showAdminSidebar'));
     <a class="dashboard-card" href="theme-editor.php">
       <div class="dashboard-card-label">ปรับแต่งชุดสี</div>
     </a>
+    <?php endif; ?>
   </div>
+  <?php endif; ?>
 <?php render_sidebar($layout); render_footer(); ?>
