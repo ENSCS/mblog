@@ -5,6 +5,16 @@ require __DIR__ . '/includes/stats.php';
 $slug = $_GET['slug'] ?? '';
 $article = getArticle($slug);
 if (!$article) {
+    // Private articles are invisible to getArticle() by design (see
+    // publicVisibilitySql()) — openable only by direct link + staff login,
+    // so a logged-out visitor sees the same 404 as a nonexistent slug (the
+    // URL never reveals a private article exists there).
+    $privateArticle = getPrivateArticle($slug, 'post');
+    if ($privateArticle && currentStaff() !== null) {
+        $article = $privateArticle;
+    }
+}
+if (!$article) {
     $redirectSlug = findRedirectSlug($slug, 'post');
     if ($redirectSlug) {
         header('Location: article.php?slug=' . urlencode($redirectSlug), true, 301);

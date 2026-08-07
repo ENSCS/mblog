@@ -5,6 +5,13 @@ require __DIR__ . '/includes/stats.php';
 $slug = $_GET['slug'] ?? '';
 $page = getPage($slug);
 if (!$page) {
+    // Same private-article fallback as article.php — see getPrivateArticle().
+    $privatePage = getPrivateArticle($slug, 'page');
+    if ($privatePage && currentStaff() !== null) {
+        $page = $privatePage;
+    }
+}
+if (!$page) {
     $redirectSlug = findRedirectSlug($slug, 'page');
     if ($redirectSlug) {
         header('Location: page.php?slug=' . urlencode($redirectSlug), true, 301);

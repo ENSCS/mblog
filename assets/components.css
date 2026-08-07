@@ -313,6 +313,10 @@ input[type=file]::file-selector-button:hover {
   background: var(--tag-blue-bg);
   color: var(--tag-blue-text);
 }
+.status-private {
+  background: var(--tag-purple-bg);
+  color: var(--tag-purple-text);
+}
 .status-pinned {
   background: var(--tag-yellow-bg);
   color: var(--tag-yellow-text);

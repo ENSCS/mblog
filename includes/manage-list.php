@@ -224,7 +224,7 @@ function renderManageListPage(string $type, array $config): void
                 <td><?= relativeTimeTag($article['created_at']) ?></td>
                 <?php
                 $displayStatus = $article['deleted_at'] ? 'trash' : $article['status'];
-                $statusBadgeLabels = ['published' => 'เผยแพร่แล้ว', 'scheduled' => 'ตั้งเวลา', 'draft' => 'ร่าง', 'trash' => 'ถังขยะ'];
+                $statusBadgeLabels = ['published' => 'เผยแพร่แล้ว', 'scheduled' => 'ตั้งเวลา', 'draft' => 'ร่าง', 'trash' => 'ถังขยะ', 'private' => 'ส่วนตัว'];
                 $statusBadgeClass = $displayStatus === 'trash' ? 'draft' : $displayStatus;
                 ?>
                 <td>

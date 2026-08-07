@@ -6,7 +6,7 @@ requireCapability('edit_articles');
 $perPage = max(1, (int) siteSetting('articles_per_page', 10));
 $page = max(1, (int) ($_GET['page'] ?? 1));
 
-$result = getArticleList(['status' => 'draft'], $page, $perPage);
+$result = getArticleList(['status' => 'draft', 'author_id' => articleOwnerFilter()], $page, $perPage);
 $articles = $result['items'];
 $totalPages = max(1, (int) ceil($result['total'] / $perPage));
 

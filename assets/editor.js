@@ -757,9 +757,9 @@ function saveArticle(quill, articleId, slug, status) {
   embedYoutubeLinks(clone);
   expandImageCaptions(clone);
 
-  const savingMessages = { published: 'กำลังเผยแพร่...', scheduled: 'กำลังตั้งเวลา...', draft: 'กำลังบันทึกร่าง...' };
-  const savedMessages = { published: 'เผยแพร่แล้ว', scheduled: 'ตั้งเวลาแล้ว', draft: 'บันทึกร่างแล้ว' };
-  const statusLabels = { published: 'เผยแพร่แล้ว', scheduled: 'ตั้งเวลา', draft: 'ร่าง' };
+  const savingMessages = { published: 'กำลังเผยแพร่...', scheduled: 'กำลังตั้งเวลา...', draft: 'กำลังบันทึกร่าง...', private: 'กำลังเผยแพร่แบบส่วนตัว...' };
+  const savedMessages = { published: 'เผยแพร่แล้ว', scheduled: 'ตั้งเวลาแล้ว', draft: 'บันทึกร่างแล้ว', private: 'เผยแพร่แบบส่วนตัวแล้ว' };
+  const statusLabels = { published: 'เผยแพร่แล้ว', scheduled: 'ตั้งเวลา', draft: 'ร่าง', private: 'ส่วนตัว' };
 
   statusEl.textContent = savingMessages[status] || savingMessages.draft;
   fetch('api/save.php', {

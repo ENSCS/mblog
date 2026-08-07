@@ -486,6 +486,12 @@ function getArticleList(array $filters, int $page = 1, int $perPage = 0, bool $s
         $where[] = 'a.title LIKE ?';
         $params[] = '%' . $filters['search'] . '%';
     }
+    // 'author' role — same articleOwnerFilter() filter getArticlesForAdmin()
+    // uses, opt-in per caller (drafts.php passes it, others don't).
+    if (!empty($filters['author_id'])) {
+        $where[] = 'a.author_id = ?';
+        $params[] = (int) $filters['author_id'];
+    }
 
     $whereSql = implode(' AND ', $where);
     $allParams = array_merge($joinParams, $params);
@@ -671,6 +677,19 @@ function getDraftArticles(): array
 function getArticle(string $slug): ?array
 {
     return fetchOneArticle('a.slug = ? AND a.type = ? AND ' . publicVisibilitySql(), [$slug, 'post']);
+}
+
+// Direct-link lookup for a 'private' article/page — never listed publicly
+// (excluded by publicVisibilitySql() everywhere else), openable only by
+// slug + staff login. article.php/page.php call this as a fallback when
+// getArticle()/getPage() finds nothing, then gate rendering on
+// currentStaff() themselves (see article.php).
+function getPrivateArticle(string $slug, string $type): ?array
+{
+    return fetchOneArticle(
+        "a.slug = ? AND a.type = ? AND a.status = 'private' AND (a.expires_at IS NULL OR a.expires_at > NOW())",
+        [$slug, $type]
+    );
 }
 
 // Public single-page lookup — same idea as getArticle() but for pages

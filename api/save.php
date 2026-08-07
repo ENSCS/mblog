@@ -11,7 +11,7 @@ verifyCsrf($data['csrf_token'] ?? null, true);
 $title = isset($data['title']) ? trim($data['title']) : '';
 $content = isset($data['content']) ? $data['content'] : '';
 $requestedSlug = isset($data['slug']) ? trim($data['slug']) : '';
-$status = in_array($data['status'] ?? '', ['published', 'scheduled'], true) ? $data['status'] : 'draft';
+$status = in_array($data['status'] ?? '', ['published', 'scheduled', 'private'], true) ? $data['status'] : 'draft';
 $type = (isset($data['type']) && $data['type'] === 'page') ? 'page' : 'post';
 // '' stored as-is (not NULL) — articleSeoTitle()/articleSeoDescription() in
 // includes/articles.php already treat '' the same as NULL (fall back to the
@@ -95,13 +95,15 @@ if ($status === 'scheduled') {
     $scheduledAtRaw = isset($data['scheduled_at']) ? trim($data['scheduled_at']) : '';
     $scheduledTs = $scheduledAtRaw !== '' ? strtotime($scheduledAtRaw) : false;
     $publishedAt = $scheduledTs !== false ? date('Y-m-d H:i:s', $scheduledTs) : $now;
-} elseif ($status === 'published') {
+} elseif (in_array($status, ['published', 'private'], true)) {
     // "now" both the first time an article goes live AND when explicitly
     // publishing over a still-pending schedule (clicking "เผยแพร่" means
     // "make this live immediately", overriding whatever future date was set
     // before) — only a genuine republish of something already live in the
     // past keeps its original published_at, so toggling draft<->published
-    // afterward doesn't keep resetting it.
+    // afterward doesn't keep resetting it. 'private' gets the same real
+    // published_at treatment as 'published' (unlike 'draft') per the schema
+    // comment in database/article_visibility_and_seo.sql.
     $publishedAt = ($existingPublishedAt === null || strtotime($existingPublishedAt) > strtotime($now))
         ? $now
         : date('Y-m-d H:i:s', strtotime($existingPublishedAt));

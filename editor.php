@@ -33,7 +33,7 @@ $currentScheduledAt = ($currentStatus === 'scheduled' && !empty($article['publis
     ? date('Y-m-d\TH:i', strtotime($article['published_at']))
     : '';
 $currentExpiresAt = !empty($article['expires_at']) ? date('Y-m-d\TH:i', strtotime($article['expires_at'])) : '';
-$statusLabels = ['published' => 'เผยแพร่แล้ว', 'scheduled' => 'ตั้งเวลา', 'draft' => 'ร่าง'];
+$statusLabels = ['published' => 'เผยแพร่แล้ว', 'scheduled' => 'ตั้งเวลา', 'draft' => 'ร่าง', 'private' => 'ส่วนตัว'];
 $currentTags = $article ? array_column(getArticleTags($article['id']), 'name') : [];
 $allTagNames = array_column(getAllTags(), 'name');
 
@@ -64,6 +64,9 @@ ob_start();
   });
   document.getElementById('publish-btn').addEventListener('click', () => {
     saveArticle(quill, document.getElementById('article-id').value, document.getElementById('slug').value, 'published');
+  });
+  document.getElementById('private-btn').addEventListener('click', () => {
+    saveArticle(quill, document.getElementById('article-id').value, document.getElementById('slug').value, 'private');
   });
   document.getElementById('schedule-btn').addEventListener('click', () => {
     const scheduledAt = document.getElementById('scheduled-at').value;
@@ -173,6 +176,7 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'showAdminSidebar'));
   <div class="toolbar-row">
     <button class="btn btn-secondary" id="save-draft-btn">บันทึกร่าง</button>
     <button class="btn btn-secondary" id="schedule-btn">ตั้งเวลาเผยแพร่</button>
+    <button class="btn btn-secondary" id="private-btn">เผยแพร่แบบส่วนตัว</button>
     <button class="btn" id="publish-btn">เผยแพร่</button>
     <span id="status-badge" class="status-badge status-<?= $currentStatus ?>"><?= $statusLabels[$currentStatus] ?? 'ร่าง' ?></span>
     <span id="save-status"></span>
