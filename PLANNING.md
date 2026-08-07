@@ -211,6 +211,17 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 
 ---
 
+### 17. ความปลอดภัยของเว็บ (Security audit) — ✅ ตรวจครบแล้ว (2026-08-07)
+
+ตรวจโค้ดทั้งเว็บ (87 ไฟล์) หาบั๊ก+ช่องโหว่ความปลอดภัยแบบเต็มรูปแบบครั้งแรก แบ่งตรวจ 5 สาย (auth/session, SQL injection, upload/API/backup, XSS/CSRF, admin CRUD) — พบและแก้แล้วทุกจุดที่ยืนยันว่าเป็นบั๊กจริง (รายละเอียดระดับไฟล์/ฟังก์ชันดู [BUILT.md](BUILT.md)):
+- **ร้ายแรง (แก้แล้วทั้งหมด)**: privilege escalation ใน `includes/manage-list.php` (author ลบ/เผยแพร่บทความของคนอื่นได้ผ่าน POST ตรง), auth bypass ใน `api/feed-poll.php` (ไม่เช็ค login เลยทั้งที่ `feed.php` เช็ค), open redirect ใน `login.php` (`?redirect=//evil.com`), path traversal ใน `includes/uploads.php` (ลบไฟล์นอก `uploads/` ได้ในทางทฤษฎี), script injection ผ่าน JSON-LD ใน `article.php`
+- **ปานกลาง (แก้แล้วทั้งหมด)**: username ชนข้ามตาราง staff/user ใน `register.php` (ล็อกอินไม่ได้ตลอดกาลถ้าชน), `getDraftArticles()` ไม่กรองตามเจ้าของ (คอมเมนต์เดิมอ้างว่า "ยังไม่มีระบบล็อกอิน" ทั้งที่ Phase 3 เสร็จไปแล้ว — ตัวอย่างจริงของโค้ด/คอมเมนต์ไม่ตรงกับสถานะ built), `uploads/` ไม่มี `.htaccess` กัน execute สคริปต์ (defense-in-depth, เพิ่มแบบ self-provision เหมือน `backups/`), `admin.php` โชว์ตัวเลข/การ์ดเกินสิทธิ์ให้ staff ที่ไม่มี capability
+- **เพิ่มใหม่ (ไม่ใช่แค่แก้บั๊ก) — ระบบป้องกัน brute-force ที่ `login.php`** — ตาราง `mblog_login_attempts` (`database/login_rate_limit.sql`) + `isLoginLocked()`/`recordFailedLogin()`/`clearLoginAttempts()` ใน `includes/auth.php` — ล็อก 15 นาทีถ้า identifier เดียวกันผิดเกิน 5 ครั้ง หรือ IP เดียวกันผิดเกิน 10 ครั้ง เช็คก่อน `password_verify()` เสมอ (คำขอที่โดนล็อกไม่แตะรหัสผ่านเลย) ข้อความ error เหมือนรหัสผิดปกติทุกกรณี (กันแยกแยะว่าโดนล็อกหรือรหัสผิด) — ทดสอบผ่าน UI จริงแล้ว (ยิงผิดครบ 5/10 ครั้งผ่านฟอร์มจริง ยืนยันล็อก + ไม่มี row ใหม่เพิ่มตอนโดนล็อก)
+- **ไม่พบเลยทั้งเว็บ**: SQL injection (prepared statement ถูกต้องทุกจุด), ช่องโหว่ CSRF (ทุกฟอร์ม admin มี token เช็คก่อนเสมอ)
+- **พิจารณาแล้วตัดสินใจไม่ทำตอนนี้**: ระบบ rate-limit/anti-bot ระดับทั้งเว็บ (กันเรียกถี่ผิดปกติ/บอทถล่ม) — คุยข้อดีข้อเสียแล้ว (DB write ทุก request ที่เช็คกลายเป็นคอขวดใหม่เอง, ไม่กันบอทหมุน IP, ไม่ใช่การป้องกัน DDoS จริงอยู่ดี) ตัดสินใจไม่ทำ รอจนกว่าจะรู้ hosting/Cloudflare จริงก่อนค่อยกลับมาคุย — 2FA/MFA บัญชี admin ก็พิจารณาแล้วไม่ทำเช่นกัน (เว็บบล็อกส่วนตัว ไม่ใช่ high-value target พอจะคุ้มความซับซ้อนที่เพิ่ม)
+
+---
+
 ## ประเด็นที่วนกลับมาซ้ำๆ (dependency สำคัญ)
 
 **ระบบล็อกอิน/สิทธิ์เสร็จแล้ว (Phase 3, ดู Roadmap)** — ตัวบล็อกเดิมที่เคยกระทบหลายฟีเจอร์พร้อมกันตอนนี้หลุดแล้ว แต่ฟีเจอร์ปลายทางแต่ละตัวยังต้องสร้างเพิ่มเอง (auth เป็นแค่ dependency ที่ปลดล็อก ไม่ได้ทำฟีเจอร์เหล่านี้ให้เสร็จไปด้วย):
@@ -246,6 +257,7 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 - [x] `includes/auth.php` bootstrap (session, `requireLogin()`, `requireCapability()`, `requireApiLogin()`/`requireApiCapability()` สำหรับ API) — **ไม่ได้ย้ายเข้าโฟลเดอร์ `/admin/` ตามแผนเดิม** เพราะหน้าเว็บมีอยู่แล้วจำนวนมากตอนถึง Phase นี้ ย้ายทั้งหมดเสี่ยงพังลิงก์/bookmark เดิม เลือกให้แต่ละหน้าเรียก `requireCapability('...')` ที่บรรทัดแรกแทน — จุดเดียวที่ต้องแก้ถ้าจะเปลี่ยนสิทธิ์คือ `ROLE_CAPABILITIES`
 - [x] CSRF token บนฟอร์มที่ทำงานหลังล็อกอิน (`csrfToken()`/`csrfField()`/`verifyCsrf()`)
 - [x] อัปเกรดความปลอดภัยของ draft (2026-08-07) — `drafts.php` กรอง "เฉพาะของตัวเอง" ผ่าน `articleOwnerFilter()` แล้ว เหมือน `manage-articles.php`
+- [x] ป้องกัน brute-force (2026-08-07, นอกแผนเดิม) — ตาราง `mblog_login_attempts` ล็อก 15 นาทีถ้าผิดเกิน 5 ครั้ง/identifier หรือ 10 ครั้ง/IP — ดูหัวข้อ 17
 - [x] เข้าสู่ระบบด้วยอีเมล**หรือ**username ก็ได้ (`login.php`, นอกแผนเดิม) — query เดียว `WHERE email = ? OR username = ?`
 - [x] หน้าโปรไฟล์ตัวเอง + จัดการทีมงาน (นอกแผนเดิม, ดู Phase 15) — `profile.php`/`users.php`
 
@@ -329,6 +341,12 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 - [x] **เปลี่ยนคำศัพท์ "ผู้อ่าน"→"ผู้ใช้" ทั้งระบบ** (ตัดสินใจหลังทำเวอร์ชันแรกเสร็จ) — ชนกับชื่อฟังก์ชัน/session key ที่ขึ้นต้นด้วย "User" ซึ่งใช้กับ **staff** อยู่ก่อนแล้ว (ตกค้างจากก่อน Phase 15) จึงสลับฝั่ง staff เป็น `*Staff` ก่อน (`currentUser()→currentStaff()`, `includes/users.php→includes/staff.php`, `users.php→staff.php` ฯลฯ) แล้วย้ายฝั่งผู้ใช้ทั่วไปเข้าชื่อที่ว่างลง (`includes/readers.php→includes/users.php`, `manage-readers.php→users.php`, `reader-profile.php→user-profile.php`, `uploads/readers/→uploads/users/`) — รายละเอียดเต็มดู [BUILT.md](BUILT.md)
 - [ ] ผู้ใช้ทั่วไปยังไม่มีสิทธิ์พิเศษอะไรจริงจากระดับ tier เลย (แค่เก็บค่าไว้ก่อน รอฟีเจอร์ที่ผูกกับ tier จริงๆ เช่น Phase 7/12) — ยังไม่มีระบบชำระเงินอัปเกรด tier เอง (admin ตั้งให้เท่านั้น)
 
+### Phase 17 — ตรวจสอบบั๊ก + ความปลอดภัยทั้งเว็บ (ส่วน 17, นอกแผนเดิม, ทำเสร็จ 2026-08-07)
+- [x] ตรวจโค้ดทั้งเว็บ 87 ไฟล์ แบ่ง 5 สาย (auth/session, SQL injection, upload/API/backup, XSS/CSRF, admin CRUD) — พบ+แก้บั๊ก/ช่องโหว่ระดับร้ายแรง 5 จุด + ปานกลาง/เล็กน้อยอีกหลายจุด ไม่พบ SQL injection หรือช่องโหว่ CSRF เลยทั้งเว็บ — รายละเอียดเต็มดูหัวข้อ 17/[BUILT.md](BUILT.md)
+- [x] เพิ่มระบบป้องกัน brute-force ที่ `login.php` (ไม่ได้อยู่ในแผนเดิมของ Phase 3) — ทดสอบผ่าน UI จริงแล้ว
+- [ ] Rate-limit/anti-bot ระดับทั้งเว็บ — พิจารณาแล้วตัดสินใจไม่ทำตอนนี้ รอรู้ hosting/Cloudflare จริงก่อน (ดูหัวข้อ 17)
+- [ ] 2FA/MFA บัญชี admin — พิจารณาแล้วตัดสินใจไม่ทำตอนนี้ (ดูหัวข้อ 17)
+
 ---
 
 ## นอกขอบเขต Roadmap นี้ (ตกลงไว้ว่ายังไม่นับตอนนี้ — วางแผนแยกภายหลัง)
@@ -340,7 +358,7 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 
 ---
 
-## สถานะล่าสุด — Phase 1 เสร็จสมบูรณ์ ✅ + ระบบ Page/หมวดหมู่/เมนูขยายเพิ่มเติมมาก + Phase 5/6 นำเข้า Markdown เสร็จแล้ว + Phase 11 5/6 (Private post เพิ่มเข้ามา 2026-08-07 เหลือแค่ Hierarchical pages)/13 ส่วนใหญ่เสร็จแล้ว + **Phase 3 ระบบล็อกอิน/สิทธิ์เสร็จแล้ว (รวม draft ownership filter เสร็จ 2026-08-07) + Phase 15 โปรไฟล์ทีมงาน/topbar ทั้งเว็บเสร็จแล้ว (2026-08-06) + Phase 16 ระบบสมัครสมาชิกผู้ใช้ทั่วไปเสร็จแล้ว (2026-08-07)**
+## สถานะล่าสุด — Phase 1 เสร็จสมบูรณ์ ✅ + ระบบ Page/หมวดหมู่/เมนูขยายเพิ่มเติมมาก + Phase 5/6 นำเข้า Markdown เสร็จแล้ว + Phase 11 5/6 (Private post เพิ่มเข้ามา 2026-08-07 เหลือแค่ Hierarchical pages)/13 ส่วนใหญ่เสร็จแล้ว + **Phase 3 ระบบล็อกอิน/สิทธิ์เสร็จแล้ว (รวม draft ownership filter เสร็จ 2026-08-07) + Phase 15 โปรไฟล์ทีมงาน/topbar ทั้งเว็บเสร็จแล้ว (2026-08-06) + Phase 16 ระบบสมัครสมาชิกผู้ใช้ทั่วไปเสร็จแล้ว (2026-08-07) + Phase 17 ตรวจสอบบั๊ก+ความปลอดภัยทั้งเว็บเสร็จแล้ว (2026-08-07)**
 
 บทความ/รูปภาพ/หมวดหมู่/เมนู ย้ายเข้า MySQL ครบทั้งหมดแล้ว (ดูรายละเอียดใน [BUILT.md](BUILT.md)) พร้อมของแถมนอกแผนเดิม (แก้ slug เองได้ + 301 redirect, ระบบค่าตั้งค่าเว็บ, ชื่อไฟล์อัปโหลดแบบ SEO-friendly) ตารางของทุก Phase ถัดไปก็สร้างรอไว้ล่วงหน้าหมดแล้วด้วย (`database/phase3_users.sql` ถึง `phase9_stats.sql`)
 
@@ -386,6 +404,8 @@ Schema ทั้งหมดของหัวข้อนี้ (ยกเว�
 **ระบบล็อกอิน/สิทธิ์ + โปรไฟล์ทีมงาน (Phase 3 + Phase 15, ทำเสร็จ 2026-08-06)** — ปิดตัวบล็อกที่ค้างมานานที่สุด: 3 roles (admin/editor/author) capability-based ทั้งหมดผ่าน `ROLE_CAPABILITIES` จุดเดียวใน `includes/auth.php`, เข้าสู่ระบบด้วยอีเมลหรือ username, ทุกหน้าแอดมิน/API ที่เคยเปิดโล่งตอนนี้ล็อกอินก่อนเข้าหมดแล้ว (แก้ความเสี่ยง arbitrary script injection ผ่านช่องใส่ head/body code ที่เคยกังวลไว้ตั้งแต่ Phase 9 ไปด้วย) — ตามด้วยงานนอกแผนเดิม (Phase 15): สลับชื่อตาราง `mblog_users`→`mblog_staff`/`mblog_readers`→`mblog_users`, เพิ่มโปรไฟล์เต็มรูปแบบ (username/ชื่อ-นามสกุล/เบอร์โทร/LINE ID/avatar พร้อม placeholder สีแบบ Gmail), แยกหน้าแก้โปรไฟล์ (`profile.php`) ออกจากหน้า list ทีมงาน (ตอนนั้นชื่อ `users.php` — เปลี่ยนเป็น `staff.php` ทีหลังใน Phase 16 ดูด้านล่าง), และย้าย account menu ขึ้นเป็นค่าเริ่มต้นของ topbar ทั้งเว็บ (ไม่ใช่แค่โซนแอดมิน) รายละเอียดเต็มดู Phase 3/15 ด้านบนหรือ [BUILT.md](BUILT.md)
 
 **ระบบสมัครสมาชิกผู้ใช้ทั่วไป (Phase 16, นอกแผนเดิม, ทำเสร็จ 2026-08-07)** — เพิ่มคอลัมน์ `tier` (free/paid/premium) บน `mblog_users`, หน้าสมัครสาธารณะ `register.php`, ขยาย `login.php` ให้รองรับทั้ง staff และผู้ใช้ทั่วไปในฟอร์มเดียว (session key แยกกัน `staff_id`/`user_id`), หน้าแอดมิน `users.php` (list + ค้นหา + bulk action + แบ่งหน้า) กับ `user-profile.php` (ดูรายละเอียด/ตั้งรหัสผ่านให้เผื่อลืม), และ `my-profile.php` ให้ผู้ใช้แก้ข้อมูลตัวเองได้ (ยกเว้น username) — **ระหว่างทางตัดสินใจเปลี่ยนคำศัพท์ "ผู้อ่าน" (reader) ทั้งระบบเป็น "ผู้ใช้" (user)** เพราะสื่อความหมายตรงกว่า (เว็บมีเครื่องมืออื่นนอกจากบทความด้วย) ซึ่งชนกับชื่อฟังก์ชัน `*User`/`$_SESSION['user_id']` เดิมที่ใช้กับ staff อยู่ก่อน (ตกค้างจาก Phase 15) — แก้ด้วยการสลับฝั่ง staff เป็น `*Staff` ก่อน (`includes/users.php→includes/staff.php`, `users.php→staff.php` ฯลฯ) แล้วย้ายฝั่งผู้ใช้ทั่วไปเข้าชื่อที่ว่างลง (`includes/readers.php→includes/users.php`, `manage-readers.php→users.php`, `reader-profile.php→user-profile.php`) รายละเอียดเต็มดู Phase 16 ด้านบนหรือ [BUILT.md](BUILT.md)
+
+**ตรวจสอบบั๊ก + ความปลอดภัยทั้งเว็บ (Phase 17, นอกแผนเดิม, ทำเสร็จ 2026-08-07)** — ตรวจโค้ดทั้งเว็บ 87 ไฟล์ครั้งแรกแบบเต็มรูปแบบ (5 สาย: auth/session, SQL injection, upload/API/backup, XSS/CSRF, admin CRUD) พบและแก้บั๊ก/ช่องโหว่ร้ายแรง 5 จุด (privilege escalation ให้ author ลบ/เผยแพร่บทความคนอื่นได้, auth bypass ใน `api/feed-poll.php`, open redirect ใน `login.php`, path traversal ใน `includes/uploads.php`, script injection ผ่าน JSON-LD ใน `article.php`) + ปานกลาง/เล็กน้อยอีกหลายจุด — ไม่พบ SQL injection หรือช่องโหว่ CSRF เลยทั้งเว็บ — เพิ่มระบบป้องกัน brute-force ที่ `login.php` ใหม่ (`mblog_login_attempts`, ล็อก 15 นาทีถ้าผิดเกิน 5 ครั้ง/identifier หรือ 10 ครั้ง/IP, ทดสอบผ่าน UI จริงแล้ว) — พิจารณาแล้วตัดสินใจไม่ทำ rate-limit/anti-bot ระดับทั้งเว็บและ 2FA ตอนนี้ (เว็บบล็อกส่วนตัว ไม่คุ้มความซับซ้อนที่เพิ่ม) รายละเอียดเต็มดูหัวข้อ 17 หรือ [BUILT.md](BUILT.md)
 
 **ตัวเลือกขั้นต่อไป:**
 - Private post (หัวข้อ 13) และความปลอดภัยของระบบร่าง (กรอง `drafts.php` ให้เห็นแค่ของตัวเอง) — ✅ ทำเสร็จแล้ว (2026-08-07)
