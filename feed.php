@@ -3,6 +3,11 @@ require __DIR__ . '/includes/articles.php';
 require __DIR__ . '/includes/feed.php';
 require __DIR__ . '/includes/stats.php';
 
+// Feed content only for people logged in (staff or general user, either
+// counts — see requireAnyLogin()) — not the public list/category/tag pages,
+// just this one.
+requireAnyLogin();
+
 recordPageview('feed');
 
 $items = getFeedItems((int) siteSetting('feed_item_limit', 50));

@@ -5,6 +5,11 @@
   }
 
   var lastId = parseInt(list.dataset.lastId || '0', 10);
+  // Set by feed-embed.php (data-limit="25") to keep its fixed-size window
+  // consistent across polls — plain feed.php has no data-limit, so this
+  // stays empty and the poll falls back to the feed_item_limit site setting
+  // (see api/feed-poll.php).
+  var limit = list.dataset.limit || '';
   var POLL_INTERVAL_MS = 20000;
 
   // api/feed-poll.php renders the whole current list server-side (same
@@ -13,7 +18,7 @@
   // sync with the server anymore, and edits/deletes show up automatically
   // since every poll reflects the real current state, not just "what's new".
   function poll() {
-    fetch('api/feed-poll.php?last_seen_id=' + lastId)
+    fetch('api/feed-poll.php?last_seen_id=' + lastId + (limit ? '&limit=' + limit : ''))
       .then(function (res) { return res.json(); })
       .then(function (data) {
         if (typeof data.html === 'string') {

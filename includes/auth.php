@@ -168,19 +168,19 @@ function topbarAccountMenu(): string
         ? '<img src="' . htmlspecialchars($staff['avatar_path']) . '" alt="" class="avatar-thumb avatar-thumb-md">'
         : '<span class="avatar-thumb avatar-thumb-md avatar-thumb-placeholder ' . avatarColorClass((int) $staff['id']) . '">' . htmlspecialchars(avatarInitial($staff)) . '</span>';
 
-    // Capability-gated like every other check in the codebase (see
-    // ROLE_CAPABILITIES above) rather than assuming every logged-in staff
-    // member can write — all three roles happen to have edit_articles today,
-    // but this stays correct if that ever changes.
-    $writeLink = staffCan('edit_articles') ? '<a href="editor.php">เขียนบทความ</a>' : '';
     // 'manage_settings' is already an admin-only capability (settings.php
     // uses the same check) — reused here rather than hardcoding
     // $staff['role'] === 'admin', per the project's own capability-based-not-
     // role-based rule (see ROLE_CAPABILITIES above).
-    $manageLink = staffCan('manage_settings') ? '<a href="admin.php">จัดการเว็บ</a>' : '';
+    $isAdmin = staffCan('manage_settings');
+    // Redundant for admin — "จัดการเว็บ" already leads to the full dashboard
+    // (which has its own "+ เขียนบทความใหม่" card), so this shortcut only
+    // shows for editor/author, who have no "จัดการเว็บ" link to fall back on.
+    $writeLink = (!$isAdmin && staffCan('edit_articles')) ? '<a href="editor.php">เขียนบทความ</a>' : '';
+    $manageLink = $isAdmin ? '<a href="admin.php">จัดการเว็บ</a>' : '';
 
     return '<div class="topbar-account-menu">'
-        . '<a href="profile.php" class="topbar-account-toggle">' . $avatar . '</a>'
+        . '<a href="admin.php" class="topbar-account-toggle">' . $avatar . '</a>'
         . '<div class="topbar-account-dropdown">'
         . $writeLink
         . $manageLink
@@ -248,12 +248,40 @@ function requireUserLogin(): void
     exit;
 }
 
+// Some public pages (feed.php) require *some* logged-in identity — staff or
+// general user, doesn't matter which — rather than one specific kind. Staff
+// counts too (no reason to make a logged-in staff member log in again as a
+// user just to read the same page anyone else with an account can).
+function requireAnyLogin(): void
+{
+    if (currentStaff() !== null || currentUser() !== null) {
+        return;
+    }
+    $redirect = $_SERVER['REQUEST_URI'] ?? 'index.php';
+    header('Location: login.php?redirect=' . urlencode($redirect));
+    exit;
+}
+
 // --- API (JSON) gates — api/*.php calls these instead; a redirect/HTML error
 // page makes no sense to a fetch() caller, so these reply 401/403 JSON. ---
 
 function requireApiLogin(): void
 {
     if (currentStaff() !== null) {
+        return;
+    }
+    http_response_code(401);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'error' => 'not logged in']);
+    exit;
+}
+
+// API equivalent of requireAnyLogin() — api/feed-poll.php uses this so the
+// poll behind a logged-out feed.php visit can't be used to read the feed
+// content anyway once the page itself is gated.
+function requireApiAnyLogin(): void
+{
+    if (currentStaff() !== null || currentUser() !== null) {
         return;
     }
     http_response_code(401);

@@ -68,6 +68,16 @@ $layout = render_header(compact('pageTitle', 'showAdminSidebar'));
     <h2 style="margin-top:0;">รายละเอียดโปรไฟล์</h2>
     <table class="admin-table">
       <tbody>
+        <tr>
+          <th style="width:160px;">รูปโปรไฟล์</th>
+          <td>
+            <?php if ($user['avatar_path']): ?>
+              <img src="<?= htmlspecialchars($user['avatar_path']) ?>" alt="" class="avatar-thumb avatar-thumb-xl">
+            <?php else: ?>
+              <span class="avatar-thumb avatar-thumb-xl avatar-thumb-placeholder <?= avatarColorClass((int) $user['id']) ?>"><?= htmlspecialchars(avatarInitial($user)) ?></span>
+            <?php endif; ?>
+          </td>
+        </tr>
         <tr><th style="width:160px;">User ID</th><td><?= (int) $user['id'] ?></td></tr>
         <tr><th>ชื่อ-นามสกุล</th><td><?= htmlspecialchars($displayName !== '' ? $displayName : '-') ?></td></tr>
         <tr><th>Username</th><td><?= htmlspecialchars($user['username']) ?></td></tr>

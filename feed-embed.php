@@ -7,7 +7,13 @@
 require __DIR__ . '/includes/feed.php';
 require_once __DIR__ . '/includes/theme-colors.php';
 
-$items = getFeedItems((int) siteSetting('feed_item_limit', 50));
+// Fixed at 25 regardless of the feed_item_limit site setting feed.php uses
+// (this embed sits in a narrow sidebar iframe — 50 would make it a very
+// long scroll) — assets/feed.js reads data-limit below to keep polling
+// consistent with this same number instead of falling back to the site-wide
+// setting after the first auto-refresh.
+const FEED_EMBED_LIMIT = 25;
+$items = getFeedItems(FEED_EMBED_LIMIT);
 $lastId = $items ? (int) $items[0]['id'] : 0;
 ?>
 <!doctype html>
@@ -95,7 +101,7 @@ $lastId = $items ? (int) $items[0]['id'] : 0;
     <a href="feed.php" target="_top">ดูทั้งหมด &rarr;</a>
   </div>
   <div class="feed-embed-list-wrap">
-    <div id="feed-list" class="feed-list" data-last-id="<?= $lastId ?>">
+    <div id="feed-list" class="feed-list" data-last-id="<?= $lastId ?>" data-limit="<?= FEED_EMBED_LIMIT ?>">
       <?php if (!$items): ?>
         <p style="color:var(--text-muted);">ยังไม่มีข้อความ</p>
       <?php else: ?>
