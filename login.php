@@ -34,45 +34,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
     $identifier = trim($_POST['identifier'] ?? '');
     $password = $_POST['password'] ?? '';
+    $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
 
-    // Accepts either — the same field doubles as email or username so
-    // people can log in with whichever they remember. Staff table checked
-    // first (mblog_staff is the smaller, privileged namespace) — if the
-    // identifier matches a staff account, only that account's password is
-    // ever checked, never falling through to try it as a general user too,
-    // even if the same identifier also happens to exist in mblog_users (the
-    // two tables enforce uniqueness independently, see database/phase3b_readers.sql).
-    $stmt = db()->prepare('SELECT id, password_hash FROM mblog_staff WHERE email = ? OR username = ?');
-    $stmt->execute([$identifier, $identifier]);
-    $staffRow = $stmt->fetch();
-
-    if ($staffRow) {
-        if (password_verify($password, $staffRow['password_hash'])) {
-            // New session id on privilege change (login) — closes the
-            // session-fixation window where an attacker who fixed a
-            // visitor's session id before login could reuse the same id to
-            // hijack it after.
-            session_regenerate_id(true);
-            $_SESSION['staff_id'] = (int) $staffRow['id'];
-            header('Location: ' . $staffRedirectTarget);
-            exit;
-        }
-        // Same error message in every failure branch below — a distinct
-        // "no such account" message would let an attacker enumerate which
-        // emails/usernames have accounts, staff or general user.
+    // Checked before ever touching the DB for a password row — a locked-out
+    // request does zero password_verify() work, which is the whole point
+    // against a scripted brute-force run. Same wording as a wrong password
+    // below so a locked-out attacker can't distinguish the two and use that
+    // to detect exactly when they got throttled.
+    if (isLoginLocked($identifier, $clientIp)) {
         $error = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
     } else {
-        $stmt = db()->prepare('SELECT id, password_hash FROM mblog_users WHERE email = ? OR username = ?');
+        // Accepts either — the same field doubles as email or username so
+        // people can log in with whichever they remember. Staff table checked
+        // first (mblog_staff is the smaller, privileged namespace) — if the
+        // identifier matches a staff account, only that account's password is
+        // ever checked, never falling through to try it as a general user too,
+        // even if the same identifier also happens to exist in mblog_users (the
+        // two tables enforce uniqueness independently, see database/phase3b_readers.sql).
+        $stmt = db()->prepare('SELECT id, password_hash FROM mblog_staff WHERE email = ? OR username = ?');
         $stmt->execute([$identifier, $identifier]);
-        $userRow = $stmt->fetch();
+        $staffRow = $stmt->fetch();
 
-        if ($userRow && password_verify($password, $userRow['password_hash'])) {
-            session_regenerate_id(true);
-            $_SESSION['user_id'] = (int) $userRow['id'];
-            header('Location: ' . $userRedirectTarget);
-            exit;
+        if ($staffRow) {
+            if (password_verify($password, $staffRow['password_hash'])) {
+                // New session id on privilege change (login) — closes the
+                // session-fixation window where an attacker who fixed a
+                // visitor's session id before login could reuse the same id to
+                // hijack it after.
+                session_regenerate_id(true);
+                $_SESSION['staff_id'] = (int) $staffRow['id'];
+                clearLoginAttempts($identifier);
+                header('Location: ' . $staffRedirectTarget);
+                exit;
+            }
+            recordFailedLogin($identifier, $clientIp);
+            // Same error message in every failure branch below — a distinct
+            // "no such account" message would let an attacker enumerate which
+            // emails/usernames have accounts, staff or general user.
+            $error = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+        } else {
+            $stmt = db()->prepare('SELECT id, password_hash FROM mblog_users WHERE email = ? OR username = ?');
+            $stmt->execute([$identifier, $identifier]);
+            $userRow = $stmt->fetch();
+
+            if ($userRow && password_verify($password, $userRow['password_hash'])) {
+                session_regenerate_id(true);
+                $_SESSION['user_id'] = (int) $userRow['id'];
+                clearLoginAttempts($identifier);
+                header('Location: ' . $userRedirectTarget);
+                exit;
+            }
+            recordFailedLogin($identifier, $clientIp);
+            $error = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
         }
-        $error = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
     }
 }
 

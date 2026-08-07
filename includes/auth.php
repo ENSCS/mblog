@@ -213,6 +213,59 @@ function articleOwnerFilter(): ?int
     return (int) $staff['id'];
 }
 
+// --- Login rate limiting — mblog_login_attempts (database/login_rate_limit.sql)
+// logs every failed login (identifier + IP). login.php checks isLoginLocked()
+// BEFORE ever calling password_verify(), so a scripted brute-force run gets
+// rejected with zero hashing work done. Locks on EITHER too many failures
+// against one identifier (protects one targeted account) OR too many
+// failures from one IP (slows down someone trying many different accounts
+// from the same machine) — whichever limit trips first. Same generic error
+// message as a wrong password either way, so a locked-out attacker can't
+// distinguish "wrong password" from "too many attempts" and calibrate around it.
+const LOGIN_ATTEMPT_WINDOW_MINUTES = 15;
+const LOGIN_ATTEMPT_IDENTIFIER_LIMIT = 5;
+const LOGIN_ATTEMPT_IP_LIMIT = 10;
+
+function isLoginLocked(string $identifier, string $ip): bool
+{
+    $stmt = db()->prepare(
+        'SELECT COUNT(*) FROM mblog_login_attempts
+         WHERE identifier = ? AND attempted_at > (NOW() - INTERVAL ' . LOGIN_ATTEMPT_WINDOW_MINUTES . ' MINUTE)'
+    );
+    $stmt->execute([$identifier]);
+    if ((int) $stmt->fetchColumn() >= LOGIN_ATTEMPT_IDENTIFIER_LIMIT) {
+        return true;
+    }
+
+    $stmt = db()->prepare(
+        'SELECT COUNT(*) FROM mblog_login_attempts
+         WHERE ip_address = ? AND attempted_at > (NOW() - INTERVAL ' . LOGIN_ATTEMPT_WINDOW_MINUTES . ' MINUTE)'
+    );
+    $stmt->execute([$ip]);
+
+    return (int) $stmt->fetchColumn() >= LOGIN_ATTEMPT_IP_LIMIT;
+}
+
+function recordFailedLogin(string $identifier, string $ip): void
+{
+    $stmt = db()->prepare('INSERT INTO mblog_login_attempts (identifier, ip_address, attempted_at) VALUES (?, ?, NOW())');
+    $stmt->execute([$identifier, $ip]);
+    // Opportunistic cleanup instead of a separate cron — same "sweep on the
+    // write path" reasoning as scripts/backup.php's retention delete, just
+    // inline since this table is small and every failed login is already a
+    // write happening anyway.
+    db()->exec('DELETE FROM mblog_login_attempts WHERE attempted_at < (NOW() - INTERVAL 1 DAY)');
+}
+
+// Called on successful login — lets someone who mistyped their own password
+// a few times log straight in once they get it right, instead of being
+// stuck waiting out the full window even after authenticating correctly.
+function clearLoginAttempts(string $identifier): void
+{
+    $stmt = db()->prepare('DELETE FROM mblog_login_attempts WHERE identifier = ?');
+    $stmt->execute([$identifier]);
+}
+
 // --- Page (HTML) gates — redirect to login.php / render the shared error page ---
 
 function requireLogin(): void
