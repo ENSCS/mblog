@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/config.php';
 require __DIR__ . '/includes/admin-nav.php';
-require __DIR__ . '/includes/uploads.php';
+require_once __DIR__ . '/includes/uploads.php';
 requireCapability('manage_settings');
 
 // Curated to what this single-owner Thai blog actually needs — not a full
