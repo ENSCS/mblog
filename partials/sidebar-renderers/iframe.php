@@ -6,6 +6,6 @@
 ?>
 <div class="sidebar-item">
   <?php if (!empty($item['iframe_src'])): ?>
-    <iframe class="sidebar-item-iframe" src="<?= htmlspecialchars($item['iframe_src']) ?>" height="<?= (int) ($item['iframe_height'] ?: 300) ?>" loading="lazy"></iframe>
+    <iframe class="sidebar-item-iframe" src="<?= htmlspecialchars(resolveIframeSrc($item['iframe_src'])) ?>" height="<?= (int) ($item['iframe_height'] ?: 300) ?>" loading="lazy"></iframe>
   <?php endif; ?>
 </div>

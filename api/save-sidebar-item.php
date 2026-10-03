@@ -20,12 +20,9 @@ $isActive = !empty($data['is_active']) ? 1 : 0;
 // it gets validated here specifically rather than trusted like the rest of
 // this form. Invalid/empty just becomes null (renderer skips output) rather
 // than failing the whole save.
-$iframeSrc = trim((string) ($data['iframe_src'] ?? ''));
-if ($iframeSrc !== '' && filter_var($iframeSrc, FILTER_VALIDATE_URL) && in_array(parse_url($iframeSrc, PHP_URL_SCHEME), ['http', 'https'], true)) {
-    // keep as-is
-} else {
-    $iframeSrc = null;
-}
+// Accepts an absolute http(s) URL or a site-relative path like
+// "feed-embed.php" (see normalizeIframeSrc() in includes/sidebar.php).
+$iframeSrc = normalizeIframeSrc((string) ($data['iframe_src'] ?? ''));
 $iframeHeight = isset($data['iframe_height']) && (int) $data['iframe_height'] > 0
     ? max(50, min(2000, (int) $data['iframe_height']))
     : 300;

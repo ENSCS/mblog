@@ -83,7 +83,8 @@ $layout = render_header(compact('pageTitle', 'extraHead', 'showAdminSidebar'));
   <div id="iframe-fields" style="display:<?= $currentItemType === 'iframe' ? 'block' : 'none' ?>;">
     <div class="field">
       <label for="iframe-src">URL ที่จะ embed</label>
-      <input type="text" id="iframe-src" value="<?= htmlspecialchars($sidebarItem['iframe_src'] ?? '') ?>" placeholder="https://...">
+      <input type="text" id="iframe-src" value="<?= htmlspecialchars($sidebarItem['iframe_src'] ?? '') ?>" placeholder="https://... หรือ feed-embed.php">
+      <small style="color:var(--text-muted);">เว็บอื่นใส่ URL เต็ม (https://...) — หน้าในเว็บนี้ใส่แค่ชื่อไฟล์ เช่น <code>feed-embed.php</code>, <code>youtube-embed.php</code> จะตามโฮสที่ใช้อยู่อัตโนมัติ ย้ายเว็บแล้วไม่พัง</small>
     </div>
     <div class="field">
       <label for="iframe-height">ความสูง (px)</label>

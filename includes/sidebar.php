@@ -5,6 +5,42 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/db.php';
 
+// iframe_src is either an absolute http(s) URL (external site) or a path
+// relative to this site's root (e.g. "feed-embed.php") — the latter is what
+// keeps internal embeds working after a host/folder/domain change, because
+// the host is filled in per request instead of being frozen into the DB row.
+// Returns null for anything that is neither (blank, javascript:, //evil.com,
+// ../ traversal, ...) — also the single validation point for save-sidebar-item.php.
+function normalizeIframeSrc(string $src): ?string
+{
+    $src = trim($src);
+    if ($src === '') {
+        return null;
+    }
+    if (filter_var($src, FILTER_VALIDATE_URL) && in_array(parse_url($src, PHP_URL_SCHEME), ['http', 'https'], true)) {
+        return $src;
+    }
+    $path = ltrim($src, '/');
+    if ($src[0] === '/' && ($src[1] ?? '') === '/') {
+        return null; // protocol-relative //host/... would point off-site
+    }
+    if (preg_match('#^[A-Za-z0-9_\-./?=&%]+$#', $path) && !str_contains($path, '..') && !str_contains($path, '//')) {
+        return $path;
+    }
+    return null;
+}
+
+// Turns a stored iframe_src into the URL the browser should load.
+function resolveIframeSrc(string $src): string
+{
+    $normalized = normalizeIframeSrc($src);
+    if ($normalized === null || preg_match('#^https?://#i', $normalized)) {
+        return $normalized ?? '';
+    }
+    require_once __DIR__ . '/articles.php'; // siteBaseUrl()
+    return siteBaseUrl() . '/' . $normalized;
+}
+
 // Only the ones toggled "on", in display order — what partials/footer.php
 // actually renders. Separate from getAllSidebarItems() below the same way
 // getPublicTags() is separate from getAllTags(): the admin screen needs to
